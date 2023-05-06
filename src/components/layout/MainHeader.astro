@@ -1,0 +1,43 @@
+---
+const { title, description } = Astro.props;
+import { siteName } from "../../../config";
+---
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="/favicon.ico" />
+  <meta name="viewport" content="width=device-width" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta name="robots" content="index, follow" />
+
+  <meta property="og:site_name" content="EverythingCS" />
+  <meta property="og:url" content="https://everythingcs.dev/" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:type" content="article" />
+  <meta
+    property="og:image"
+    content="https://everythingcs.dev/images/banner.png"
+  />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://everythingcs.dev/" />
+  <meta property="twitter:title" content={title} />
+  <meta property="twitter:description" content={description} />
+  <meta
+    property="twitter:image"
+    content="https://everythingcs.dev/images/banner.png"
+  />
+
+  <script
+    src="https://beamanalytics.b-cdn.net/beam.min.js"
+    data-token={import.meta.env.PUBLIC_BEAM_TOKEN}
+    async
+  ></script>
+
+  <slot />
+</head>

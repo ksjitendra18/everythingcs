@@ -1,0 +1,30 @@
+---
+import PostCard from "../../components/blog/PostCard.astro";
+import MainLayout from "../../components/layout/MainLayout.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
+);
+---
+
+<MainLayout
+  title="Blog"
+  description="Posts regarading frontend, firebase, reactjs, nextjs"
+>
+  <section class="mt-7">
+    <h2 class="text-3xl font-semibold">Latest Posts</h2>
+
+    <div class="mt-5 flex flex-col gap-5">
+      {
+        posts.map((post) => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            slug={post.slug}
+          />
+        ))
+      }
+    </div>
+  </section>
+</MainLayout>

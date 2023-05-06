@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Inter", sans-serif;
+}
+
+.post-content p {
+  margin-block-end: 13px;
+}
+
+.post-content h2 {
+  @apply font-medium text-3xl mb-5;
+}
+
+pre {
+  @apply bg-[#2d2d2d] p-5 rounded-xl my-6;
+}

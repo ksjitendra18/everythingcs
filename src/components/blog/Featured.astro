@@ -1,0 +1,32 @@
+---
+import PostCard from "./PostCard.astro";
+
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
+);
+
+const featuredPosts = posts.filter((post) => post.data.isFeatured === true);
+---
+
+<section class="mt-7">
+  <div class="flex md:justify-start items-center gap-7 justify-between">
+    <h2 class="font-semibold text-2xl md:text-3xl">Featured Posts</h2>
+    <a href="/blog" class="bg-primaryColour px-5 py-2 rounded-lg text-white"
+      >View All Posts</a
+    >
+  </div>
+
+  <div class="my-10 flex gap-5 flex-col">
+    {
+      featuredPosts.map((post) => (
+        <PostCard
+          title={post.data.title}
+          description={post.data.description}
+          slug={post.slug}
+        />
+      ))
+    }
+  </div>
+</section>
