@@ -6,15 +6,7 @@ import sitemap from "@astrojs/sitemap";
 import { siteName } from "./config";
 
 export default defineConfig({
-  integrations: [
-    tailwind(),
-    partytown({
-      config: {
-        forward: ["dataLayer.push"],
-      },
-    }),
-    sitemap(),
-  ],
+  integrations: [tailwind(), sitemap()],
 
   site: siteName,
 

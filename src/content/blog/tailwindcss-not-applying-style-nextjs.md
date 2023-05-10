@@ -1,9 +1,8 @@
 ---
 layout: "../../components/layout/BlogPostLayout.astro"
 title: 'Tailwind CSS not applying style to Next.js error'
-date: 'September 26, 2022'
 publishedDate: 2022-09-26
-updatedDate: 2023-04-04
+updatedDate: 2023-05-10
 description: 'Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS?'
 featuredImage: '/images/posts/img1.jpg'
 category: 'JavaScript'
@@ -44,12 +43,18 @@ npm : npm cache clean --force
 yarn : yarn cache clean
  ```
 
+Also clear the .next folder generated
+```shell
+Windows Powershell: Remove-Item .\.next\ -Recurse
+Bash/zsh: rm -rf ./next
+ ```
+
 Then again install tailwindcss with all the dependencies
 
 ```bash
-npm i tailwindcss postcss autoprefixer
+npm i -D tailwindcss postcss autoprefixer
 or
-yarn add tailwindcss postcss autoprefixer
+yarn add --dev tailwindcss postcss autoprefixer
 ```
 
 then run
@@ -63,14 +68,19 @@ then modify tailwind.config.js
 instead of
 
 ```js
-content:[] add 
+content:[]  
 ```
+replace with
 
 ```js
-content: [
-"./pages/**.{js,ts,jsx,tsx}",
-"./components/**.{js,ts,jsx,tsx}",
-],
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+ 
+    // Or if using `src` directory:
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
 ```
 
 Your  tailwind.config.js should look like this 👇
@@ -79,8 +89,12 @@ Your  tailwind.config.js should look like this 👇
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+ 
+    // Or if using `src` directory:
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {},
