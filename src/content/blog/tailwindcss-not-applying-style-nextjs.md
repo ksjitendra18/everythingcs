@@ -2,7 +2,7 @@
 layout: "../../components/layout/BlogPostLayout.astro"
 title: 'Tailwind CSS not applying style to Next.js error'
 publishedDate: 2022-09-26
-updatedDate: 2023-05-10
+updatedDate: 2023-06-10
 description: 'Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS?'
 featuredImage: '/images/posts/img1.jpg'
 category: 'JavaScript'
@@ -10,8 +10,6 @@ author: 'Jitendra'
 isFeatured: true
 draft: false
 ---
-
-
 
 Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS? So let’s fix this problem.
 
@@ -103,27 +101,27 @@ module.exports = {
 }
 ```
 
-## Incorrect Path
+## Incorrect Syntax
 
-This could be the reason if you have moved your pages folder into src folder.
 
 This happened with me once and honestly I was unable to figure out for like good 5 minutes 😥
 
-If you have moved your pages folder into src folder or any such things  just change your tailwind.config.js. Your tailwind.config.js should look like this
+The reason was I did not copy the content path from docs and I wrote it without referring to it.
+
+The main reason was the spaces after the comma.
 
 ```js
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-  "./src/pages/**.{js,ts,jsx,tsx}",
-  "./src/components/**.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+//error code
+content: ["./src/**/*.{js, ts, tsx, jsx}"],
 ```
+Now these gaps are invalid and tailwind will not pickup the classes used. So make sure it is valid
+
+```js
+// valid
+content: ["./src/**/*.{js,ts,tsx,jsx}"],
+```
+
+
 
 ## Conclusion
 

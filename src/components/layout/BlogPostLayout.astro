@@ -1,14 +1,16 @@
 ---
 import PostHeader from "../blog/PostHeader.astro";
 import MainHeader from "./MainHeader.astro";
-import Navbar from "./Navbar.astro";
+import Navbar from "../Navbar.astro";
 
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 import "@fontsource/inter/700.css";
 import "../../global.css";
-import Footer from "./Footer.astro";
+import Footer from "../Footer.astro";
+import Sidebar from "../Sidebar.astro";
+
 // import "/prism-dracula.css";
 
 const { frontmatter } = Astro.props;
@@ -48,9 +50,7 @@ const {
           <slot />
         </section>
 
-        <!-- <section class="sidebar w-[30%]">
-          <div class="pl-10 pt-10">Did you find this post helpful?</div>
-        </section> -->
+        <!-- <Sidebar /> -->
       </div>
     </main>
     <Footer />
