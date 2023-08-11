@@ -1,1 +1,66 @@
-this is a privacy policy
+---
+import MainLayout from "../components/layout/MainLayout.astro";
+---
+
+<MainLayout
+  title="Privacy Policy"
+  description="This page explains what data do we collect and how is it processed."
+>
+  <h2 class="text-center text-2xl md:text-3xl font-bold mt-10">
+    Privacy Policy
+  </h2>
+  <p class="mt-5">
+    This is the privacy policy for the EverythingCS Blog. I am writing clearly
+    and not the usual boilerplate stuff. I may add those in future but for now
+    in a clear concise manner I will inform about data collection and
+    processing.
+  </p>
+  <h3 class="my-3 text-xl font-bold">Data Collection</h3>
+  <p>
+    No information is collected by default and also no <strong>cookies</strong>
+    are stored.
+  </p>
+  <p>
+    If you choose to submit the feedback form or the contact form then we
+    require <strong>name</strong> and <strong>email address</strong> so that we can
+    contact you further. After the query the data is disposed and is not stored or
+    shared with any third party software or tool.
+  </p>
+  <h3 class="my-3 text-xl font-bold">Analytics</h3>
+  <p>
+    For the analytics we are using Beam Analytics. It is a privacy friendly
+    analytics tool which It does not collect any personal information and
+    doesn't use cookies.
+  </p>
+
+  <p>
+    Please refer to Beam Analytics <a
+      href="https://beamanalytics.io/privacy"
+      rel="nofollow noopener noreferrer">privacy policy</a
+    > and <a
+      href="https://beamanalytics.io/data"
+      rel="nofollow noopener noreferrer">data policy</a
+    > for more information.
+  </p>
+
+  <h3 class="my-3 text-xl font-bold">Contact</h3>
+  <p>
+    If you have additional queries then please contact us through our <a
+      href="/contact"
+    >
+      contact form
+    </a>.
+  </p>
+
+  <p>Last Updated: <strong>21 July 2023</strong></p>
+</MainLayout>
+
+<style>
+  a {
+    text-decoration: underline !important;
+  }
+
+  p:last-child() {
+    margin-bottom: 20px;
+  }
+</style>

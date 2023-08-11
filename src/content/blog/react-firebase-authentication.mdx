@@ -1,0 +1,221 @@
+---
+layout: "../../components/layout/BlogPostLayout.astro"
+title: "How to add Firebase Authentication in React (Email Password and Google)"
+publishedDate: 2023-06-10
+updatedDate: 2023-06-10
+description: "Step by step guide on how to add authentication in react application using firebase."
+featuredImage: "/images/posts/img1.jpg"
+category: "JavaScript"
+author: "Jitendra"
+isFeatured: true
+draft: true
+---
+
+Authentication is essential to ensure only authenticated is able to access the protected content or service. Firebase makes it really easy to implement authentication in your app.
+
+Firebase is a Backend as a Service provider that provides a range of service including Authentication Firestore database, Realtime database and many other features.
+
+In this tutorial we are going to add Firebase authentication to our react application that would allow users to sign up, log in so that they can access authorized content.
+
+Please note that I have built this tutorial using Vite and TypeScript . If you are a beginner don’t get disheartened by this. Rather than consider it as a opportunity to learn TypeScript.
+
+Typescript is easy to begin with. I will explain clearly when I will give type. I would recommend you to start and learn while building project.
+
+Also I have hosted the project on Netlify. Here is the live url.
+
+This is the github repository associated with this project. Refer to this if you face any error, also feel free to raise if there is any issue.
+
+### Requirements
+
+- Node.js
+- Google Account
+- Any Text Editor (I am using VS Code)
+
+With the requirements specified let's start builiding the project.
+
+## Step 1: Setting up Firebase project
+
+Go to [https://console.firebase.google.com/](https://console.firebase.google.com/)
+
+<img
+  src="https://static.everythingcs.dev/blog/1686389111696-725996971.png"
+  alt="firebase dashboard page"
+  loading="lazy"
+/>
+
+Tap on create a project. Then enter the name of your project. It could be anything. Although make it descriptive enough so that you can differentiate them in the dashboard later when you create multiple project.
+
+<img
+  src="https://static.everythingcs.dev/blog/1685206968357-606494435.png"
+  alt="firebase dashboard page"
+  loading="lazy"
+/>
+
+In the next step you will be prompted to select Google Analytics. Here I am not enabling analytics. You can if you want to integrate analytics in your account. Click on Create Project. You will be presented with a loading screen. It will take some seconds to minutes to create the project. Once your new project is ready tap on continue.
+
+Then you will be routed to the project page
+
+<img
+  src="https://static.everythingcs.dev/blog/1687975669564-120005619.png"
+  alt="project page"
+  loading="lazy"
+/>
+
+Next step is to add an app. As we are building web project we will select the third option (\<\/\>). In this step we will register our app. Add any descriptive app nickname. Here I am not selecting the firebase hosting as I am going to host the project on Netlify.
+
+<img
+  src="https://static.everythingcs.dev/blog/1688041556682-954139160.png"
+  alt="project page"
+  loading="lazy"
+/>
+
+In step 2 you will be provided with the methods to integrate Firebase in your web application. We will be using firebase with the npm. So store the credentials somewhere we will need it later.
+
+<img
+  src="https://static.everythingcs.dev/blog/1688041685076-22188298.png"
+  alt="firebase credentails"
+  loading="lazy"
+/>
+
+Please keep the credentials secure. Don’t post in online forums or on github. I will tell you how to secure in the next sectons.
+
+Next step is we will turn on the authentication for our website. Tap on continue to console.
+
+You will be again in the overview section. Click authentication card.
+
+If you don’t find the authentication card then go to build in category and there you will find the authentication option.
+
+In the authentication page tap on get started. Now you will be on the sign in providers page.
+
+<img
+  src="https://static.everythingcs.dev/blog/1689958259576-15556936.png"
+  alt="authentication page"
+  loading="lazy"
+/>
+
+In this option we will turn on the email/password option and google option.
+
+Tap on email/password and enable the option and finally save it.
+
+Now to add Google Sign in method tap on Add Provider options. Choose Google then enable the option and then write the name of your website then also select the support email and finally save it.
+
+<img
+  src="https://static.everythingcs.dev/blog/1689958469383-765831544.png"
+  alt="google auth page firebase"
+  loading="lazy"
+/>
+
+Now we are complete with the firebase setup. We will come back to this in the later part of the blog.
+
+Let’s start with the developement side. Open your favorite code editor and let's get started. I am using VSCode.
+
+## Step 2: Setting up React
+
+I have preferred to setup React using Vite. It’s because it’s easy to begin with and then you can use the knowledge to use it other framework like Next.js or Remix.
+
+### Step 2.1 Intialiaze an empty react project using vite
+
+```bash
+npm create vite@latest
+```
+
+Press y if asked and enter to proceed.
+
+Then write the project name or write ./ if you want your project to be created in the same directory.
+
+Then select the React framework. (You can navigate using keyboard up and down arrow)
+
+Then select TypeScript + SWC options
+
+<img
+  src="https://static.everythingcs.dev/blog/1689958716361-303037350.png"
+  alt="vite setup screen"
+  loading="lazy"
+/>
+
+### 2.2 Install the dependencies
+
+run command
+
+```bash
+npm install
+```
+
+### 2.3 Run the project
+
+```bash
+npm run dev
+```
+
+The command will start the developement server. Go to localhost:5173
+
+You will see the default screen of vite react.
+
+<img
+  src="https://staticecs.b-cdn.net/blog/1689962726796-568941843.png"
+  alt="default vite screen"
+  loading="lazy"
+/>
+
+Next step is we will do the cleanup part.
+
+Delete App.css
+
+Clear all the lines in index.css and App.tsx
+
+### Step 2.4 Install TailwindCSS
+
+The installation step is there in docs.
+
+install it by running
+
+```bash
+npm i tailwindcss autoprefixer postcss -D
+```
+
+(-D because it is a developement dependency)
+
+then after the installation run
+
+```bash
+npx tailwindcss init -p
+```
+
+then add the following code to the content in tailwind.config.js
+
+```json
+content: ["./src/**/*.{js,ts,tsx,jsx}"],
+```
+
+Your tailwind.config.ts file should look like this
+
+```js
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./src/**/*.{js,ts,tsx,jsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+then add these tailwind directives to index.css file which is in src folder
+
+```bash
+src/index.css
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+## Step 3: Setting up React Router Dom
+
+As we will have multiple pages so we need a router to navigate to those page. Let's install react router dom
+
+```bash
+npm i react-router-dom
+```
+
+The version I am using is 6.14.2 . Please install this particular version if you are facing problem.

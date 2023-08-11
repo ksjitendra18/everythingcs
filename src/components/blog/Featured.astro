@@ -7,7 +7,10 @@ const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
 );
 
-const featuredPosts = posts.filter((post) => post.data.isFeatured === true);
+const featuredPosts = posts.filter(
+  (post) => !post.data.draft && post.data.isFeatured
+);
+// const featuredPosts = posts.filter((post) => post.data.isFeatured === true );
 ---
 
 <section class="mt-7">
