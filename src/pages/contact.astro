@@ -1,0 +1,233 @@
+---
+import MainLayout from "../components/layout/MainLayout.astro";
+---
+
+<MainLayout
+  title="Contact"
+  description="This page explains what data do we collect and how is it processed."
+>
+  <h2 class="text-center text-2xl md:text-3xl font-bold mt-10">Contact</h2>
+  <form id="contactForm" class="w-1/2 m-auto mt-5 rounded-md px-5 py-5">
+    <div class="flex flex-col mb-3">
+      <label for="name" data-input-required class="text-sm text-slate-800"
+        >Name</label
+      >
+      <input
+        type="text"
+        id="name"
+        name="name"
+        required
+        class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+      />
+    </div>
+    <div class="flex flex-col mb-3">
+      <label for="email" data-input-required class="text-sm text-slate-800"
+        >Email</label
+      >
+      <input
+        type="email"
+        id="email"
+        name="email"
+        required
+        class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+      />
+    </div>
+
+    <div class="flex flex-col mb-3">
+      <label for="queryType" data-input-required class="text-sm text-slate-800"
+        >Reason</label
+      >
+      <select
+        name="queryType"
+        id="queryType"
+        class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+        aria-controls="blogPostLink"
+      >
+        <option value="">Please select the reason</option>
+        <option value="blog">Blog Post Related</option>
+        <option value="sponsorship">Sponsorship Related</option>
+        <option value="dmca">DMCA</option>
+        <option value="privacy">Privacy Related</option>
+        <option value="other">Others</option>
+      </select>
+    </div>
+
+    <div
+      id="linkContainer"
+      class="flex flex-col"
+      aria-label="Field for the blog url if the Blog option is selected"
+    >
+      <label
+        id="blogPostLinkLabel"
+        for="blogPostLink"
+        class="text-sm text-slate-800"
+        hidden
+        data-input-required
+        >Blog Post Link
+      </label>
+      <input
+        type="text"
+        id="blogPostLink"
+        name="blogPostLink"
+        class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+        hidden
+      />
+    </div>
+
+    <div class="flex flex-col mb-3">
+      <label for="query" class="text-sm text-slate-800" data-input-required=""
+        >Query</label
+      >
+      <textarea
+        name="query"
+        id="query"
+        rows="5"
+        cols="5"
+        required
+        class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+      ></textarea>
+    </div>
+
+    <div
+      class="cf-turnstile"
+      data-sitekey="0x4AAAAAAAHq-BaP9eXRL-pj"
+      data-callback="javascriptCallback"
+    >
+    </div>
+
+    <div class="flex justify-end">
+      <button
+        id="contactFormBtn"
+        class="bg-primaryColour px-5 py-2 text-sm rounded-md mt-3 text-white disabled:bg-primaryColour/70 disabled:animate-pulse"
+        >Submit</button
+      >
+    </div>
+  </form>
+
+  <div
+    id="submitResMessage"
+    class="w-1/2 px-2 mx-auto"
+    aria-label="This will output the message based on success and failure of the form action."
+  >
+  </div>
+</MainLayout>
+
+<style>
+  a {
+    text-decoration: underline !important;
+  }
+
+  p:last-child() {
+    margin-bottom: 20px;
+  }
+
+  label[data-input-required]::after {
+    content: "*";
+    color: #be2f2f;
+  }
+
+  button[data-btn-disabled] {
+  }
+</style>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer
+></script>
+<script>
+  const contactForm = document.getElementById(
+    "contactForm"
+  )! as HTMLFormElement;
+  const linkContainer = document.getElementById("linkContainer")!;
+  const submitResMessage = document.getElementById("submitResMessage")!;
+  const queryTypeSelect = document.getElementById(
+    "queryType"
+  ) as HTMLFormElement;
+  const blogPostLink = document.getElementById("blogPostLink")!;
+  const blogPostLinkLabel = document.getElementById("blogPostLinkLabel")!;
+  const contactFormBtn = document.getElementById("contactFormBtn")!;
+
+  queryTypeSelect.addEventListener("change", () => {
+    if (queryTypeSelect.value === "blog" || queryTypeSelect.value === "dmca") {
+      linkContainer.classList.add("mb-3");
+      blogPostLink.removeAttribute("hidden");
+      blogPostLink.setAttribute("required", "true");
+      blogPostLinkLabel.removeAttribute("hidden");
+    } else {
+      linkContainer.classList.remove("mb-3");
+      blogPostLink.setAttribute("hidden", "true");
+      blogPostLink.removeAttribute("required");
+      blogPostLinkLabel.setAttribute("hidden", "");
+    }
+  });
+
+  contactForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    contactFormBtn.setAttribute("disabled", "true");
+    const formData = new FormData(contactForm);
+
+    const name = formData.get("name");
+    const email = formData.get("email");
+    const queryType = formData.get("queryType");
+    const blogPostLink = formData.get("blogPostLink");
+    const query = formData.get("query");
+    const cfTurnstileRes = formData.get("cf-turnstile-response");
+
+    try {
+      const sendForm = await fetch("https://api.everythingcs.dev/v1/contact", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          email,
+          queryType,
+          blogPostLink,
+          query,
+          cfTurnstileRes,
+        }),
+      });
+
+      const res = await sendForm.json();
+
+      if (res.ok) {
+        console.log("okay");
+      }
+      if (!res.ok) {
+        submitResMessage.innerHTML = `<p class="bg-red-600 px-2 py-2 mb-5 rounded-md text-white">
+      Server error. Please try again later.
+    </p>`;
+
+        return;
+      }
+
+      if (!res.success) {
+        // error
+        submitResMessage.innerHTML = `<p class="bg-red-600 px-2 py-2 mb-5 rounded-md text-white">
+      Server error. Please try again later.
+    </p>`;
+        return;
+      }
+
+      if (res.success && !res.data.submit) {
+        submitResMessage.innerHTML = `<p class="bg-green-600 px-2 py-2 mb-5 rounded-md text-white">
+      Please check all the fields and submit again
+    </p>`;
+
+        return;
+      }
+
+      if (res.success && res.data.submit) {
+        contactForm.reset();
+
+        submitResMessage.innerHTML = `<p class="bg-green-600 px-2 py-2 mb-5 rounded-md text-white">
+      Form submitted Successfully
+    </p>`;
+        return;
+      }
+    } catch (error) {
+      submitResMessage.innerHTML = `<p class="bg-red-600 px-2 py-2 mb-5 rounded-md text-white">
+      Error while submitting. Please try again later.
+    </p>`;
+    } finally {
+      contactFormBtn.removeAttribute("disabled");
+    }
+  });
+</script>

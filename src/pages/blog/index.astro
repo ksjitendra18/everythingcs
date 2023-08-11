@@ -3,9 +3,16 @@ import PostCard from "../../components/blog/PostCard.astro";
 import MainLayout from "../../components/layout/MainLayout.astro";
 import { getCollection } from "astro:content";
 
-const posts = (await getCollection("blog")).sort(
+const publishedBlog = await getCollection("blog", ({ data }) => {
+  return data.draft !== true;
+});
+
+const posts = publishedBlog.sort(
   (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
 );
+// const posts = (await getCollection("blog")).sort(
+//   (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
+// );
 ---
 
 <MainLayout
