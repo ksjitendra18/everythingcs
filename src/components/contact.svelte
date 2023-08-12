@@ -49,8 +49,7 @@
     console.log("name", name);
 
     try {
-      // const sendForm = await fetch("https://api.everythingcs.dev/v1/contact", {
-      const sendForm = await fetch("http://127.0.0.1:8787/v1/contact", {
+      const sendForm = await fetch("https://api.everythingcs.dev/v1/contact", {
         method: "POST",
         body: JSON.stringify({
           referenceId,
