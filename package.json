@@ -16,7 +16,7 @@
     "@astrojs/svelte": "^3.1.0",
     "@astrojs/tailwind": "^4.0.0",
     "@fontsource/inter": "^5.0.8",
-    "astro": "^2.10.6",
+    "astro": "^2.10.7",
     "nanoid": "^4.0.2",
     "rollup": "^3.28.0",
     "svelte": "^4.0.0",
