@@ -1,0 +1,37 @@
+---
+import MainLayout from "../../components/layout/MainLayout.astro";
+---
+
+<MainLayout title="Tools | Everything" description="List of all the tools">
+  <h1 class="text-center font-bold text-3xl my-5">Tools</h1>
+
+  <div class="flex">
+    <a
+      href="/tools/package-update"
+      class="hover:border-gray-500 hover:border-4 transition-all duration-150 ease-out card flex w-[400px] flex-col px-3 py-2 rounded-md border-2 border-gray-500"
+    >
+      <picture>
+        <source
+          type="image/webp"
+          src="https://cfcdn.everythingcs.dev/tools/get-string.webp"
+        />
+
+        <img
+          class="rounded-md border-2 border-gray-500"
+          src="https://cfcdn.everythingcs.dev/tools/get-string.png"
+          alt=""
+        />
+      </picture>
+
+      <div>
+        <h2 class="text-xl font-medium text-center my-3">
+          Package Update String
+        </h2>
+
+        <p class="text-center">
+          Paste your npm outdated output and get latest update string.
+        </p>
+      </div>
+    </a>
+  </div>
+</MainLayout>

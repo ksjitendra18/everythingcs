@@ -1,8 +1,8 @@
 ---
 layout: "../../components/layout/BlogPostLayout.astro"
 title: "How to add Firebase Authentication in React (Email Password and Google)"
-publishedDate: 2023-06-10
-updatedDate: 2023-06-10
+publishedDate: 2023-08-13
+updatedDate: 2023-08-13
 description: "Step by step guide on how to add authentication in react application using firebase."
 featuredImage: "/images/posts/img1.jpg"
 category: "JavaScript"
@@ -10,6 +10,8 @@ author: "Jitendra"
 isFeatured: true
 draft: true
 ---
+
+
 
 Authentication is essential to ensure only authenticated is able to access the protected content or service. Firebase makes it really easy to implement authentication in your app.
 
@@ -113,109 +115,347 @@ Let’s start with the developement side. Open your favorite code editor and let
 
 I have preferred to setup React using Vite. It’s because it’s easy to begin with and then you can use the knowledge to use it other framework like Next.js or Remix.
 
-### Step 2.1 Intialiaze an empty react project using vite
+I have setup up a starter for this project. I have setup tailwind css and included dependencies need and also added basic markup for pages so that we can directly get started.
 
-```bash
-npm create vite@latest
-```
+[Download the zip](https://github.com/ksjitendra18/learn-auth/archive/refs/heads/starter-code.zip) and unzip in your desired location. Here I am unzipping and moving the files in learn-auth folder
 
-Press y if asked and enter to proceed.
+## Step 2.1 Install Dependencies
 
-Then write the project name or write ./ if you want your project to be created in the same directory.
-
-Then select the React framework. (You can navigate using keyboard up and down arrow)
-
-Then select TypeScript + SWC options
-
-<img
-  src="https://static.everythingcs.dev/blog/1689958716361-303037350.png"
-  alt="vite setup screen"
-  loading="lazy"
-/>
-
-### 2.2 Install the dependencies
-
-run command
+Open the console and run
 
 ```bash
 npm install
 ```
 
-### 2.3 Run the project
+This will install all the packages.
 
-```bash
+Now run 
+```bash 
 npm run dev
 ```
 
-The command will start the developement server. Go to localhost:5173
+and you will see the welcome screen.
 
-You will see the default screen of vite react.
+## Step 2.2: Overview of the files
 
-<img
-  src="https://staticecs.b-cdn.net/blog/1689962726796-568941843.png"
-  alt="default vite screen"
-  loading="lazy"
-/>
+**src/component**: UI components of file including a GoogleLogin component which is used in both signup and login pages.
 
-Next step is we will do the cleanup part.
+**src/pages**: Contains all the pages
 
-Delete App.css
+**src/utils**: Contains the utilities function. It has only one file which is firebase.ts file which exports 2 function db and auth
 
-Clear all the lines in index.css and App.tsx
+## Step 2.3: Firebase Configuration
 
-### Step 2.4 Install TailwindCSS
+I have already added firebase as a dependency and also utils/firebase.ts contains the configuration
 
-The installation step is there in docs.
+### Step 2.3.1: Creating env
+Create .env file and copy the contents of file .env.example into it.
 
-install it by running
+### Step 2.3.2: Filling the values 
+Now fill the values that you have got in step 1.
 
-```bash
-npm i tailwindcss autoprefixer postcss -D
+If you don't have those values follow these steps:
+ Go to project page
+
+ On top left corner click on gear or setting icon beside the project overview
+
+ Click on Project settings
+
+ ![project setting](https://staticecs.b-cdn.net/blog/1692117262782-105530495.png)
+
+On the project settings page scroll down and you will find your apps section and in that it will have same configuration.
+
+![project details](https://staticecs.b-cdn.net/blog/1692117414284-646728534.png)
+
+
+
+## Step 3: Signup
+
+Let's work on signup functionality.
+
+In this there are two ways for signup one is google account and other one is email/password.
+
+We are also collecting name in the form and we will store it in firestore database.
+
+### Step 3.1: Email Password Sign up functionality
+
+#### Step 3.1.1: Add onClick function handleSignup and also define handleSignup function
+
+(... means no change, remains same)
+```jsx
+const Signup = () => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+  };
+
+return(
+...
+<form onSubmit={handleSignup} className="w-[100%] mx-auto md:w-auto">
+...
+)
+
+}
 ```
+#### Step 3.1.2: Now lets extract the values from form first then we will move to next steps
 
-(-D because it is a developement dependency)
+We are going to use FormData constructor to get the data.
 
-then after the installation run
-
-```bash
-npx tailwindcss init -p
-```
-
-then add the following code to the content in tailwind.config.js
-
-```json
-content: ["./src/**/*.{js,ts,tsx,jsx}"],
-```
-
-Your tailwind.config.ts file should look like this
+Try this
 
 ```js
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: ["./src/**/*.{js,ts,tsx,jsx}"],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
+const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formValues = new FormData(form);
+
+    console.log("formData", formValues.get("name"));
+  };
+```
+
+You will see the name entered in the form. Please remember that the parameter inside the formValues.get() must match the input name field.
+
+Let's develop the functionality further. 
+
+To sign up thier is function called **createUserWithEmailAndPassword()** and after successfull signup it will return the userCredentials.
+
+Let's console.log what does it looks like:
+
+(updated code for handleSignup)
+```js
+
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../libs/firebase";
+
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formValues = new FormData(form);
+
+    console.log("formData", formValues.get("name"));
+
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      formValues.get("email") as string,
+      formValues.get("password") as string
+    );
+
+    console.log("after signup", userCredential);
+  };
+```
+
+console.log output
+
+```js
+after signup 
+Object { user: {…}, providerId: null, _tokenResponse: {…}, operationType: "signIn" }
+​
+_tokenResponse: Object { kind: "identitytoolkit#SignupNewUserResponse", idToken: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImNmM2I1YWRhM2NhMzkxNTQ4ZDM1OTJiMzU5MjkyM2UzNjAxMmI5MTQiLCJ0eXAiOiJKV1QifQ...", email: "js@everythingcs.dev", … }
+​
+operationType: "signIn"
+​
+providerId: null
+​
+user: Object { providerId: "firebase", uid: "Bda2dT4zdEfPIUyP7XDoeQuJuqk2", accessToken: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImNmM2I1YWRhM2NhMzkxNTQ4ZDM1OTJiMzU5MjkyM2UzNjAxMmI5MTQiLCJ0eXAiOiJKV1QifQ...", … }
+```
+
+The firebase returns a lot of value. We will store the user name by thier uid using **setDoc()** method in the users collection.
+
+```js
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { auth, db } from "../libs/firebase";
+
+await setDoc(doc(db, 'users', userCredential.user.uid), {
+	name: data.get('name') as string,
+	email: data.get('email') as string,
+	timeStamp: serverTimestamp()
+	});
+```
+
+Also I am adding loading states and error handling and after signup I will redirect user to the dashboard page
+
+Updated Signup page code
+
+```jsx
+import { useState } from "react";
+import { Link, redirect } from "react-router-dom";
+import GoogleLogin from "../components/GoogleLogin";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+
+import { auth, db } from "../libs/firebase";
+import { FirebaseError } from "firebase/app";
+
+const Signup = () => {
+  const FIREBASE_ERRORS = {
+    "auth/email-already-in-use": "A user with that email already exists",
+    "auth/weak-password":
+      "Please check your password. It should be 6+ characters",
+  };
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+
+  const [errHandler, setErrHandler] = useState({
+    isError: false,
+    errorMsg: "",
+  });
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formValues = new FormData(form);
+
+    try {
+      setIsLoading(true);
+      setErrHandler({ isError: false, errorMsg: "" });
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formValues.get("email") as string,
+        formValues.get("password") as string
+      );
+
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        name: formValues.get("name") as string,
+        email: formValues.get("email") as string,
+        timeStamp: serverTimestamp(),
+      });
+
+      redirect("/dashboard");
+    } catch (error: unknown) {
+      const err = error as FirebaseError;
+
+      setErrHandler({
+        isError: true,
+        errorMsg: FIREBASE_ERRORS[err.code as keyof typeof FIREBASE_ERRORS],
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <main className="p-4 md:p-9">
+        <h2 className="text-4xl font-medium mt-10 text-center">Sign up</h2>
+        <div className="auth-options w-full flex flex-col items-center justify-center">
+          <GoogleLogin
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+            message="Sign up with Google"
+          />
+          <div className="mt-5 mb-3 w-full md:w-[380px] flex items-center justify-center">
+            <div className="before-or w-[100%] h-[2px] bg-gray-300 mr-2"></div>
+            <p className="text-gray-500 or">OR</p>
+            <div className="after-or w-[100%] h-[2px] bg-gray-300 ml-2"></div>
+          </div>
+          <form onSubmit={handleSignup} className="w-[100%] mx-auto md:w-auto">
+            <label htmlFor="name" className="mt-5 block text-gray-600">
+              Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              required
+              className="border-slate-400 px-3 w-full md:w-[400px] py-2 rounded-md border-2 "
+            />
+            <label htmlFor="email" className="mt-5 block text-gray-600">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              required
+              className="border-slate-400 px-3 w-full md:w-[400px] py-2 rounded-md border-2 "
+            />
+            <label htmlFor="password" className="mt-5 block text-gray-600">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPass ? "text" : "password"}
+                name="password"
+                id="password"
+                required
+                className="border-slate-400 px-3 w-full md:w-[400px] py-2 rounded-md border-2 "
+              />
+              <button
+                type="button"
+                aria-label={
+                  showPass ? "Password Visible" : "Password Invisible"
+                }
+                onClick={() => {
+                  setShowPass((prev) => !prev);
+                }}
+              >
+                {showPass ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-6 select-none text-gray-700 cursor-pointer h-6 absolute top-2 right-2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                    ></path>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    ></path>
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-6 select-none text-gray-700 cursor-pointer h-6 absolute top-2 right-2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                    ></path>
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {errHandler.isError ? (
+              <div className="w-[100%] mx-auto md:w-auto bg-red-600 mt-3 rounded-md px-3 py-2 text-white">
+                {errHandler.errorMsg}
+              </div>
+            ) : null}
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="bg-slate-800 mt-5 w-full px-10 py-2  border-2 border-solid border-mainbg rounded-md text-white hover:scale-95 duration-100 ease-in disabled:bg-gray-700 "
+              >
+                {isLoading ? "Signing up..." : "Sign up"}
+              </button>
+            </div>
+          </form>
+          <p className="mt-5 text-left">
+            Already have an account?{" "}
+            <Link to="/login" className="font-medium">
+              Log in
+            </Link>
+          </p>
+        </div>
+      </main>
+    </div>
+  );
 };
+
+export default Signup;
 ```
 
-then add these tailwind directives to index.css file which is in src folder
-
-```bash
-src/index.css
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-```
-
-## Step 3: Setting up React Router Dom
-
-As we will have multiple pages so we need a router to navigate to those page. Let's install react router dom
-
-```bash
-npm i react-router-dom
-```
-
-The version I am using is 6.14.2 . Please install this particular version if you are facing problem.
