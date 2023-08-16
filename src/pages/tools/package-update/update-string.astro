@@ -3,6 +3,9 @@ import MainLayout from "../../../components/layout/MainLayout.astro";
 import UpdateStringComp from "../../../components/tools/package-update/UpdateString.svelte";
 ---
 
-<MainLayout title="Get Update String | Everything">
+<MainLayout
+  title="Get Update String | Everything"
+  description="Paste the npm outdated command result and get the string of all the packages to update with @latest suffix."
+>
   <UpdateStringComp client:load />
 </MainLayout>

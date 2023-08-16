@@ -40,7 +40,7 @@
 
   function copyToClipboard() {
     try {
-      navigator.clipboard.writeText(updatedPkgString);
+      navigator.clipboard.writeText(pkgManager + updatedPkgString);
 
       copyToClipboardAction.show = true;
       copyToClipboardAction.error = false;
