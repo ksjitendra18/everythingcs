@@ -1,4 +1,8 @@
 ---
+interface Props {
+  title: string;
+  description: string;
+}
 const { title, description } = Astro.props;
 import { siteName } from "../../../config";
 ---
@@ -36,8 +40,7 @@ import { siteName } from "../../../config";
   <script
     src="https://beamanalytics.b-cdn.net/beam.min.js"
     data-token={import.meta.env.PUBLIC_BEAM_TOKEN}
-    async
-  ></script>
+    async></script>
 
   <slot />
 </head>

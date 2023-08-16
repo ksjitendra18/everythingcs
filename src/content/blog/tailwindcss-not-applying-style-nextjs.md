@@ -103,7 +103,6 @@ module.exports = {
 
 ## Incorrect Syntax 
 
-
 This happened with me once and honestly I was unable to figure out for like good 5 minutes 😥
 
 The reason was I did not copy the content path from docs and I wrote it without referring to it.
@@ -124,9 +123,7 @@ content: ["./src/**/*.{js,ts,tsx,jsx}"],
 
 ## Incorrect Path
 
-This could be the reason for tailwind classes not being applied. Check where your actual source file is stored. For example next.js has multiple way to create routes like app folder and pages folder and optionally you can use src directory also
-
-This happened with me once and honestly I was unable to figure out for like good 5 minutes 😥
+This could be the reason for tailwind classes not being applied. Check where your actual source file is stored. For example next.js has multiple way to create routes like app folder and pages folder and optionally you can use src directory also.
 
 If you have moved your pages folder  into src folder or any such things just change your tailwind.config.js. Your tailwind.config.js should look like this
 
@@ -157,8 +154,6 @@ module.exports = {
   plugins: [],
 }
 ```
-
-
 
 ## Conclusion
 

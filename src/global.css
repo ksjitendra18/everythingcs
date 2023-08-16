@@ -24,6 +24,10 @@ body {
   margin-block-end: 13px;
 }
 
+.post-content a {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
 pre {
   @apply bg-[#2d2d2d] p-5 rounded-xl my-6;
 }

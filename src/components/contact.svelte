@@ -84,8 +84,8 @@
       }
       if (res.success && res.data.submit) {
         // contactForm.reset();
+        form.reset();
         formResHandler.isSuccess = true;
-
         formResHandler.msg = `Form submitted successfully. Please note the reference id: <span class="font-bold"> ${referenceId} </span> for future references`;
         return;
       }
