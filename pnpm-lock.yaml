@@ -22,6 +22,9 @@ dependencies:
   astro:
     specifier: ^2.10.9
     version: 2.10.9
+  astro-robots-txt:
+    specifier: ^0.5.0
+    version: 0.5.0
   nanoid:
     specifier: ^4.0.2
     version: 4.0.2
@@ -1191,6 +1194,13 @@ packages:
     hasBin: true
     dev: false
 
+  /astro-robots-txt@0.5.0:
+    resolution: {integrity: sha512-MJDcxBDjEKSp7Uvw32cnmkPHlmjQ/pW5JwzMhKEegFRoGaiSh2i1kkh1QEhk1UpGnAsSondWCoIt2xpG8qjSgA==}
+    dependencies:
+      valid-filename: 4.0.0
+      zod: 3.21.4
+    dev: false
+
   /astro@2.10.9:
     resolution: {integrity: sha512-rtm/RHeJdAIAsziQaAGvbv2ALylNNOF1SUQ0zJaugu/ABUU62tNGNSxIR0LO5l4+dHhLbzRNo5uEnIPkmSRw+w==}
     engines: {node: '>=16.12.0', npm: '>=6.14.0'}
@@ -1889,6 +1899,11 @@ packages:
     resolution: {integrity: sha512-WtySTkS4OKev5JtpHXnib4Gxiurzh5NCGvWrFaZ34m6JehfTUhKZvn9njTfw48t6JumVQOmrKqpmGcdwxnhqBQ==}
     dependencies:
       format: 0.2.2
+    dev: false
+
+  /filename-reserved-regex@3.0.0:
+    resolution: {integrity: sha512-hn4cQfU6GOT/7cFHXBqeBg2TbrMBgdD0kcjLhvSQYYwm3s4B6cjvBfb7nBALJLAXqmU5xajSa7X2NnUud/VCdw==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: false
 
   /fill-range@7.0.1:
@@ -4111,6 +4126,13 @@ packages:
       diff: 5.1.0
       kleur: 4.1.5
       sade: 1.8.1
+    dev: false
+
+  /valid-filename@4.0.0:
+    resolution: {integrity: sha512-VEYTpTVPMgO799f2wI7zWf0x2C54bPX6NAfbZ2Z8kZn76p+3rEYCTYVYzMUcVSMvakxMQTriBf24s3+WeXJtEg==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dependencies:
+      filename-reserved-regex: 3.0.0
     dev: false
 
   /vfile-location@4.1.0:
