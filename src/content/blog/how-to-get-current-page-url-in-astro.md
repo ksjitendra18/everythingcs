@@ -55,3 +55,52 @@ For example
     content={`https://everythingcs.dev${Astro.url.pathname}`}
   />
 ```
+
+## Get current url in framework 
+
+Here is how you can get the URL while using the framework.
+
+For this example I am using svelte example.
+
+### Option 1: Pass URL as a prop
+
+Just pass the Astro.url value as a prop.
+
+```jsx
+---
+import ContactForm from "../components/contact.svelte";
+---
+<ContactForm client:load url={Astro.url} />
+```
+
+and in the svelte component receive it as a prop
+
+```js
+<script lang="ts">
+  export let url: URL;
+
+  console.log("url info", url);
+</script>
+...
+
+```
+
+### Option 2: Access the window object after mounting the component
+
+Use the window object to access the **window.location.url** after the component mounts. Various frameworks have their own lifecycle hooks to ensure this.
+
+Like react has useEffect, svelte has onMount
+
+```js
+<script lang="ts">
+  let url: URL | undefined = undefined;
+
+  onMount(() => {
+    url = new URL(window.location.href);
+  });
+
+  $: console.log("url", url);
+})
+</script>
+```
+

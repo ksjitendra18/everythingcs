@@ -5,7 +5,6 @@ interface Props {
   ogImage?: string;
 }
 const { title, description } = Astro.props;
-import { siteName } from "../../../config";
 ---
 
 <head>
@@ -14,7 +13,13 @@ import { siteName } from "../../../config";
   <meta name="viewport" content="width=device-width" />
   <title>{title}</title>
   <meta name="description" content={description} />
-  <meta name="robots" content="index, follow" />
+  <meta name="robots" content="index, follow" /><meta
+    name="googlebot"
+    content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+  /><meta
+    name="bingbot"
+    content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+  />
 
   <meta property="og:site_name" content="EverythingCS" />
   <meta
@@ -40,6 +45,7 @@ import { siteName } from "../../../config";
     content={`https://everythingcs.dev${Astro.url.pathname}`}
   />
   <meta name="twitter:site" content="@ksjitendra18" />
+  <meta name="twitter:creator" content="@ksjitendra18" />
   <meta property="twitter:title" content={title} />
   <meta property="twitter:description" content={description} />
   <meta
