@@ -6,7 +6,7 @@ updatedDate: 2023-08-12
 description: 'Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS?'
 featuredImage: '/images/posts/img1.jpg'
 ogImage: "https://static.everythingcs.dev/blog/tailwindcss-not-applying-style-nextjs-image.png"
-category: 'JavaScript'
+category: ['JavaScript']
 author: 'Jitendra'
 isFeatured: true
 draft: false

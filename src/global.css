@@ -31,3 +31,10 @@ body {
 pre {
   @apply bg-[#2d2d2d] p-5 rounded-xl my-6;
 }
+
+/* to make the footer stick to bottom */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

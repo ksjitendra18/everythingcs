@@ -26,6 +26,8 @@ const {
   author,
   image,
 } = frontmatter;
+
+console.log(Astro.url);
 ---
 
 <html lang="en">
@@ -44,7 +46,7 @@ const {
   <body>
     <Navbar />
 
-    <main class="md:max-w-[1248px] md:mx-auto px-3 pb-2">
+    <main class="w-full md:max-w-[1248px] md:mx-auto px-3 pb-2">
       <div class="w-full md:flex">
         <section class="post-content md:w-[70%] text-[19px]">
           <PostHeader {title} {publishedDate} {updatedDate} />
