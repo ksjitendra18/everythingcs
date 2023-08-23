@@ -46,8 +46,6 @@
     const query = formData.get("query");
     const cfTurnstileRes = formData.get("cf-turnstile-response");
 
-    console.log("name", name);
-
     try {
       const sendForm = await fetch("https://api.everythingcs.dev/v1/contact", {
         method: "POST",
@@ -83,7 +81,6 @@
         return;
       }
       if (res.success && res.data.submit) {
-        // contactForm.reset();
         form.reset();
         formResHandler.isSuccess = true;
         formResHandler.msg = `Form submitted successfully. Please note the reference id: <span class="font-bold"> ${referenceId} </span> for future references`;
