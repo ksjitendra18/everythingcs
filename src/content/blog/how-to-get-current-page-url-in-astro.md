@@ -8,7 +8,7 @@ featuredImage: "/images/posts/img1.jpg"
 ogImage: "https://static.everythingcs.dev/blog/how-to-get-current-url-in-astro-image.png"
 category: ["JavaScript"]
 author: "Jitendra"
-isFeatured: true
+isFeatured: false
 draft: false
 ---
 
