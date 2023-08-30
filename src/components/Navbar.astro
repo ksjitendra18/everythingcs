@@ -1,9 +1,15 @@
-<header class={`text-[18px] h-[80px] bg-primaryColour text-white `}>
+---
+import ThemeToggle from "./theme-toggle.astro";
+---
+
+<header
+  class={`text-[18px] h-[80px] bg-primaryColour dark:bg-transparent text-white `}
+>
   <div
     class="relative h-full md:max-w-[1248px] md:mx-auto px-3 flex justify-between items-center"
   >
     <a href="/">
-      <h1 class="font-semibold text-2xl md:text-3xl">EverythingCS</h1>
+      <p class="font-semibold text-xl md:text-2xl">EverythingCS</p>
     </a>
 
     <div class="hidden md:flex items-center gap-20">
@@ -21,17 +27,21 @@
           <a href="/about">About</a>
         </li>
       </ul>
+      <ThemeToggle />
     </div>
     <div class={`hamburger  block md:hidden mt-1 cursor-pointer`}>
-      <span class="bar block w-[30px] h-[4px] bg-white"></span>
-      <span class="bar block w-[30px] mt-1 h-[4px] bg-white"></span>
-      <span class="bar block w-[30px] mt-1 h-[4px] bg-white"></span>
+      <span class="bar block w-[30px] h-[4px] bg-slate-800 dark:bg-white"
+      ></span>
+      <span class="bar block w-[30px] mt-1 h-[4px] bg-slate-800 dark:bg-white"
+      ></span>
+      <span class="bar block w-[30px] mt-1 h-[4px] bg-slate-800 dark:bg-white"
+      ></span>
     </div>
   </div>
 
   <!-- class="mobileNav hidden top-14 right-0 w-[100%] text-white absolute flex flex-col justify-center h-[300px] bg-black items-center md:hidden" -->
   <nav
-    class="mobileNav hidden top-14 right-0 w-[100%] text-white absolute flex-col justify-center h-[300px] bg-primaryColour items-center md:hidden transition-all duration-1000 ease-in"
+    class="mobileNav bg-surfaceColour shadow-md hidden top-14 right-0 w-[100%] dark:text-white absolute flex-col justify-center h-[300px] items-center md:hidden transition-all duration-1000 ease-in"
   >
     <ul
       class="flex flex-col items-center gap-5 transition-all duration-1000 ease-in"
@@ -49,6 +59,7 @@
         <a href="/about">About</a>
       </li>
     </ul>
+    <ThemeToggle />
   </nav>
 </header>
 

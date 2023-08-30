@@ -11,16 +11,22 @@
   },
   "dependencies": {
     "@astrojs/mdx": "^0.19.7",
+    "@astrojs/preact": "^2.2.2",
     "@astrojs/rss": "^2.4.4",
     "@astrojs/sitemap": "^2.0.2",
     "@astrojs/svelte": "^3.1.0",
     "@astrojs/tailwind": "^4.0.0",
-    "@fontsource/inter": "^5.0.8",
+    "@fontsource-variable/inter": "^5.0.8",
     "astro": "^2.10.9",
     "astro-robots-txt": "^0.5.0",
     "nanoid": "^4.0.2",
+    "preact": "^10.17.1",
     "rollup": "^3.28.0",
     "svelte": "^4.0.0",
     "tailwindcss": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9"
   }
 }
