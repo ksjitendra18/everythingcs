@@ -1,14 +1,11 @@
 ---
-import PostHeader from "../blog/PostHeader.astro";
-import MainHeader from "./MainHeader.astro";
-import Navbar from "../Navbar.astro";
-
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/inter/700.css";
+import PostHeader from "../blog/post-header.astro";
+import MainHeader from "./main-header.astro";
+import Navbar from "../navbar.astro";
+import "@fontsource-variable/inter";
 import "../../global.css";
-import Footer from "../Footer.astro";
+import Footer from "../footer.astro";
+import Sidebar from "../sidebar.astro";
 
 const { frontmatter } = Astro.props;
 
@@ -25,7 +22,8 @@ const {
 } = frontmatter;
 ---
 
-<html lang="en">
+<!DOCTYPE html>
+<html class="dark" lang="en">
   <MainHeader {title} {description} {ogImage}>
     <meta
       property="article:published_time"
@@ -42,10 +40,14 @@ const {
     <Navbar />
 
     <main class="w-full md:max-w-[1248px] md:mx-auto px-3 pb-2">
-      <div class="w-full md:flex">
-        <section class="post-content md:w-[70%] text-[19px]">
+      <div class="w-full h-full md:flex relative">
+        <section
+          class="post-content relative md:w-[70%] lg:w-[60%] mx-auto text-[19px]"
+        >
           <PostHeader {title} {publishedDate} {updatedDate} />
-          <slot />
+          <article>
+            <slot />
+          </article>
         </section>
 
         <!-- <Sidebar /> -->

@@ -8,6 +8,7 @@ const blogCollection = defineCollection({
     isFeatured: z.boolean(),
     draft: z.boolean(),
     featuredImage: z.string().optional(),
+    ogImage: z.string().optional(),
     publishedDate: z.date().transform((str) => new Date(str)),
     updatedDate: z.date().transform((str) => new Date(str)),
     category: z.array(z.string()),

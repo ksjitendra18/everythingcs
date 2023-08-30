@@ -1,0 +1,29 @@
+---
+const { fileName, hasPartialCode } = Astro.props;
+---
+
+<div class="code-container">
+  {
+    fileName ? (
+      <p class="border-b-2 py-2 px-4 text-white font-medium border-gray-600;">
+        {fileName}
+      </p>
+    ) : null
+  }
+  {hasPartialCode && <p class="px-4 text-white">...rest same no changes</p>}
+  <slot />
+</div>
+<!-- 2d2d2d -->
+<style is:global>
+  .code-container {
+    margin-block-top: 20px !important;
+    margin-block-end: 20px !important;
+    @apply bg-[#1f2023] dark:bg-transparent dark:border-2 dark:border-gray-400  rounded-xl;
+    /* @apply bg-[#2d2d2d] dark:bg-transparent dark:border-2 dark:border-gray-400  rounded-xl; */
+  }
+
+  pre {
+    background: #1f2023 !important;
+    @apply bg-[#2d2d2d] dark:bg-transparent  p-5 rounded-xl my-6;
+  }
+</style>

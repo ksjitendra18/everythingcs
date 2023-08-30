@@ -103,15 +103,17 @@
   ></script>
 </svelte:head>
 
-<h2 class="text-center text-2xl md:text-3xl font-bold mt-10">Contact</h2>
+<h1 class="text-center text-2xl md:text-3xl font-bold mt-10">Contact</h1>
 <form
   id="contactForm"
   on:submit={handleSubmit}
   class="md:w-1/2 m-auto mt-5 rounded-md px-3 md:px-5 py-5"
 >
   <div class="flex flex-col mb-3">
-    <label for="name" data-input-required class="text-sm text-slate-800"
-      >Name</label
+    <label
+      for="name"
+      data-input-required
+      class="text-sm dark:text-gray-100 text-slate-800">Name</label
     >
     <input
       type="text"
@@ -119,12 +121,14 @@
       name="name"
       required
       maxlength="200"
-      class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+      class="rounded-md bg-transparent border-2 dark:border-gray-200 border-gray-500 px-2 py-1"
     />
   </div>
   <div class="flex flex-col mb-3">
-    <label for="email" data-input-required class="text-sm text-slate-800"
-      >Email</label
+    <label
+      for="email"
+      data-input-required
+      class="text-sm dark:text-gray-100 text-slate-800">Email</label
     >
     <input
       type="email"
@@ -132,19 +136,21 @@
       name="email"
       required
       maxlength="200"
-      class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+      class="rounded-md bg-transparent border-2 dark:border-gray-200 border-gray-500 px-2 py-1"
     />
   </div>
 
   <div class="flex flex-col mb-3">
-    <label for="queryType" data-input-required class="text-sm text-slate-800"
-      >Reason</label
+    <label
+      for="queryType"
+      data-input-required
+      class="text-sm dark:text-gray-100 text-slate-800">Reason</label
     >
     <select
       name="queryType"
       id="queryType"
       bind:value={queryType}
-      class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+      class="rounded-md bg-transparent border-2 dark:border-gray-200 border-gray-500 bg-gray-100 dark:bg-[#1f2023] px-2 py-1"
       aria-controls="blogPostLink"
     >
       <option value="">Please select the reason</option>
@@ -165,7 +171,7 @@
       <label
         id="blogPostLinkLabel"
         for="blogPostLink"
-        class="text-sm text-slate-800"
+        class="text-sm dark:text-gray-100 text-slate-800"
         data-input-required
         >Blog Post Link
       </label>
@@ -173,15 +179,17 @@
         type="text"
         id="blogPostLink"
         name="blogPostLink"
-        class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+        class="rounded-md bg-transparent border-2 dark:border-gray-200 border-gray-500 px-2 py-1"
         maxlength="200"
       />
     </div>
   {/if}
 
   <div class="flex flex-col mb-3">
-    <label for="query" class="text-sm text-slate-800" data-input-required=""
-      >Query</label
+    <label
+      for="query"
+      class="text-sm dark:text-gray-100 text-slate-800"
+      data-input-required="">Query</label
     >
     <textarea
       name="query"
@@ -190,7 +198,7 @@
       cols="5"
       required
       maxlength="2000"
-      class="rounded-md bg-transparent border-2 border-gray-500 px-2 py-1"
+      class="rounded-md bg-transparent border-2 dark:border-gray-200 border-gray-500 px-2 py-1"
     />
   </div>
 
@@ -204,7 +212,7 @@
     <button
       id="contactFormBtn"
       disabled={isLoading}
-      class="bg-primaryColour px-5 py-2 text-sm rounded-md mt-3 text-white disabled:bg-primaryColour/70 disabled:animate-pulse"
+      class="dark:border-2 dark:border-gray-200 bg-primaryColour dark:bg-transparent px-5 py-2 text-sm rounded-md mt-3 text-white disabled:bg-primaryColour/70 disabled:animate-pulse"
       >Submit</button
     >
   </div>
@@ -227,10 +235,6 @@
 {/if}
 
 <style>
-  /* a {
-    text-decoration: underline !important;
-  } */
-
   label[data-input-required]::after {
     content: "*";
     color: #be2f2f;

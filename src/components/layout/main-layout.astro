@@ -1,22 +1,19 @@
 ---
-import Navbar from "../Navbar.astro";
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/inter/700.css";
+import Navbar from "../navbar.astro";
+import "@fontsource-variable/inter";
 import "../../global.css";
-import MainHeader from "./MainHeader.astro";
-import Footer from "../Footer.astro";
+import MainHeader from "./main-header.astro";
+import Footer from "../footer.astro";
 
 const { title, description } = Astro.props;
 ---
 
+<!DOCTYPE html>
 <html lang="en">
   <MainHeader {title} {description} />
   <body class="flex flex-col min-h-[100vh]">
     <div>
       <Navbar />
-
       <main class="md:max-w-[1248px] md:mx-auto px-3">
         <slot />
       </main>

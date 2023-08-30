@@ -1,9 +1,48 @@
-<aside class="sidebar w-[30%] flex justify-end">
-  <div class="mt-7 bg-gray-200 rounded-xl px-9 py-3 h-fit flex flex-col">
-    <h3 class="font-medium text-slate-700 mb-3">
-      Did you find this post helpful?
-    </h3>
-    <p class="text-slate-600">Yes</p>
-    <p class="text-slate-600">No</p>
+---
+import TableOfContent from "./blog/table-of-content.astro";
+---
+
+<aside class="sidebar ml-10 w-[30%] flex flex-col justify-start">
+  <div class="sticky sidebar-container top-5">
+    <!-- <TableOfContent /> -->
+
+    <div
+      id="feedback-widget"
+      class="hidden mt-7 dark:bg-transparent dark:border-2 dark:border-gray-300 text-white bg-gray-200 rounded-xl px-9 py-3 h-fit flex-col"
+    >
+      <h3 class="font-medium mb-3">Did you find this post helpful?</h3>
+      <p class="">Yes</p>
+      <p class="">No</p>
+    </div>
   </div>
 </aside>
+
+<style>
+  .sidebar-container {
+    /* margin-block-start: 10px; */
+  }
+</style>
+
+<script>
+  const feedBackWidget = document.getElementById("feedback-widget");
+  const distanceFromBottom = 1000;
+
+  console.log(window.innerHeight);
+  function isUserNearEnd() {
+    const windowHeight = window.innerHeight;
+    const totalHeight = document.documentElement.scrollHeight;
+    const currentScroll = window.scrollY;
+
+    return totalHeight - (currentScroll + windowHeight) < distanceFromBottom;
+  }
+
+  window.addEventListener("scroll", () => {
+    if (isUserNearEnd()) {
+      feedBackWidget?.classList.add("flex");
+      feedBackWidget?.classList.remove("hidden");
+    } else {
+      feedBackWidget?.classList.remove("flex");
+      feedBackWidget?.classList.add("hidden");
+    }
+  });
+</script>

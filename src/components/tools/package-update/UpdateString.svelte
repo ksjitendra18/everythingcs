@@ -83,7 +83,7 @@
       id="info"
       rows="8"
       spellcheck="false"
-      class="border-2 px-2 py-3 rounded-md w-full"
+      class="dark:bg-transparent border-2 px-2 py-3 rounded-md w-full"
     />
   </div>
 

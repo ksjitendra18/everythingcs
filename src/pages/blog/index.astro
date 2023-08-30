@@ -1,6 +1,6 @@
 ---
-import PostCard from "../../components/blog/PostCard.astro";
-import MainLayout from "../../components/layout/MainLayout.astro";
+import PostCard from "../../components/blog/post-card.astro";
+import MainLayout from "../../components/layout/main-layout.astro";
 import { getCollection } from "astro:content";
 
 const publishedBlog = await getCollection("blog", ({ data }) => {
@@ -19,10 +19,10 @@ const posts = publishedBlog.sort(
   title="Blog"
   description="Posts regarading frontend, firebase, reactjs, nextjs"
 >
-  <section class="mt-7">
-    <h2 class="text-3xl font-semibold">Latest Posts</h2>
+  <section class="mt-10">
+    <h2 class="text-xl md:text-3xl text-center font-bold">Latest Posts</h2>
 
-    <div class="mt-5 flex flex-col gap-5">
+    <div class="my-10 flex flex-col gap-5">
       {
         posts.map((post) => (
           <PostCard

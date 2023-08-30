@@ -1,9 +1,9 @@
 ---
-layout: "../../components/layout/BlogPostLayout.astro"
+layout: "../../components/layout/blog-post-layout.astro"
 title: "How to get current page URL in astro"
 publishedDate: 2023-08-23
-updatedDate: 2023-08-23
-description: "Get the current page url info in astro"
+updatedDate: 2023-08-30
+description: "Get the current page url info or details like pathname, origin, host, and hostname in astro"
 featuredImage: "/images/posts/img1.jpg"
 ogImage: "https://static.everythingcs.dev/blog/how-to-get-current-url-in-astro-image.png"
 category: ["JavaScript"]
