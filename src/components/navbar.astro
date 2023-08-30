@@ -2,18 +2,17 @@
 import ThemeToggle from "./theme-toggle.astro";
 ---
 
-<header
-  class={`text-[18px] h-[80px] bg-primaryColour dark:bg-transparent text-white `}
->
+<header class="relative h-[80px] bg-primaryColour dark:bg-[#1f2023] text-white">
   <div
-    class="relative h-full md:max-w-[1248px] md:mx-auto px-3 flex justify-between items-center"
+    class="h-full max-w-[1200px] mx-auto flex justify-between items-center py-2"
   >
-    <a href="/">
-      <p class="font-semibold text-xl md:text-2xl">EverythingCS</p>
-    </a>
-
-    <div class="hidden md:flex items-center gap-20">
-      <ul class={` text-[20px] flex items-center gap-5 `}>
+    <a href="/" class="font-semibold text-xl md:text-2xl px-3"> EverythingCS</a>
+    <nav
+      class="mainNav hidden md:flex absolute md:static top-14 md:top-0 items-center w-full md:w-auto justify-center bg-transparent dark:bg-[#1f2023]"
+    >
+      <ul
+        class={`flex flex-col md:flex-row text-[20px] py-5 md:py-3 justify-center  items-center gap-5 `}
+      >
         <li>
           <a href="/">Home</a>
         </li>
@@ -26,51 +25,28 @@ import ThemeToggle from "./theme-toggle.astro";
         <li>
           <a href="/about">About</a>
         </li>
+
+        <li class="ml-7 mt-1">
+          <ThemeToggle />
+        </li>
       </ul>
-      <ThemeToggle />
-    </div>
-    <div class={`hamburger  block md:hidden mt-1 cursor-pointer`}>
-      <span class="bar block w-[30px] h-[4px] bg-slate-800 dark:bg-white"
-      ></span>
-      <span class="bar block w-[30px] mt-1 h-[4px] bg-slate-800 dark:bg-white"
-      ></span>
-      <span class="bar block w-[30px] mt-1 h-[4px] bg-slate-800 dark:bg-white"
-      ></span>
+    </nav>
+    <div class={`px-3 hamburger  block md:hidden mt-1 cursor-pointer`}>
+      <span class="bar block w-[30px] h-[4px] bg-white"></span>
+      <span class="bar block w-[30px] mt-1 h-[4px] bg-white"></span>
+      <span class="bar block w-[30px] mt-1 h-[4px] bg-white"></span>
     </div>
   </div>
-
-  <!-- class="mobileNav hidden top-14 right-0 w-[100%] text-white absolute flex flex-col justify-center h-[300px] bg-black items-center md:hidden" -->
-  <nav
-    class="mobileNav bg-surfaceColour shadow-md hidden top-14 right-0 w-[100%] dark:text-white absolute flex-col justify-center h-[300px] items-center md:hidden transition-all duration-1000 ease-in"
-  >
-    <ul
-      class="flex flex-col items-center gap-5 transition-all duration-1000 ease-in"
-    >
-      <li>
-        <a href="/">Home</a>
-      </li>
-      <li>
-        <a href="/blog">Blog</a>
-      </li>
-      <li>
-        <a href="/tools">Tools</a>
-      </li>
-      <li>
-        <a href="/about">About</a>
-      </li>
-    </ul>
-    <ThemeToggle />
-  </nav>
 </header>
 
 <script>
   const hamburger = document.querySelector(".hamburger");
-  const mobileNav = document.querySelector(".mobileNav");
+  const mainNav = document.querySelector(".mainNav");
 
   hamburger?.addEventListener("click", () => {
     hamburger.classList.toggle("active");
-    mobileNav?.classList.toggle("hidden");
-    mobileNav?.classList.toggle("flex");
+    mainNav?.classList.toggle("hidden");
+    mainNav?.classList.toggle("flex");
   });
 </script>
 
