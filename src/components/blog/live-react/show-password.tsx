@@ -34,7 +34,7 @@ const ShowPassword = () => {
                 stroke-width="1.5"
                 stroke="currentColor"
                 class="w-6 select-none  cursor-pointer h-6 absolute top-2 right-2"
-                tabindex="-1"
+                tabIndex={-1}
               >
                 <path
                   stroke-linecap="round"
@@ -70,47 +70,3 @@ const ShowPassword = () => {
   );
 };
 export default ShowPassword;
-
-// import React from "react";
-
-// const showpassword = () => {
-//   return (
-//     <div>
-//       <input
-//         class="bg-transparent border-2 border-gray-700 dark:border-gray-200 px-3 py-2 rounded-md"
-//         type={showPassword ? "text" : "password"}
-//         name="password"
-//         id="password"
-//       />
-//       <button
-//         type="button"
-//         class="text-black dark:text-white"
-//         onClick={() => {
-//           setShowPassword((prev) => !prev);
-//         }}
-//       >
-//         {showPassword ? "Hide" : "Show"}
-//       </button>
-//     </div>
-//   );
-// };
-
-// export const showpassword;
-
-// <>
-//   <input
-//     class="bg-transparent border-2 border-gray-700 dark:border-gray-200 px-3 py-2 rounded-md"
-//     type={showPassword ? "text" : "password"}
-//     name="password"
-//     id="password"
-//   />
-//   <button
-//     type="button"
-//     class="text-black dark:text-white"
-//     onClick={() => {
-//       setShowPassword((prev) => !prev);
-//     }}
-//   >
-//     {showPassword ? "Hide" : "Show"}
-//   </button>
-// </>;
