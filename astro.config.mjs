@@ -12,6 +12,6 @@ export default defineConfig({
   integrations: [tailwind(), sitemap(), mdx(), svelte(), robotsTxt(), preact()],
   site: "https://everythingcs.dev",
   markdown: {
-    syntaxHighlight: "prism"
-  }
+    syntaxHighlight: "prism",
+  },
 });
