@@ -2,7 +2,7 @@
 layout: "../../components/layout/blog-post-layout.astro"
 title: 'Tailwind CSS not applying style to Next.js error'
 publishedDate: 2022-09-26
-updatedDate: 2023-08-12
+updatedDate: 2023-09-14
 description: 'Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS?'
 featuredImage: '/images/posts/img1.jpg'
 ogImage: "https://static.everythingcs.dev/blog/tailwindcss-not-applying-style-nextjs-image.png"
@@ -11,10 +11,12 @@ author: 'Jitendra'
 isFeatured: true
 draft: false
 ---
+import CodeContainer from "../../components/blog/code-container.astro"
+
 
 Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS? So let’s fix this problem.
 
-There could be several factors like improper installation and the major one is not entering the correct details of the path in the content in the tailwindconfig file.
+There could be several factors like improper installation and the major one is not entering the correct details of the path in the content in the tailwind config file.
 
 ## Improper Installation
 
@@ -24,53 +26,70 @@ The very first step is to remove the current installation.
 
 For npm:
 
+<CodeContainer fileName="terminal">
 ```bash
 npm uninstall tailwindcss postcss autoprefixer
 ```
+</CodeContainer>
 
 For yarn:
-
+<CodeContainer fileName="terminal">
 ```bash
 yarn remove tailwindcss postcss autoprefixer
 ```
+</CodeContainer>
 
 Then clear cache
 
- ```shell
+<CodeContainer fileName="terminal">
+```shell
 npm : npm cache clean --force
 
 yarn : yarn cache clean
  ```
+</CodeContainer>
+
 
 Also clear the .next folder generated
+
+<CodeContainer fileName="terminal">
 ```shell
 Windows Powershell: Remove-Item .\.next\ -Recurse
 Bash/zsh: rm -rf ./next
  ```
+</CodeContainer>
+
 
 Then again install tailwindcss with all the dependencies
-
+<CodeContainer fileName="terminal">
 ```bash
 npm i -D tailwindcss postcss autoprefixer
 or
 yarn add --dev tailwindcss postcss autoprefixer
 ```
+</CodeContainer>
 
 then run
+<CodeContainer fileName="terminal">
 
 ```bash
 npx tailwindcss init -p
 ```
+</CodeContainer>
 
 then modify tailwind.config.js
 
 instead of
+<CodeContainer>
 
 ```js
 content:[]  
 ```
+</CodeContainer>
+
 replace with
 
+<CodeContainer>
 ```js
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -81,9 +100,11 @@ replace with
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
 ```
+</CodeContainer>
 
 Your  tailwind.config.js should look like this 👇
 
+<CodeContainer fileName="tailwind.config.js">
 ```js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -101,6 +122,7 @@ module.exports = {
   plugins: [],
 }
 ```
+</CodeContainer>
 
 ## Incorrect Syntax 
 
@@ -110,16 +132,22 @@ The reason was I did not copy the content path from docs and I wrote it without 
 
 The main reason was the spaces after the comma.
 
+<CodeContainer fileName="tailwind.config.js">
 ```js
 //error code
 content: ["./src/**/*.{js, ts, tsx, jsx}"],
 ```
-Now these gaps are invalid and tailwind will not pickup the classes used. So make sure it is valid
+</CodeContainer>
 
+Now these gaps are invalid and tailwind will not pickup the classes used. So make sure it is valid.
+
+<CodeContainer fileName="tailwind.config.js">
 ```js
 // valid
 content: ["./src/**/*.{js,ts,tsx,jsx}"],
 ```
+</CodeContainer>
+
 
 
 ## Incorrect Path
@@ -128,6 +156,7 @@ This could be the reason for tailwind classes not being applied. Check where you
 
 If you have moved your pages folder  into src folder or any such things just change your tailwind.config.js. Your tailwind.config.js should look like this
 
+<CodeContainer fileName="tailwind.config.js">
 ```js
 module.exports = {
   content: [
@@ -140,9 +169,10 @@ module.exports = {
   plugins: [],
 }
 ```
+</CodeContainer>
 
 for app directory in src folder
-
+<CodeContainer fileName="tailwind.config.js">
 ```js
 module.exports = {
   content: [
@@ -155,6 +185,7 @@ module.exports = {
   plugins: [],
 }
 ```
+</CodeContainer>
 
 ## Conclusion
 
