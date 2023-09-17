@@ -1,0 +1,44 @@
+---
+import type { GetStaticPathsOptions, Page } from "astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+
+import PostCard from "../../components/blog/post-card.astro";
+import MainLayout from "../../components/layout/main-layout.astro";
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+  const publishedBlog = await getCollection("blog", ({ data }) => {
+    return data.draft !== true;
+  });
+
+  const posts: CollectionEntry<"blog">[] = publishedBlog.sort(
+    (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
+  );
+
+  return paginate(posts, {
+    pageSize: 12,
+  });
+}
+
+const { page } = Astro.props as { page: Page<CollectionEntry<"blog">> };
+---
+
+<MainLayout
+  title="Blog"
+  description="Posts regarading frontend, firebase, reactjs, nextjs"
+>
+  <section class="mt-10">
+    <h2 class="text-xl md:text-3xl text-center font-bold">Latest Posts</h2>
+
+    <div class="my-10 flex flex-col gap-5">
+      {
+        page.data.map((post) => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            slug={post.slug}
+          />
+        ))
+      }
+    </div>
+  </section>
+</MainLayout>
