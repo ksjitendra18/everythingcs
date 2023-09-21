@@ -1,0 +1,59 @@
+---
+layout: "../../components/layout/blog-post-layout.astro"
+title: "How to setup authentication (email/password) using nextauth in nextjs app router/directory"
+publishedDate: 2023-09-19
+updatedDate: 2023-09-19
+description: "Step by step guide on how to setup  email password based authentication in nextjs application using nextauth app directory/router"
+ogImage: "https://static.everythingcs.dev/blog/react-firebase-authentication.png"
+featuredImage: "https://static.everythingcs.dev/blog/react-firebase-authentication.png"
+category: ["JavaScript"]
+author: "Jitendra"
+isFeatured: true
+draft: true
+---
+import CodeContainer from "../../components/blog/code-container.astro"
+
+Authentication is essential requirement for the some web applications which can be sometimes tricky to implement. There are various parts of an authentication system which are hard to implement like sessions and also social authentication like google or github authentication.
+
+But luckily for nextjs (and other frameworks too) we have a authentication library to help us implement authentication with various strategies like credential based(email/password), social auth like google, github etc and also passwordless authentication.
+
+In this step by step tutorial we are going to implement authentication in our nextjs app (new app router) through nextauth using credential provider strategy which will allow users to authenticate themselves through email and password. I am going to provide all the code snippets step by step.
+
+High level overview is that through credential provider strategy we will provide the user ability to sign up and login with email and password that we will store in the database using prisma. I will be using PosgreSQL locally. You can use MySQL,  Please install it locally or through the docker. If you don't want to install then you can also use neondb. 
+
+Also note this is going to be three part see. In this part we are implementing email and password based authentication. In second part we will implement Github and Google authenticaiton and in third part we will implement passwordless email based authentication.
+
+Here is
+So enough talking. Let's finally start implementing step by step.
+
+## Step 1: Setting up Nextjs app
+
+Go to your desired directory and run the following command to create a new nextjs app
+
+<CodeContainer>
+```bash
+# for npm
+npx create-next-app@latest
+# for pnpm 
+pnpm create next-app@latest
+# for yarn
+yarn create next-app@latest
+```
+</CodeContainer>
+
+Choose the typescript option, src directory, app router, tailwind css to yes and modify alias to no. 
+
+<img src="https://static.everythingcs.dev/blog/180923/create-next-app-options.png" loading="lazy" />
+
+Now run dev script to run the application in developement mode
+
+<CodeContainer>
+```bash
+# for npm
+npm run dev
+# for pnpm 
+pnpm dev
+# for yarn
+yarn dev
+```
+</CodeContainer>
