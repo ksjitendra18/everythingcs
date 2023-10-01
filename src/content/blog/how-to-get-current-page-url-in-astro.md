@@ -1,5 +1,5 @@
 ---
-layout: "../../components/layout/blog-post-layout.astro"
+
 title: "How to get current page URL in astro"
 publishedDate: 2023-08-23
 updatedDate: 2023-08-30

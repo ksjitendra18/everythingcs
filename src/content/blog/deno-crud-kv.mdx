@@ -1,9 +1,9 @@
 ---
-layout: "../../components/layout/blog-post-layout.astro"
-title: "Deno CRUD"
-publishedDate: 2023-09-15
-updatedDate: 2023-09-15
-description: "Step by step guide on how to setup and and use drizzle orm in node js with typescript and perform crud operation"
+
+title: "Deno CRUD with Hono and Deno KV"
+publishedDate: 2023-09-22
+updatedDate: 2023-09-22
+description: "Step by step guide on how to store data in deno kv and retrieve it and perform complete crud operation."
 ogImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
 featuredImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
 category: ["JavaScript"]
@@ -11,3 +11,13 @@ author: "Jitendra"
 isFeatured: false
 draft: true
 ---
+
+Deno has started offering Deno KV (which is currently in beta). It is the global key value data store which can be used to store data and is ACID complaint. It is based on FoundationDB.
+
+These key value stores like Redis or Cloudflare KV and now Deno KV are generally used to cache the API response data or storing the user preferences which can be fetched at lower latency and higher speed.
+
+In this step by step guide I will build a CRUD operation REST API which will store the data in the Deno KV. I will be building a simple API to handle contact form submissions. I will be using postman to make all the request. 
+
+To start with, make sure you have sure you have deno installed and have an account on deno deploy. I will be using hono for creating rest APIs. It provides an express like syntax and is very easy and performant too.
+
+## Deno Setup

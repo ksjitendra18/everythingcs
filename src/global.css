@@ -50,3 +50,8 @@ html.dark {
   /* @apply bg-[#1f1d23] text-white; */
   @apply bg-[#1f2023] text-white;
 }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding: 50px;
+}
