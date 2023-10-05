@@ -8,6 +8,12 @@ body {
 
 .post-content p {
   margin-block-end: 13px;
+  /* look for possible ui shifts or errors */
+  word-wrap: break-word;
+}
+
+.code-container p {
+  word-wrap: break-word;
 }
 
 .post-content h2 {
