@@ -1,7 +1,3 @@
----
-import TableOfContent from "./blog/table-of-content.astro";
----
-
 <aside class="sidebar ml-10 w-[30%] flex flex-col justify-start">
   <div class="sticky sidebar-container top-5">
     <!-- <TableOfContent /> -->
@@ -27,7 +23,6 @@ import TableOfContent from "./blog/table-of-content.astro";
   const feedBackWidget = document.getElementById("feedback-widget");
   const distanceFromBottom = 1000;
 
-  console.log(window.innerHeight);
   function isUserNearEnd() {
     const windowHeight = window.innerHeight;
     const totalHeight = document.documentElement.scrollHeight;

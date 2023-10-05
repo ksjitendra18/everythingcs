@@ -8,6 +8,12 @@ body {
 
 .post-content p {
   margin-block-end: 13px;
+  /* look for possible ui shifts or errors */
+  word-wrap: break-word;
+}
+
+.code-container p {
+  word-wrap: break-word;
 }
 
 .post-content h2 {
@@ -49,4 +55,9 @@ html.dark {
   /* @apply bg-[#1d1d23] text-white; */
   /* @apply bg-[#1f1d23] text-white; */
   @apply bg-[#1f2023] text-white;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding: 50px;
 }

@@ -1,0 +1,27 @@
+---
+import formatDate from "../../utils/formatDate";
+
+const { title, publishedDate, updatedDate } = Astro.props;
+
+let displayDate: string;
+if (new Date(updatedDate).getTime() === new Date(publishedDate).getTime()) {
+  displayDate = formatDate(publishedDate);
+} else {
+  displayDate = formatDate(updatedDate);
+}
+---
+
+<div class="my-7 md:my-14 lg:max-w-[70%] mx-auto">
+  <h1 class="my-5 font-bold text-2xl md:text-3xl text-center">{title}</h1>
+
+  <p class="mb-5 -mt-3 text-gray-800 dark:text-gray-300 text-center">
+    {
+      new Date(updatedDate).getTime() === new Date(publishedDate).getTime()
+        ? "Published On "
+        : "Last updated on "
+    }
+    <time>
+      {displayDate}
+    </time>
+  </p>
+</div>

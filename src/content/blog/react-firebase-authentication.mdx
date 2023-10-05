@@ -1,5 +1,4 @@
 ---
-layout: "../../components/layout/blog-post-layout.astro"
 title: "How to add Firebase Authentication in React (Email Password and Google)"
 publishedDate: 2023-08-25
 updatedDate: 2023-08-30
@@ -27,13 +26,13 @@ Also I have hosted the project on Netlify. Here is the [live url](https://learn-
 
 This is the [github repository](https://github.com/ksjitendra18/learn-auth/tree/main). associated with this project. Refer to this if you face any error, also feel free to raise if there is any issue.
 
-### Requirements
+## Requirements
 
 - Node.js
 - Google Account
 - Any Text Editor (I am using VS Code)
 
-### What to expect??
+## What to expect??
 We will basically be able to 
 - **1. implement email and password based authentication in react using firebase**
 - **2. implement google accound authentication in react using firebase**
@@ -152,7 +151,7 @@ I have setup up a starter for this project. I have setup tailwind css and includ
 
 [Download the zip](https://github.com/ksjitendra18/learn-auth/archive/refs/heads/starter-code.zip) and unzip in your desired location. Here I am unzipping and moving the files in learn-auth folder
 
-## Step 2.1 Install Dependencies
+### Step 2.1 Install Dependencies
 
 Open the console and run
 
@@ -174,7 +173,7 @@ npm run dev
 
 and you will see the welcome screen.
 
-## Step 2.2: Overview of the files
+### Step 2.2: Overview of the files
 
 **src/component**: UI components of file including a GoogleLogin component which is used in both signup and login pages.
 
@@ -182,14 +181,14 @@ and you will see the welcome screen.
 
 **src/libs**: Contains the library specific function. It has only one file which is firebase.ts file which exports 2 function db and auth which we whill reference again and again.
 
-## Step 2.3: Firebase Configuration
+### Step 2.3: Firebase Configuration
 
 I have already added firebase as a dependency and also libs/firebase.ts contains the configuration
 
-### Step 2.3.1: Creating env
+#### Step 2.3.1: Creating env
 Create .env file and copy the contents of file .env.example into it.
 
-### Step 2.3.2: Filling the values 
+#### Step 2.3.2: Filling the values 
 Now fill the values that you have got in step 1.
 
 If you don't have those values follow these steps:
@@ -199,11 +198,11 @@ If you don't have those values follow these steps:
 
  Click on Project settings
 
- ![project setting](https://staticecs.b-cdn.net/blog/1692117262782-105530495.png)
+ ![project setting](https://static.everythingcs.dev/blog/1692117262782-105530495.png)
 
 On the project settings page scroll down and you will find your apps section and in that it will have same configuration.
 
-![project details](https://staticecs.b-cdn.net/blog/1692117414284-646728534.png)
+![project details](https://static.everythingcs.dev/blog/1692117414284-646728534.png)
 
 
 
@@ -516,7 +515,7 @@ export default Signup;
 </CodeContainer>
 
 
-### Step 3.1.3: Verify Email
+#### Step 3.1.3: Verify Email
 
 After the successfull signup, the next step is to perform email verification. This is to ensure user is using authentic email.
 
