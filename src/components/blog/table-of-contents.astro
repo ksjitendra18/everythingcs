@@ -31,8 +31,10 @@ const filteredHeading = headings.filter((f) => f.depth < 4);
   }
 
   a.toc-link {
-    color: white;
+    /* color: white;
     font: 0.5rem;
-    text-decoration: none;
+    text-decoration: none; */
+
+    @apply dark:text-white text-black no-underline;
   }
 </style>

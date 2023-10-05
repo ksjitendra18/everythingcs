@@ -1,0 +1,10 @@
+---
+interface Props {
+  href: string;
+  doFollow: boolean;
+}
+
+const { href } = Astro.props;
+---
+
+<a href={href}><slot /></a>
