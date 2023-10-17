@@ -1,0 +1,226 @@
+---
+title: "How to Get values from Form Input Values (3 ways) in React and Next.js (including server actions)"
+publishedDate: 2023-10-10
+updatedDate: 2023-10-10
+description: "Step by step guide on how to get  values of text number select checkbox  input of the form in react and nextjs"
+ogImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
+featuredImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
+category: ["JavaScript"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+import CodeContainer from "../../components/blog/code-container.astro"
+
+Forms are essential part of the webpages. They are used in some way or other. So handling forms are essential as a web developer. In this post I am going to discuss how to get values from the form. Apart of getting value I will also show you how to validate data and show error states.
+
+I will show you 3 methods to get the form methods without any external library or package and in the next post I will discuss about form library React Hook Form and how does it make working with forms very easy.
+
+## Setting up Frontend
+
+I have provided you the simple react vite setup with the typescript and tailwind. Download the repo from github.
+
+The src folder has 6 files. main.tsx, App.tsx  For method 1 we will use FormOne for method 2 FormTwo and so on...
+
+## Method One: useState
+
+This is the most easy to use method to collect the form values. Here is a simplified example.
+
+<CodeContainer>
+```jsx
+const [nameInput, setNameInput] = useState("")
+
+<input name="name"
+ id="name" 
+ className="..." 
+ onChange = {(event)=> setNameInput(event.target.value)} 
+/>
+```
+</CodeContainer>
+
+Now you can easily access the value of the input through the **nameInput** value of useState.
+
+Now let's say you have 10 fields so you will have to make 10 seperate useState values and that will be a lot. So have have single useState for all the input where values are stored as an object.
+
+Here is the simplified example.
+
+<CodeContainer>
+```jsx
+const [formValues, setFormValues] = useState()
+
+<label htmlFor="name">Name</label> 
+<input name="name"
+ id="name" 
+ className="..." 
+ onChange = {(event)=> setFormValues({...formValues, name: event.target.value})} 
+/>
+
+<label htmlFor="description">Description</label> 
+<input name="description"
+ id="description" 
+ className="..." 
+ onChange = {(event)=> setFormValues({...formValues, description: event.target.value})} 
+/>
+```
+</CodeContainer>
+
+Now again if you will see we are repeating some stuff over. Like `{(event)=> setFormValues({...formValues, name: event.target.value})}` and `{(event)=> setFormValues({...formValues, name: event.target.value})}`. Now here if you will see for name we have name and for description we have description. That field name of the object is basically the **name field of html input elment**, so we can get that by **[event.target.name]**.
+
+So let's make a generic function **handleInputChange**
+
+<CodeContainer>
+```jsx
+const [formValues, setFormValues] = useState()
+
+const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+) => {
+  setFormData({
+    ...formData,
+    [event.target.name]: event.target.value,
+    });
+};
+
+<label htmlFor="name">Name</label> 
+<input name="name"
+ id="name" 
+ className="..." 
+ onChange = {(event)=> handleInputChange(event)} 
+/>
+
+<label htmlFor="description">Description</label> 
+<input name="description"
+ id="description" 
+ className="..." 
+ onChange = {(event)=> handleInputChange(event)} 
+/>
+```
+</CodeContainer>
+
+Now we console.log the values formData. Here's the output
+
+<img src="https://static.everythingcs.dev/blog/form-handling-171023/console-value-use-state.png" alt="console value of the above function" loading="lazy" />
+
+Now let's add some validation checks. It will depend on your project requirement. Here I am considering product name is required should be more than 5 characters and less than 50 characters. In similar way description should be more than 10 characters and less than than 150 characters. Based on this validation we will show error states. 
+
+<CodeContainer>
+```jsx
+const [formValues, setFormValues] = useState()
+
+const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+) => {
+  setFormData({
+    ...formData,
+    [event.target.name]: event.target.value,
+    });
+};
+
+<label htmlFor="name">Name</label> 
+<input name="name"
+ id="name" 
+ className="..." 
+ required
+ minLength={5}
+ maxLength={50}
+ onChange = {(event)=> handleInputChange(event)} 
+/>
+
+{formData?.name && formData.name.length < 5 && (
+  <p className="text-red-500 mb-2">
+    Product Name should be more than 5 characters
+  </p>
+)}
+
+{formData?.name && formData.name.length > 50 && (
+  <p className="text-red-500 mb-2">
+    Product Name should not be more than 50 characters
+  </p>
+)}
+
+{formData?.name?.length === 0 && (
+  <p className="text-red-500 mb-2">Product Name is required</p>
+)}
+
+
+<label htmlFor="description">Description</label> 
+<input name="description"
+ id="description" 
+ required
+ minLength={5}
+ maxLength={50}
+ className="..." 
+ onChange = {(event)=> handleInputChange(event)} 
+/>
+
+{formData?.description && formData.description.length < 5 && (
+  <p className="text-red-500 mb-2">
+  Product Description should be more than 10 characters
+  </p>
+)}
+
+{formData?.description && formData.description.length > 150 && (
+  <p className="text-red-500 mb-2">
+    Product Description should not be more than 50 characters
+  </p>
+)}
+
+{formData?.description?.length === 0 && (
+  <p className="text-red-500 mb-2">Product Description is required</p>
+)}
+```
+</CodeContainer>
+
+<img src="https://static.everythingcs.dev/blog/form-handling-171023/error-img-p1.png" alt="console value of the above function" loading="lazy" />
+
+Now this validation logic needs to be repeated again in the submit form section too right. So let's bring zod which is used to validation.
+
+<CodeContainer fileName="terminal">
+```bash
+npm i zod
+```
+</CodeContainer>
+
+Let's declare the form schema for the entire form. 
+
+<CodeContainer>
+```js
+import {z} from "zod"
+
+const formSchema = z.object({
+  name: z
+    .string({ required_error: "Name is required" })
+    .min(5, { message: "Name must be more than 5 characters" }),
+
+  description: z
+    .string({ required_error: "Description is required" })
+    .min(10, { message: "Description must be more than 5 characters" }),
+
+  price: z.coerce
+    .number({ required_error: "Price is required" })
+    .min(0, { message: "Price should be more than 0" }),
+
+  is_featured: z.boolean(),
+});
+```
+</CodeContainer>
+
+We will use this schema for our useState also also currently with nothing initial value typescript must be throwing a lot of errors.
+
+<CodeContainer>
+```js
+const [formData, setFormData] = useState<z.infer<typeof formSchema>>({
+  name: "",
+  description: "",
+  price: 0,
+  is_featured: false,
+});
+```
+</CodeContainer>
+
+Now while submitting the form we can see parse the formValues against the schema. If it is successfully parsed then we will move forward or else we will throw the error and prevent form submitting.
+
+Here is final code
+
+
+I am not very fond of this method as it triggers re-render on every change. Please remember rerender here in this case is not much that big of an issue. React handles rerender pretty well. But still we have optimised methods so let's see them.
