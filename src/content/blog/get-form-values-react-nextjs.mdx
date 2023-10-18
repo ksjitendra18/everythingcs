@@ -18,11 +18,19 @@ I will show you 3 methods to get the form methods without any external library o
 
 ## Setting up Frontend
 
-I have provided you the simple react vite setup with the typescript and tailwind. Download the repo from [github](https://github.com/ksjitendra18/form-handling-react).
+I have provided you the simple react vite setup with the typescript and tailwind. Download the starter code from the repo [github](https://github.com/ksjitendra18/form-handling-react/archive/refs/heads/starter-code.zip).
 
 The src folder has 6 files. main.tsx, App.tsx  For method 1 we will use FormOne for method 2 FormTwo and so on...
 
 <img src="https://static.everythingcs.dev/blog/form-handling-171023/folder-structure-forms-react.png" alt="folder structure" loading="lazy" />
+
+This is the [repo](https://github.com/ksjitendra18/form-handling-react) for this post. Refer it for any code changes.
+
+Here is the video demonstration of what we are going to build
+
+<video controls muted>
+ <source src="https://static.everythingcs.dev/blog/form-handling-171023/react-nextjs-form-input-values-validation-zod.mp4" type="video/mp4">
+</video>
 
 ## Method One: useState
 
@@ -150,7 +158,7 @@ const handleInputChange = (
  id="description" 
  required
  minLength={5}
- maxLength={50}
+ maxLength={150}
  className="..." 
  onChange = {(event)=> handleInputChange(event)} 
 />
@@ -163,7 +171,7 @@ const handleInputChange = (
 
 {formData?.description && formData.description.length > 150 && (
   <p className="text-red-500 mb-2">
-    Product Description should not be more than 50 characters
+    Product Description should not be more than 150 characters
   </p>
 )}
 
@@ -192,11 +200,15 @@ import {z} from "zod"
 const formSchema = z.object({
   name: z
     .string({ required_error: "Name is required" })
-    .min(5, { message: "Name must be more than 5 characters" }),
+    .min(5, { message: "Name must be more than 5 characters" })
+    .max(50, { message: "Name must be less than 50 characters" })
+    .trim(),
 
   description: z
     .string({ required_error: "Description is required" })
-    .min(10, { message: "Description must be more than 5 characters" }),
+    .min(10, { message: "Description must be more than 10 characters" })
+    .max(150, { message: "Description must be less than 150 characters" })
+    .trim(),
 
   price: z.coerce
     .number({ required_error: "Price is required" })
@@ -232,7 +244,7 @@ Also lets remove the manual validation errors that we are added and let's use zo
 
 
 ```jsx
-const [formError, setFormError] = useState<z.ZodFormattedError<FormSchema, string>>();
+const [formError, setFormError] = useState<z.ZodFormattedError<FormSchema, string> | null>(null);
 
 useEffect(() => {
   const parsedData = formSchema.safeParse(formData);
@@ -240,6 +252,8 @@ useEffect(() => {
   if (!parsedData.success) {
   const err = parsedData.error.format();
   setFormError(err);
+} else{
+  setFormError(null)
 }
   }, [formData]);
 
@@ -270,11 +284,13 @@ const formSchema = z.object({
   name: z
     .string({ required_error: "Name is required" })
     .min(5, { message: "Name must be more than 5 characters" })
+    .max(50, { message: "Name must be less than 50 characters" })
     .trim(),
 
   description: z
     .string({ required_error: "Description is required" })
     .min(10, { message: "Description must be more than 10 characters" })
+    .max(150, { message: "Description must be less than 150 characters" })
     .trim(),
 
   price: z.coerce
@@ -303,7 +319,7 @@ const FormOne = () => {
   });
 
   const [formError, setFormError] =
-    useState<z.ZodFormattedError<FormSchema, string>>();
+    useState<z.ZodFormattedError<FormSchema, string> | null>(null);
 
   const [touchedInput, setTouchedInput] = useState<string[]>([]);
 
@@ -337,6 +353,8 @@ const FormOne = () => {
     if (!parsedData.success) {
       const err = parsedData.error.format();
       setFormError(err);
+    } else{
+      setFormError(null)
     }
   }, [formData]);
 
@@ -351,6 +369,8 @@ const FormOne = () => {
 
         setFormError(err);
         return;
+      } else{
+        setFormError(null)
       }
 
       // send data to database
@@ -371,7 +391,7 @@ const FormOne = () => {
           </label>
           <input
             type="text"
-            min={2}
+            min={5}
             max={50}
             className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
             onChange={(event) => handleInputChange(event)}
@@ -484,6 +504,7 @@ export default FormOne;
 
 
 
+
 I am not very fond of this method as it triggers re-render on every change. Please remember rerender here in this case is not much that big of an issue. React handles rerender pretty well. But still we have optimised methods so let's see them.
 
 
@@ -559,7 +580,7 @@ const FormTwo = () => {
   const featuredInput = useRef<HTMLInputElement>(null);
 
   const [formError, setFormError] =
-    useState<z.ZodFormattedError<FormSchema, string>>();
+    useState<z.ZodFormattedError<FormSchema, string> | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -579,6 +600,8 @@ const FormTwo = () => {
 
         setFormError(err);
         return;
+      } else{
+        setFormError(null)
       }
 
       console.log("formdata", parsedFormValue.data);
@@ -793,7 +816,7 @@ type FormSchema = z.infer<typeof formSchema>;
 
 const FormThree = () => {
   const [formError, setFormError] =
-    useState<z.ZodFormattedError<FormSchema, string>>();
+    useState<z.ZodFormattedError<FormSchema, string> | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -816,6 +839,8 @@ const FormThree = () => {
         console.log(err);
         setFormError(err);
         return;
+      } else{
+        setFormError(null)
       }
 
       console.log("formdata", parsedFormValue.data);
@@ -953,7 +978,7 @@ Here is the output
 
 ## Conclusion
 
-So in this post we learnt how to handle forms in react and how to get values from input. In this post we also implemented the validation using zod library.
+So in this post we learnt how to handle forms in react and how to get values from input. In this post we also implemented the validation using zod library. This is the final [repo](https://github.com/ksjitendra18/form-handling-react) for this article.
 
 In the upcoming posts I am going to discuss server actions in nextjs and also using React Hook Form library for handling forms much easier and with much lesser code.
 
