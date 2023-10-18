@@ -55,7 +55,9 @@ const { title, description } = Astro.props;
   <meta property="twitter:description" content={description} />
   <meta
     property="twitter:image"
-    content="https://everythingcs.dev/images/banner.png"
+    content={`${
+      Astro.props.ogImage ?? "https://everythingcs.dev/images/banner.png"
+    }`}
   />
 
   <script
