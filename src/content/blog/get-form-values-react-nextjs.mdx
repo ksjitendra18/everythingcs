@@ -1,0 +1,960 @@
+---
+title: "How to Get values from Form Input Values (3 ways) in React and Next.js (including form validation)"
+publishedDate: 2023-10-18
+updatedDate: 2023-10-18
+description: "Step by step guide on how to get  values of text number select checkbox inputs of the form and how to validate them using zod in react and nextjs"
+ogImage: "https://static.everythingcs.dev/blog/get-form-input-values-react-next-validate-zod"
+featuredImage: "https://static.everythingcs.dev/blog/get-form-input-values-react-next-validate-zod"
+category: ["JavaScript"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+import CodeContainer from "../../components/blog/code-container.astro"
+
+Forms are essential part of the webpages. They are used in some way or other. So handling forms are essential as a web developer. In this post I am going to discuss how to get values from the form. Apart from getting values from the input I will also show you how to validate data and show error states.
+
+I will show you 3 methods to get the form methods without any external library or package and in the next post I will discuss about form library React Hook Form and how does it make working with forms very easy.
+
+## Setting up Frontend
+
+I have provided you the simple react vite setup with the typescript and tailwind. Download the repo from [github](https://github.com/ksjitendra18/form-handling-react).
+
+The src folder has 6 files. main.tsx, App.tsx  For method 1 we will use FormOne for method 2 FormTwo and so on...
+
+<img src="https://static.everythingcs.dev/blog/form-handling-171023/folder-structure-forms-react.png" alt="folder structure" loading="lazy" />
+
+## Method One: useState
+
+This is the most easy to use method to collect the form values. Here is a simplified example.
+
+<CodeContainer>
+```jsx
+const [nameInput, setNameInput] = useState("")
+
+<input name="name"
+ id="name" 
+ className="..." 
+ onChange = {(event)=> setNameInput(event.target.value)} 
+/>
+```
+</CodeContainer>
+
+Now you can easily access the value of the input through the **nameInput** value of useState.
+
+Now let's say you have 10 fields so you will have to make 10 seperate useState values and that will be a lot. So have have single useState for all the input where values are stored as an object.
+
+Here is the simplified example.
+
+<CodeContainer>
+```jsx
+const [formValues, setFormValues] = useState()
+
+<label htmlFor="name">Name</label> 
+<input name="name"
+ id="name" 
+ className="..." 
+ onChange = {(event)=> setFormValues({...formValues, name: event.target.value})} 
+/>
+
+<label htmlFor="description">Description</label> 
+<input name="description"
+ id="description" 
+ className="..." 
+ onChange = {(event)=> setFormValues({...formValues, description: event.target.value})} 
+/>
+```
+</CodeContainer>
+
+Now again if you will see we are repeating some stuff over. Like `{(event)=> setFormValues({...formValues, name: event.target.value})}` and `{(event)=> setFormValues({...formValues, name: event.target.value})}`. Now here if you will see for name we have name and for description we have description. That field name of the object is basically the **name field of html input elment**, so we can get that by **[event.target.name]**.
+
+So let's make a generic function **handleInputChange**
+
+<CodeContainer>
+```jsx
+const [formValues, setFormValues] = useState()
+
+const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+) => {
+  setFormData({
+    ...formData,
+    [event.target.name]: event.target.value,
+    });
+};
+
+<label htmlFor="name">Name</label> 
+<input name="name"
+ id="name" 
+ className="..." 
+ onChange = {(event)=> handleInputChange(event)} 
+/>
+
+<label htmlFor="description">Description</label> 
+<input name="description"
+ id="description" 
+ className="..." 
+ onChange = {(event)=> handleInputChange(event)} 
+/>
+```
+</CodeContainer>
+
+Now we console.log the values formData. Here's the output
+
+<img src="https://static.everythingcs.dev/blog/form-handling-171023/console-value-use-state.png" alt="console value of the above function" loading="lazy" />
+
+Now let's add some validation checks. It will depend on your project requirement. Here I am considering product name is required should be more than 5 characters and less than 50 characters. In similar way description should be more than 10 characters and less than than 150 characters. Based on this validation we will show error states. 
+
+<CodeContainer>
+```jsx
+const [formValues, setFormValues] = useState()
+
+const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+) => {
+  setFormData({
+    ...formData,
+    [event.target.name]: event.target.value,
+    });
+};
+
+<label htmlFor="name">Name</label> 
+<input name="name"
+ id="name" 
+ className="..." 
+ required
+ minLength={5}
+ maxLength={50}
+ onChange = {(event)=> handleInputChange(event)} 
+/>
+
+{formData?.name && formData.name.length < 5 && (
+  <p className="text-red-500 mb-2">
+    Product Name should be more than 5 characters
+  </p>
+)}
+
+{formData?.name && formData.name.length > 50 && (
+  <p className="text-red-500 mb-2">
+    Product Name should not be more than 50 characters
+  </p>
+)}
+
+{formData?.name?.length === 0 && (
+  <p className="text-red-500 mb-2">Product Name is required</p>
+)}
+
+
+<label htmlFor="description">Description</label> 
+<input name="description"
+ id="description" 
+ required
+ minLength={5}
+ maxLength={50}
+ className="..." 
+ onChange = {(event)=> handleInputChange(event)} 
+/>
+
+{formData?.description && formData.description.length < 5 && (
+  <p className="text-red-500 mb-2">
+  Product Description should be more than 10 characters
+  </p>
+)}
+
+{formData?.description && formData.description.length > 150 && (
+  <p className="text-red-500 mb-2">
+    Product Description should not be more than 50 characters
+  </p>
+)}
+
+{formData?.description?.length === 0 && (
+  <p className="text-red-500 mb-2">Product Description is required</p>
+)}
+```
+</CodeContainer>
+
+<img src="https://static.everythingcs.dev/blog/form-handling-171023/error-img-p1.png" alt="error in form" loading="lazy" />
+
+Now this validation logic needs to be repeated again in the submit form section too right. So let's bring zod which is used to validation.
+
+<CodeContainer fileName="terminal">
+```bash
+npm i zod
+```
+</CodeContainer>
+
+Let's declare the form schema for the entire form. 
+
+<CodeContainer>
+```js
+import {z} from "zod"
+
+const formSchema = z.object({
+  name: z
+    .string({ required_error: "Name is required" })
+    .min(5, { message: "Name must be more than 5 characters" }),
+
+  description: z
+    .string({ required_error: "Description is required" })
+    .min(10, { message: "Description must be more than 5 characters" }),
+
+  price: z.coerce
+    .number({ required_error: "Price is required" })
+    .min(0, { message: "Price should be more than 0" }),
+
+  category: z
+  .string({ required_error: "Category is required" })
+  .refine((val) => val !== "uncategorised", {
+    message: "Choose category other than uncategorised",
+  }),
+
+  is_featured: z.boolean(),
+});
+```
+</CodeContainer>
+
+We will use this schema for our useState also also currently with nothing initial value typescript must be throwing a lot of errors.
+
+<CodeContainer>
+```js
+const [formData, setFormData] = useState<z.infer<typeof formSchema>>({
+  name: "",
+  description: "",
+  price: 0,
+  is_featured: false,
+});
+```
+</CodeContainer>
+
+Also lets remove the manual validation errors that we are added and let's use zod schema for parsing and generating error.
+
+<CodeContainer>
+
+
+```jsx
+const [formError, setFormError] = useState<z.ZodFormattedError<FormSchema, string>>();
+
+useEffect(() => {
+  const parsedData = formSchema.safeParse(formData);
+
+  if (!parsedData.success) {
+  const err = parsedData.error.format();
+  setFormError(err);
+}
+  }, [formData]);
+
+...
+
+ {formError?.description?._errors?.map((err) => (
+  <p className="text-red-500 mb-2" key={err}>
+  {err}
+  </p>
+))}
+
+```
+
+</CodeContainer>
+
+I have added one more state that will keep track of which state has user visited and contains error. We will error for those inputs only.
+
+Now while submitting the form, the data will be parsed the formValues against the schema. If it is successfully parsed then we will move forward or else we will throw the error and prevent form submitting.
+
+Here is final code
+
+<CodeContainer fileName="FormOne.tsx">
+```jsx
+import { FormEvent, useEffect, useState } from "react";
+import { z } from "zod";
+
+const formSchema = z.object({
+  name: z
+    .string({ required_error: "Name is required" })
+    .min(5, { message: "Name must be more than 5 characters" })
+    .trim(),
+
+  description: z
+    .string({ required_error: "Description is required" })
+    .min(10, { message: "Description must be more than 10 characters" })
+    .trim(),
+
+  price: z.coerce
+    .number({ required_error: "Price is required" })
+    .min(0, { message: "Price should be more than 0" }),
+
+  category: z
+    .string({ required_error: "Category is required" })
+    .refine((val) => val !== "uncategorised", {
+      message: "Choose category other than uncategorised",
+    }),
+
+  is_featured: z.boolean(),
+});
+
+type FormSchema = z.infer<typeof formSchema>;
+
+const FormOne = () => {
+
+  const [formData, setFormData] = useState<z.infer<typeof formSchema>>({
+    name: "",
+    description: "",
+    price: 0,
+    is_featured: false,
+    category: "",
+  });
+
+  const [formError, setFormError] =
+    useState<z.ZodFormattedError<FormSchema, string>>();
+
+  const [touchedInput, setTouchedInput] = useState<string[]>([]);
+
+  const handleInputChange = (
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    if (!touchedInput.includes(event.target.name)) {
+      setTouchedInput([...touchedInput, event.target.name]);
+    }
+
+    if (event.target.type === "checkbox") {
+      if (event.target && event.target instanceof HTMLInputElement) {
+        setFormData({
+          ...formData,
+          [event.target.name]: event.target.checked,
+        });
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [event.target.name]: event.target.value,
+      }));
+    }
+  };
+
+  useEffect(() => {
+    const parsedData = formSchema.safeParse(formData);
+
+    if (!parsedData.success) {
+      const err = parsedData.error.format();
+      setFormError(err);
+    }
+  }, [formData]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const parsedFormValue = formSchema.safeParse(formData);
+
+      if (!parsedFormValue.success) {
+        const err = parsedFormValue.error.format();
+
+        setFormError(err);
+        return;
+      }
+
+      // send data to database
+      console.log("formdata", parsedFormValue.data);
+    } catch (error) {
+      console.log("caught error");
+      //handle additional erros ...
+    }
+  };
+
+  return (
+    <>
+      <div className="my-10 w-full">
+        <h2 className="text-2xl text-center font-bold">Add New</h2>
+        <form onSubmit={handleSubmit} className="lg:w-1/2 mx-auto px-5 py-5">
+          <label className=" block" htmlFor="name">
+            Product Name
+          </label>
+          <input
+            type="text"
+            min={2}
+            max={50}
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            onChange={(event) => handleInputChange(event)}
+            name="name"
+            id="text"
+            required
+          />
+          {touchedInput.includes("name") && formError?.name && (
+            <>
+              {formError?.name?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label className="block" htmlFor="description">
+            Product Description
+          </label>
+          <textarea
+            minLength={10}
+            maxLength={150}
+            rows={5}
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            name="description"
+            id="description"
+            onChange={(event) => handleInputChange(event)}
+            required
+          />
+          {touchedInput.includes("description") && formError?.description && (
+            <>
+              {formError?.description?._errors?.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+          <label className="block" htmlFor="price">
+            Product Price
+          </label>
+          <input
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            type="number"
+            name="price"
+            min={0}
+            id="price"
+            onChange={(event) => handleInputChange(event)}
+            required
+          />
+          {touchedInput.includes("price") && formError?.name && (
+            <>
+              {formError?.price?._errors?.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label htmlFor="category">Category</label>
+          <select
+            name="category"
+            id="category"
+            className=" border bg-[#f8f8f8] border-gray-500 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2  "
+            onChange={(event) => handleInputChange(event)}
+          >
+            <option value="uncategorised">Choose a category</option>
+            <option value="shirts">Shirts</option>
+            <option value="pants">Pants </option>
+            <option value="glasses">Glasses</option>
+            <option value="hats">Hats</option>
+          </select>
+
+          {touchedInput.includes("category") && formError?.name && (
+            <>
+              {formError?.category?._errors?.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label className="my-3 inline-block" htmlFor="is_featured">
+            Featured Product
+          </label>
+          <input
+            id="is_featured"
+            name="is_featured"
+            className="ml-5"
+            type="checkbox"
+            onChange={(event) => handleInputChange(event)}
+          />
+          <div className="flex justify-end">
+            <button className=" bg-blue-500 hover:scale-95 transition-all duration-75 ease-in px-5 py-2 rounded-md text-white">
+              Add New Product
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+};
+
+export default FormOne;
+```
+</CodeContainer>
+
+
+
+I am not very fond of this method as it triggers re-render on every change. Please remember rerender here in this case is not much that big of an issue. React handles rerender pretty well. But still we have optimised methods so let's see them.
+
+
+## Method 2: useRef
+
+If you want to prevent this re-render problem then you can use the useRef function. Read about useRef fom react docs.
+
+in App.tsx comment FormOne and uncomment FormTwo.
+
+Simplified example for useRef.
+
+<CodeContainer>
+```jsx
+const nameInput = useRef<HTMLInputElement>(null);
+const handleSubmit = async (e: FormEvent) => {
+  e.preventDefault();
+  console.log(nameInput.current?.value);
+};
+
+<input
+  type="text"
+  min={2}
+  max={50}
+  className="border-2 mb-2 border-gray-500  focus-visible:borderfocus-visible:outline-2  rounded-md px-3 py-2 w-full"
+  name="name"
+  id="text"
+  ref={nameInput}
+  required
+/>
+```
+</CodeContainer>
+
+Now we will make use of the zod schema to validate the input. 
+
+Here is the complete code.
+
+<CodeContainer fileName="FormTwo.tsx">
+```jsx
+import { z } from "zod";
+import { useRef, FormEvent, useState } from "react";
+
+const formSchema = z.object({
+  name: z
+    .string({ required_error: "Name is required" })
+    .min(5, { message: "Name must be more than 5 characters" })
+    .trim(),
+
+  description: z
+    .string({ required_error: "Description is required" })
+    .min(10, { message: "Description must be more than 10 characters" })
+    .trim(),
+
+  price: z.coerce
+    .number({ required_error: "Price is required" })
+    .min(0, { message: "Price should be more than 0" }),
+
+  category: z
+    .string({ required_error: "Category is required" })
+    .refine((val) => val !== "uncategorised", {
+      message: "Choose category other than uncategorised",
+    }),
+
+  is_featured: z.boolean(),
+});
+
+type FormSchema = z.infer<typeof formSchema>;
+
+const FormTwo = () => {
+  const nameInput = useRef<HTMLInputElement>(null);
+  const descriptionInput = useRef<HTMLTextAreaElement>(null);
+  const priceInput = useRef<HTMLInputElement>(null);
+  const categoryInput = useRef<HTMLSelectElement>(null);
+  const featuredInput = useRef<HTMLInputElement>(null);
+
+  const [formError, setFormError] =
+    useState<z.ZodFormattedError<FormSchema, string>>();
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    const formData = {
+      name: nameInput.current?.value,
+      description: descriptionInput.current?.value,
+      price: priceInput.current?.value,
+      category: categoryInput.current?.value,
+      is_featured: featuredInput.current?.checked,
+    };
+    try {
+      const parsedFormValue = formSchema.safeParse(formData);
+
+      if (!parsedFormValue.success) {
+        const err = parsedFormValue.error.format();
+
+        setFormError(err);
+        return;
+      }
+
+      console.log("formdata", parsedFormValue.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  return (
+    <>
+      <div className="my-10 w-full">
+        <h2 className="text-2xl text-center font-bold">Add New</h2>
+        <form onSubmit={handleSubmit} className="lg:w-1/2 mx-auto px-5 py-5">
+          <label className=" block" htmlFor="name">
+            Product Name
+          </label>
+          <input
+            type="text"
+            min={2}
+            max={50}
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            name="name"
+            id="text"
+            ref={nameInput}
+            required
+          />
+
+          {formError?.name && (
+            <>
+              {formError?.name?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label className="block" htmlFor="description">
+            Product Description
+          </label>
+          <textarea
+            maxLength={150}
+            minLength={10}
+            rows={5}
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            name="description"
+            id="description"
+            ref={descriptionInput}
+            required
+          />
+
+          {formError?.description && (
+            <>
+              {formError?.description?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label className="block" htmlFor="price">
+            Product Price
+          </label>
+          <input
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            type="number"
+            name="price"
+            min={0}
+            id="price"
+            ref={priceInput}
+            required
+          />
+
+          {formError?.price && (
+            <>
+              {formError?.price?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label htmlFor="category">Category</label>
+
+          <select
+            name="category"
+            id="category"
+            ref={categoryInput}
+            className=" border bg-[#f8f8f8] border-gray-500 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2  "
+          >
+            <option value="uncategorised">Choose a category</option>
+            <option value="shirts">Shirts</option>
+            <option value="pants">Pants </option>
+            <option value="glasses">Glasses</option>
+            <option value="hats">Hats</option>
+          </select>
+
+          {formError?.category && (
+            <>
+              {formError?.category?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label className="my-3 inline-block" htmlFor="is_featured">
+            Featured Product
+          </label>
+          <input
+            id="is_featured"
+            name="is_featured"
+            className="ml-5"
+            type="checkbox"
+            ref={featuredInput}
+            defaultChecked={false}
+          />
+
+          <div className="flex justify-end">
+            <button className=" bg-blue-500 hover:scale-95 transition-all duration-75 ease-in px-5 py-2 rounded-md text-white">
+              Add New Product
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+};
+
+export default FormTwo;
+```
+</CodeContainer>
+
+<div className="my-3 bg-red-600 rounded-md px-5 py-2 text-white">
+<p className="text-xl font-bold">Heads Up:</p>
+<p>
+You must be think that that we have added basic validation like length and required in the element itself so that will be handled by browser, so what's the use of formError useState and 
+
+
+```jsx
+{formError?.name && (
+  <>
+  {formError?.name?._errors.map((err) => (
+    <p className="text-red-500 mb-2" key={err}>
+      {err}
+    </p>
+  ))}
+  </>
+)}
+```
+</p>
+
+The reason I have added this is because browser validation is not that hard to bypass. You can use inspect elements and edit it right? So you need to validate data server side also. Now suppose their is error so return that error and set that error in formError state.
+</div>
+
+## Method 3: using FormData Constructor
+
+I am using this method quite a lot these day as it is very easy. In this method we are going to use the **FormData constructor**. This is nothing react specific it can be used in vanilla js or any other framework. It just takes form element as one of the parameters. Read more about this on mdn docs.
+
+Simplified example
+
+<CodeContainer>
+```jsx
+const handleSubmit = async (e: FormEvent) => {
+  e.preventDefault();
+  const formData = new FormData(e.target as HTMLFormElement);
+  console.log(formData.get("name"));
+}
+...
+
+<form onSubmit={hanldeSubmit}>
+...
+</form>
+```
+</CodeContainer>
+
+Please comment FormTwo and uncomment FormThree in App.tsx
+
+Complete code for FormThree
+<CodeContainer fileName="FormThree.tsx">
+```tsx
+import { FormEvent, useState } from "react";
+import { z } from "zod";
+
+const formSchema = z.object({
+  name: z
+    .string({ required_error: "Name is required" })
+    .min(5, { message: "Name must be more than 5 characters" })
+    .trim(),
+
+  description: z
+    .string({ required_error: "Description is required" })
+    .min(10, { message: "Description must be more than 10 characters" })
+    .trim(),
+
+  price: z.coerce
+    .number({ required_error: "Price is required" })
+    .min(0, { message: "Price should be more than 0" }),
+
+  category: z
+    .string({ required_error: "Category is required" })
+    .refine((val) => val !== "uncategorised", {
+      message: "Choose category other than uncategorised",
+    }),
+
+  is_featured: z.boolean(),
+});
+
+type FormSchema = z.infer<typeof formSchema>;
+
+const FormThree = () => {
+  const [formError, setFormError] =
+    useState<z.ZodFormattedError<FormSchema, string>>();
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target as HTMLFormElement);
+
+    const formDataValues = {
+      name: formData.get("name"),
+      description: formData.get("description"),
+      price: formData.get("price"),
+      category: formData.get("category"),
+      is_featured: Boolean(formData.get("is_featured")),
+    };
+    try {
+      const parsedFormValue = formSchema.safeParse(formDataValues);
+
+      if (!parsedFormValue.success) {
+        const err = parsedFormValue.error.format();
+
+        console.log(err);
+        setFormError(err);
+        return;
+      }
+
+      console.log("formdata", parsedFormValue.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return (
+    <>
+      <div className="my-10 w-full">
+        <h2 className="text-2xl text-center font-bold">Add New</h2>
+        <form onSubmit={handleSubmit} className="lg:w-1/2 mx-auto px-5 py-5">
+          <label className=" block" htmlFor="name">
+            Product Name
+          </label>
+          <input
+            type="text"
+            min={2}
+            max={50}
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            name="name"
+            id="text"
+            required
+          />
+
+          {formError?.name && (
+            <>
+              {formError?.name?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label className="block" htmlFor="description">
+            Product Description
+          </label>
+          <textarea
+            maxLength={150}
+            minLength={10}
+            rows={5}
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            name="description"
+            id="description"
+            required
+          />
+
+          {formError?.description && (
+            <>
+              {formError?.description?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label className="block" htmlFor="price">
+            Product Price
+          </label>
+          <input
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            type="number"
+            name="price"
+            min={0}
+            id="price"
+            required
+          />
+
+          {formError?.price && (
+            <>
+              {formError?.price?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label htmlFor="category">Category</label>
+
+          <select
+            name="category"
+            id="category"
+            className=" border bg-[#f8f8f8] border-gray-500 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2  "
+          >
+            <option value="uncategorised">Choose a category</option>
+            <option value="shirts">Shirts</option>
+            <option value="pants">Pants </option>
+            <option value="glasses">Glasses</option>
+            <option value="hats">Hats</option>
+          </select>
+
+          {formError?.category && (
+            <>
+              {formError?.category?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
+
+          <label className="my-3 inline-block" htmlFor="is_featured">
+            Featured Product
+          </label>
+          <input
+            id="is_featured"
+            name="is_featured"
+            className="ml-5"
+            type="checkbox"
+            defaultChecked={false}
+          />
+
+          <div className="flex justify-end">
+            <button className=" bg-blue-500 hover:scale-95 transition-all duration-75 ease-in px-5 py-2 rounded-md text-white">
+              Add New Product
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+};
+
+export default FormThree;
+```
+</CodeContainer>
+
+
+Here is the output
+<img src="https://static.everythingcs.dev/blog/form-handling-171023/form-data-console.png" alt="form-data-console" loading="lazy" />
+
+## Conclusion
+
+So in this post we learnt how to handle forms in react and how to get values from input. In this post we also implemented the validation using zod library.
+
+In the upcoming posts I am going to discuss server actions in nextjs and also using React Hook Form library for handling forms much easier and with much lesser code.
+
+If you have any doubt, you can contact me via [form](https://everythingcs.dev/contact/) or via the [EverythingCS discord server](https://discord.gg/W3nubBNeXK)
