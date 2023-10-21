@@ -2,7 +2,7 @@
 
 title: "How to setup Drizzle ORM in Node.js with Typescript and Perform CRUD operation"
 publishedDate: 2023-09-15
-updatedDate: 2023-09-15
+updatedDate: 2023-10-21
 description: "Step by step guide on how to setup and and use drizzle orm in node js with typescript and perform crud operation"
 ogImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
 featuredImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
@@ -63,10 +63,18 @@ create database drizzlenode;
 ```
 </CodeContainer>
 
-You can verified it is created or not by running command
+You can verified it is created or not by running command. You will see all the databases.
 <CodeContainer fileName="terminal">
 ```bash
 show databases;
+```
+</CodeContainer>
+
+Now create a .env file in root folder 
+
+<CodeContainer fileName=".env">
+```bash
+DB_URL="mysql:username@password:3306/drizzlenode"
 ```
 </CodeContainer>
 
@@ -162,13 +170,13 @@ Now let's create 2 scripts in package.json to create migrations and push changes
 Now run generate command which will generate the migrations in our db folder.
 <CodeContainer fileName="terminal">
 ```js
-npm run db:migrate
+npm run db:generate
 ```
 </CodeContainer>
 
 Output: 
 
-<img alt="db push command output" src="https://static.everythingcs.dev/blog/generate-output-3102.png" loading="lazy"/>
+<img alt="db push command output" src="https://static.everythingcs.dev/blog/db-generate-output.png" loading="lazy"/>
 
 Now run push command. It will create the table according to the schema.
 <CodeContainer fileName="terminal">

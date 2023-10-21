@@ -1,0 +1,738 @@
+---
+title: "React Redux Toolkit Setup: Building Ecommerce App with Cart Actions"
+publishedDate: 2023-10-21
+updatedDate: 2023-10-21
+description: "Build a small ecommerce app with cart functionality to understand the global state management using react redux and redux toolkit"
+ogImage: "https://static.everythingcs.dev/blog/redux-toolkit-211023/redux-toolkit-setup-ecommerce-react-cart-actions.png"
+featuredImage: "https://static.everythingcs.dev/blog/redux-toolkit-211023/redux-toolkit-setup-ecommerce-react-cart-actions.png"
+category: ["JavaScript"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+import CodeContainer from "../../components/blog/code-container.astro"
+
+Handling global state is an essential part of the react developement. So I have created the series of articles using various tools available on how to efficiently manage the global state.  We will look at how to setup redux toolkit in react js and use it to manage global state.
+
+We will implement the learning through building a simple ecommerce application and performing various cart actions like adding item to cart, increasing quantity, decreasing quantity and removing item and also calculating price based on the items in the cart.
+
+In this article I am going to use the React Redux and Redux Toolkit for handling the global state and we will see firstly how to install and setup redux toolkit, how to declare reducers and how to consume those in different components of the app.
+
+## What are going to achieve?
+
+Have a look at what are we going to implement. As I mentioned above it has all the cart functionalities like adding item to cart, removing the item, increasing and decreasing quantity.
+
+<video muted controls>
+<source src="https://static.everythingcs.dev/blog/redux-toolkit-211023/redux-toolkit-react-ecommerce-app-cart-actions.mp4" />
+</video>
+
+
+Refer to the repo if you have any doubt. Here is the [repo link](https://github.com/ksjitendra18/redux-toolkit-guide).
+
+
+## Setting up the app.
+
+I have built the basic markup for the app. Download the code from the [github](https://github.com/ksjitendra18/redux-toolkit-guide/archive/refs/heads/starter-code.zip) 
+
+It is a simple Vite setup for React, Typescript with react router dom for the routing and tailwindcss for styling.
+
+Unzip it and and run **npm i** to install the dependencies.
+
+## Setting up Redux Toolkit
+
+The very step is to install the packages.
+
+<CodeContainer fileName="terminal">
+```bash
+ npm i react-redux @reduxjs/toolkit
+```
+</CodeContainer>
+
+Now create a folder named **store** and inside the store folder create a **store.ts** file and configure the store.
+
+<CodeContainer fileName="src/store/store.ts">
+```ts
+import { configureStore } from "@reduxjs/toolkit";
+
+const store = configureStore({
+  reducer: {},
+});
+
+export default store;
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+```
+</CodeContainer>
+
+Now let's wrap the app with the provider so than we can access value and also dispatch actions of the store. So to do this go to **main.tsx** and wrap the **App** component with the Provider from react-redux and provide store prop with value as store that we intiliased in the above step.
+
+<CodeContainer fileName="src/main.tsx">
+```ts
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.tsx";
+import "@fontsource-variable/inter";
+import "./index.css";
+import { BrowserRouter } from "react-router-dom";
+import { Provider } from "react-redux";
+import store from "./store/store.ts";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Provider store={store}>
+        <App />
+      </Provider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
+```
+</CodeContainer>
+
+Now it's time to setup slice so let's declare the cart slice which will contain all the actions regarding to cart.
+
+## Declaring slice: cartSlice 
+
+Next step is to declare the cartSlice. This will store all the actions related to card in the reducer. 
+
+<CodeContainer fileName="src/store/slice/cartSlice.ts">
+```ts
+import { createSlice } from "@reduxjs/toolkit";
+import CartProduct from "../../types/CartProduct";
+
+export interface CartState {
+  cart: CartProduct[];
+}
+
+const cartSlice = createSlice({
+  name: "cart",
+  initialState: { cart: [] } as CartState,
+  reducers: {},
+});
+
+export default cartSlice;
+```
+</CodeContainer>
+
+This is basic skeleton for cartSlice. Now let's add all the actions related to cart.
+
+## Adding Reducers
+
+Reducers are basically actions we want to perform.
+
+### Adding Item to cart
+
+So for adding item to cart, firstly we will check if item already exists in the cart. If it does, then we will simply increase the quantity else we are going to just push the item into the cart.
+
+<CodeContainer fileName="src/store/slice/cartSlice.ts">
+```ts
+import { createSlice } from "@reduxjs/toolkit";
+import CartProduct from "../../types/CartProduct";
+
+export interface CartState {
+  cart: CartProduct[];
+}
+
+const cartSlice = createSlice({
+  name: "cart",
+  initialState: { cart: [] } as CartState,
+  reducers: {
+    addToCart: (state, action) => {
+      const itemInCart = state.cart.find(
+        (item) => item.id === action.payload.id
+      );
+      if (itemInCart) {
+        if (itemInCart.quantity !== undefined) {
+          itemInCart.quantity++;
+        }
+      } else {
+        state.cart.push({ ...action.payload, quantity: 1 });
+      }
+    },
+  },
+});
+
+export const { addToCart } = cartSlice.actions;
+
+export const cartReducer = cartSlice.reducer;
+
+```
+</CodeContainer>
+
+Let's register the reducer in the store.
+
+<CodeContainer fileName="src/store/store.ts">
+```ts
+import { configureStore } from "@reduxjs/toolkit";
+import { cartReducer } from "./cart/cartSlice";
+const store = configureStore({
+  reducer: {
+    cartReducer,
+  },
+});
+
+export default store;
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+```
+</CodeContainer>
+
+Now we have reducers specified, let's try to perform this action. So go to **ProductCart.tsx** in components and let dispatch this action. 
+
+Here is basic dispatch action 
+
+<CodeContainer>
+```ts
+const dispatch = useDispatch();
+
+dispatch(reducer(payload))
+
+// example
+dispatch(addToCart(product));
+```
+</CodeContainer>
+
+Now let's implement this in ProductCard.
+
+<CodeContainer fileName="src/components/ProductCard.tsx">
+```tsx
+import { ShoppingCart } from "lucide-react";
+import React from "react";
+import Product from "../types/Product";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../store/cart/cartSlice";
+interface ProductCardProps {
+  product: Product;
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const dispatch = useDispatch();
+
+  const onAddToCart = (product: Product) => {
+    dispatch(addToCart(product));
+    toast.success("Added to cart");
+  };
+
+  return (
+    <div className="flex hover:shadow-lg  transition-all ease-in duration-150 basis-1/4 flex-1  flex-col border-2 border-slate-500 px-3 py-2 rounded-md">
+      <div className="flex flex-col items-center">
+        <img
+          className=" w-[225px] h-[225px] object-contain"
+          src={product.image}
+          alt={product.title}
+        />
+        <div className="my-5">
+          <h3 className="text-center  font-bold">{product.title}</h3>
+          <h3 className="text-center mt-3 font-medium">${product.price}</h3>
+        </div>
+      </div>
+
+      <div className="flex justify-end items-end">
+        <button
+          onClick={() => onAddToCart(product)}
+          title="Add to Cart"
+          className="bg-orange-500 px-3 py-3 text-white rounded-full"
+        >
+          <ShoppingCart />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ProductCard;
+```
+</CodeContainer>
+
+Now if you will click on add item to cart then it will be added to cart. Let's display the items in the cart page.
+
+As the data is stored in the centralised store it can be accessed from any component without passing any props. Let's access this data in 3 components: Cart page, OrderValue, Navbar 
+
+Here is basically how to get value from the store. 
+
+<CodeContainer>
+```js
+const cartItem = useSelector(state => state.cartReducer.cart);
+```
+</CodeContainer>
+
+Let's update the Cart Page
+
+<CodeContainer fileName="src/pages/Cart.tsx">
+```tsx
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
+import CartItemsCard from "../components/CartItemsCard";
+import OrderValue from "../components/OrderValue";
+
+const Cart = () => {
+  const cartItem = useSelector((state: RootState) => state.cartReducer.cart);
+
+  return (
+    <div className=" flex  flex-col-reverse md:flex-row  gap-10 items-center md:items-start md:select-none md:justify-between">
+      <div className="flex flex-wrap flex-col md:flex-row mb-10  gap-10 ">
+        {cartItem?.map((item) => (
+          <CartItemsCard product={item} />
+        ))}
+      </div>
+
+      <div className="md:sticky md:top-28 bg-orange-500 text-white flex-none w-72 h-[300px] rounded-2xl">
+        <OrderValue />
+      </div>
+    </div>
+  );
+};
+
+export default Cart;
+```
+</CodeContainer>
+
+
+Also update the OrderValue component.
+
+<CodeContainer fileName="src/components/OrderValue.tsx">
+```tsx
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
+import CartProduct from "../types/CartProduct";
+
+const getTotal = (cartItem: CartProduct[]) => {
+  let totalQuantity = 0;
+  let totalPrice = 0;
+  cartItem.forEach((item) => {
+    totalQuantity += item.quantity!;
+    totalPrice += item.price! * item.quantity!;
+  });
+  return { totalPrice, totalQuantity };
+};
+
+const OrderValue = () => {
+  const cartItem = useSelector((state: RootState) => state.cartReducer.cart);
+
+  const quantity = getTotal(cartItem).totalQuantity;
+  const price = getTotal(cartItem).totalPrice;
+
+  return (
+    <div className="pt-5 pb-10 px-3">
+      <h2 className="font-bold text-center text-2xl mb-5">Order Value</h2>
+
+      <h3 className="text-xl text-center  ">
+        Total Quantity: <span className="font-bold"> {quantity}</span>
+      </h3>
+      <h3 className="text-xl text-center mt-5  ">
+        Total Price:{" "}
+        <span className="font-bold">
+          {new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+          }).format(price)}
+        </span>
+      </h3>
+
+      <div className="flex justify-center mt-7">
+        <button className="text-xl font-bold border-solid border-3 border-white text-white rounded-lg px-7 py-2">
+          <Link to="/order/checkout">Checkout</Link>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default OrderValue;
+```
+</CodeContainer>
+
+Let's show the cart quantity in the Navbar. Here is updated Navbar
+
+<CodeContainer fileName="src/components/Navbar.tsx">
+```jsx
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { RootState } from "../store/store";
+const Navbar = () => {
+  const [mobileNavActive, setMobileNavActive] = useState(false);
+
+  const cartItems = useSelector((state: RootState) => state.cartReducer.cart);
+
+  const getQuantity = () => {
+    let quantity = 0;
+    cartItems.forEach((item) => (quantity += item.quantity));
+    return quantity;
+  };
+
+  const cartCount = getQuantity();
+
+  return (
+    <header className="relative h-[80px]  ">
+      <div className="h-full max-w-7xl mx-auto flex justify-between items-center py-2 px-3">
+        <Link to="/" className="font-bold text-2xl px-3 md:px-0">
+          Ecommerce App
+        </Link>
+        <nav
+          className={` ${
+            mobileNavActive ? "flex" : "hidden"
+          } z-30  md:flex absolute md:static left-0 top-14 md:top-0 items-center w-full md:w-auto justify-center  bg-[#1f2023] text-white md:text-black md:bg-transparent`}
+        >
+          <ul
+            className={`flex flex-col md:flex-row text-[20px] py-5 md:py-3 justify-center  items-center gap-5 `}
+          >
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>
+              <Link to="/shop">Shop</Link>
+            </li>
+
+            <li className="md:ml-7  bg-orange-500 text-white px-6 py-2 rounded-md">
+              <Link className="flex items-center" to="/cart">
+                Cart
+                {cartCount > 0 && (
+                  <span className="ml-2 py-[2px] px-[8px] text-orange-500 text-sm font-bold rounded-full bg-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            </li>
+          </ul>
+        </nav>
+        <div
+          onClick={() => setMobileNavActive((prev) => !prev)}
+          className={` ${
+            mobileNavActive && "active"
+          }px-3 hamburger  block md:hidden mt-1 cursor-pointer`}
+        >
+          <span className="bar block w-[30px] h-[4px] bg-black"></span>
+          <span className="bar block w-[30px] mt-1 h-[4px] bg-black"></span>
+          <span className="bar block w-[30px] mt-1 h-[4px] bg-black"></span>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Navbar;
+```
+</CodeContainer>
+
+### Increasing and decreasing quantity
+
+Let's define the reducers to increase and decrease quantity. Go to cartSlice file and define them.
+
+<CodeContainer fileName="src/store/slice/cartSlice.ts">
+```ts
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import CartProduct from "../../types/CartProduct";
+
+export interface CartState {
+  cart: CartProduct[];
+}
+
+interface IncreaseQuantityPayload {
+  id: number;
+}
+
+interface DecreaseQuantityPayload {
+  id: number;
+}
+
+const cartSlice = createSlice({
+  name: "cart",
+  initialState: { cart: [] } as CartState,
+  reducers: {
+    addToCart: (state, action) => {
+      const itemInCart = state.cart.find(
+        (item) => item.id === action.payload.id
+      );
+      if (itemInCart) {
+        if (itemInCart.quantity !== undefined) {
+          itemInCart.quantity++;
+        }
+      } else {
+        state.cart.push({ ...action.payload, quantity: 1 });
+      }
+    },
+
+    increaseQuantity: (
+      state,
+      action: PayloadAction<IncreaseQuantityPayload>
+    ) => {
+      const item = state.cart.find((item) => item.id === action.payload.id);
+      if (item && item.quantity !== undefined) {
+        item.quantity++;
+      }
+    },
+    decreaseQuantity: (
+      state,
+      action: PayloadAction<DecreaseQuantityPayload>
+    ) => {
+      const item = state.cart.find((item) => item.id === action.payload.id);
+      if (item && item.quantity !== undefined && item.quantity > 1) {
+        item.quantity--;
+      }
+    },
+  },
+});
+
+export const { addToCart, increaseQuantity, decreaseQuantity } = cartSlice.actions;
+
+export const cartReducer = cartSlice.reducer;
+```
+</CodeContainer>
+
+Now simply dispatch these reducers in CartItemsCard.tsx
+
+
+<CodeContainer fileName="src/components/CartItemsCard.tsx">
+```jsx
+import { Minus, Plus, X } from "lucide-react";
+import React from "react";
+import { useDispatch } from "react-redux";
+import { decreaseQuantity, increaseQuantity } from "../store/cart/cartSlice";
+import CartProduct from "../types/CartProduct";
+
+interface CartItemsCardProps {
+  product: CartProduct;
+}
+
+const CartItemsCard: React.FC<CartItemsCardProps> = ({ product }) => {
+  const dispatch = useDispatch();
+
+  const onIncreaseQuantity = (productId: number) => {
+    dispatch(increaseQuantity({ id: productId }));
+  };
+
+  const onDecreaseQuantity = (productId: number) => {
+    dispatch(decreaseQuantity({ id: productId }));
+  };
+
+  const onRemoveItem = (productId: number) => {};
+
+  return (
+    <div className="flex  hover:shadow-lg  transition-all ease-in duration-150 basis-1/3 flex-1  flex-col border-2 border-slate-500 px-3 py-2 rounded-md">
+      <div className="flex flex-col items-center">
+        <img
+          className=" w-[225px] h-[225px] object-contain"
+          src={product.image}
+          alt={product.title}
+        />
+        <div className="my-5">
+          <h3 className="text-center  font-bold">{product.title}</h3>
+          <h3 className="text-center mt-3 font-medium">
+            {new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+            }).format(product.price)}
+          </h3>
+          <h3 className="text-center mt-3 font-medium">
+            Quantity: {product.quantity}
+          </h3>
+        </div>
+      </div>
+
+      <div className="flex justify-center items-center gap-5 mb-2">
+        <button
+          onClick={() => onIncreaseQuantity(product.id)}
+          title="Increase quantity"
+          className="bg-orange-500 px-2 py-2 text-white rounded-full"
+        >
+          <Plus />
+        </button>
+        <button
+          onClick={() => onDecreaseQuantity(product.id)}
+          title="Decrease Quantity"
+          className="bg-orange-500 px-2 py-2 text-white rounded-full"
+        >
+          <Minus />
+        </button>
+        <button
+          onClick={() => onRemoveItem(product.id)}
+          title="Remove item from cart"
+          className="bg-orange-500 px-2 py-2 text-white rounded-full"
+        >
+          <X />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default CartItemsCard;
+```
+</CodeContainer>
+
+Now perform these actions in the cart page and you will see values changing in the Navbar and in the order value component.
+
+### Removing Item from Cart
+
+We will simply apply the filter method on the cartItems array. Here is the updated code:
+
+<CodeContainer fileName="src/store/slice/cartSlice.ts">
+```ts
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import CartProduct from "../../types/CartProduct";
+
+export interface CartState {
+  cart: CartProduct[];
+}
+
+interface IncreaseQuantityPayload {
+  id: number;
+}
+
+interface DecreaseQuantityPayload {
+  id: number;
+}
+
+interface RemoveItemPayload {
+  id: number;
+}
+
+const cartSlice = createSlice({
+  name: "cart",
+  initialState: { cart: [] } as CartState,
+  reducers: {
+    addToCart: (state, action) => {
+      const itemInCart = state.cart.find(
+        (item) => item.id === action.payload.id
+      );
+      if (itemInCart) {
+        if (itemInCart.quantity !== undefined) {
+          itemInCart.quantity++;
+        }
+      } else {
+        state.cart.push({ ...action.payload, quantity: 1 });
+      }
+    },
+
+    increaseQuantity: (
+      state,
+      action: PayloadAction<IncreaseQuantityPayload>
+    ) => {
+      const item = state.cart.find((item) => item.id === action.payload.id);
+      if (item && item.quantity !== undefined) {
+        item.quantity++;
+      }
+    },
+
+    decreaseQuantity: (
+      state,
+      action: PayloadAction<DecreaseQuantityPayload>
+    ) => {
+      const item = state.cart.find((item) => item.id === action.payload.id);
+      if (item && item.quantity !== undefined && item.quantity > 1) {
+        item.quantity--;
+      }
+    },
+
+    removeItem: (state, action: PayloadAction<RemoveItemPayload>) => {
+      state.cart = state.cart.filter((item) => item.id !== action.payload.id);
+    },
+  },
+});
+
+export const { addToCart, increaseQuantity, decreaseQuantity, removeItem } = 
+  cartSlice.actions;
+
+export const cartReducer = cartSlice.reducer;
+```
+</CodeContainer>
+
+
+
+<CodeContainer fileName="src/components/CartItemsCard.tsx">
+```jsx
+import { Minus, Plus, X } from "lucide-react";
+import React from "react";
+import { useDispatch } from "react-redux";
+import {
+  decreaseQuantity,
+  increaseQuantity,
+  removeItem,
+} from "../store/cart/cartSlice";
+import CartProduct from "../types/CartProduct";
+
+interface CartItemsCardProps {
+  product: CartProduct;
+}
+
+const CartItemsCard: React.FC<CartItemsCardProps> = ({ product }) => {
+  const dispatch = useDispatch();
+
+  const onIncreaseQuantity = (productId: number) => {
+    dispatch(increaseQuantity({ id: productId }));
+  };
+
+  const onDecreaseQuantity = (productId: number) => {
+    dispatch(decreaseQuantity({ id: productId }));
+  };
+
+  const onRemoveItem = (productId: number) => {
+    dispatch(removeItem({ id: productId }));
+  };
+
+  return (
+    <div className="flex  hover:shadow-lg  transition-all ease-in duration-150 basis-1/3 flex-1  flex-col border-2 border-slate-500 px-3 py-2 rounded-md">
+      <div className="flex flex-col items-center">
+        <img
+          className=" w-[225px] h-[225px] object-contain"
+          src={product.image}
+          alt={product.title}
+        />
+        <div className="my-5">
+          <h3 className="text-center  font-bold">{product.title}</h3>
+          <h3 className="text-center mt-3 font-medium">
+            {new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+            }).format(product.price)}
+          </h3>
+          <h3 className="text-center mt-3 font-medium">
+            Quantity: {product.quantity}
+          </h3>
+        </div>
+      </div>
+
+      <div className="flex justify-center items-center gap-5 mb-2">
+        <button
+          onClick={() => onIncreaseQuantity(product.id)}
+          title="Increase quantity"
+          className="bg-orange-500 px-2 py-2 text-white rounded-full"
+        >
+          <Plus />
+        </button>
+        <button
+          onClick={() => onDecreaseQuantity(product.id)}
+          title="Decrease Quantity"
+          className="bg-orange-500 px-2 py-2 text-white rounded-full"
+        >
+          <Minus />
+        </button>
+        <button
+          onClick={() => onRemoveItem(product.id)}
+          title="Remove item from cart"
+          className="bg-orange-500 px-2 py-2 text-white rounded-full"
+        >
+          <X />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default CartItemsCard;
+```
+</CodeContainer>
+
+Now we have all functionality related to the cart. You can now add item to the cart, remove item and increasing and decreasing quantity of the item in the cart.
+
+
+## Conclusion
+
+In this post we setup the Redux toolkit in our react app and then we added functionality to perform cart actions. 
+
+Here is the [repo link](https://github.com/ksjitendra18/redux-toolkit-guide). If you have any query do let me know. Contact me via s[form](https://everythingcs.dev/contact/) or via the [EverythingCS discord server](https://discord.gg/W3nubBNeXK)
