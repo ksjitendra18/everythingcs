@@ -1,0 +1,450 @@
+---
+title: "Server Side Pagination in Next.js in Server Components using Drizzle ORM"
+publishedDate: 2023-10-28
+updatedDate: 2023-10-28
+description: "Setup server side pagination in Next.js server components using Drizzle ORM and planetscale"
+ogImage: "https://static.everythingcs.dev/blog/nextjs-server-side-pagination-server-components-drizzle-orm.png"
+featuredImage: "https://static.everythingcs.dev/blog/nextjs-server-side-pagination-server-components-drizzle-orm.png"
+category: ["JavaScript"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+
+
+
+import CodeContainer from "../../components/blog/code-container.astro"
+
+With the introduction of Server Components we can easily perform server side pagination in the Next.js app router with the help of query params so in this article we are going to see how to achieve exactly this using the Drizzle ORM.
+
+Please refer to the [github repo](https://github.com/ksjitendra18/nextjs-pagination.git) for code reference. This works well in both Next.js 14 and Next.js 13. This tutorial is based on Next.js 14.
+
+Here is the demonstration.
+
+<video muted controls>
+ <source src="https://static.everythingcs.dev/blog/pagination-nextjs-291023/nextjs-server-side-pagination-server-components-drizzle-orm.mp4"/>
+</video>
+
+## Setup
+
+I have setup a basic Next.js app with Drizzle ORM. [Download the setup from github](https://github.com/ksjitendra18/nextjs-pagination/archive/refs/heads/starter-code.zip). Extract it in your desired folder and run npm i to install all the packages.
+
+After installing create a local db or use a remote database. I am using a local mysql database.
+
+<CodeContainer fileName="terminal">
+```bash
+mysql -u username -p
+# enter password
+```
+</CodeContainer>
+
+<CodeContainer fileName="terminal">
+```bash
+create database paginationguide;
+```
+</CodeContainer>
+
+Now create a .env.local file and add the database url.
+
+<CodeContainer fileName="terminal">
+```bash
+DB_URL=mysql://username:password@localhost:3306/paginationguide
+```
+</CodeContainer>
+
+Now let's push the schema to the database and let's seed the database with the data.
+
+If you're not familiar with the drizzle orm here is the [Node.js Drizzle ORM Setup Guide with CRUD operations](https://everythingcs.dev/blog/nodejs-drizzle-orm-setup-crud-operation-typescript/)
+
+In the terminal run
+<CodeContainer fileName="terminal">
+
+```bash
+npm run drizzle-kit generate:mysql
+```
+
+</CodeContainer>
+
+<CodeContainer fileName="terminal">
+```bash
+npm run drizzle-kit push:mysql
+```
+</CodeContainer>
+
+After this let's run the seed script. I have already installed tsx to run the script so in terminal run
+
+<CodeContainer fileName="terminal">
+```bash
+npx tsx src/scripts/seed.ts
+```
+</CodeContainer>
+
+<img src="https://static.everythingcs.dev/blog/pagination-nextjs-291023/seed-db.png" loading="lazy"/>
+
+Now that our database has test data you can finally run the app with **npm run dev** command. You will see currently we are loading complete 500 data and this is not good performance wise and also for users.
+
+So let's fix it and add pagination to it.
+
+## Adding pagination
+
+Firstly let's limit the number of items we are getting from the database. We can easily do it by calling the limit function.
+<CodeContainer>
+
+```js
+const allUsers = await db.select().from(users).limit(6);
+```
+
+</CodeContainer>
+
+So now we can have only 6 posts. Now let's see how to see next 6 post. We need the offset function.
+
+<CodeContainer>
+
+```js
+const allUsers = await db.select().from(users).limit(6).offset(6);
+```
+
+</CodeContainer>
+
+So this will skip first 6 and will show users from id 7 to 12. So by manipulating this we can get next set of users.
+
+Now we to implement pagination we will use the parameter that will keep the page number and based on page number we will offset the user.
+
+Let's get the value stored in the url in server components
+<CodeContainer fileName="page.tsx">
+
+```jsx
+interface SearchParamsProps {
+  searchParams: {
+    page: string;
+  };
+}
+export default async function Home({ searchParams }: SearchParamsProps) {
+  console.log(searchParams.page)
+}
+```
+
+</CodeContainer>
+
+Now visit localhost:3000/?page=2 You will get the value 2 in the terminal.
+
+Now let's talk about the functionality the core concept.
+
+For example let's say we want to show 6 post every page. Let's store it in the constant **numberOfItems**. for page 1 it will offset 0 and for page 2 it will offset numberOfItems value. For page 3 it will offset by twice the numberOfItems.
+
+So the generalised formula is **offsetItems = (pageNumber - 1) * numberOfItems**
+
+<CodeContainer>
+
+```jsx
+
+const pageNumber = searchParams.page ?? 1;
+
+const numberOfItems = 6;
+
+const offsetItems = (Number(pageNumber) - 1) * numberOfItems;
+
+const allUsers = await db.select().from(users).limit(6).offset(offsetItems);
+
+```
+
+</CodeContainer>
+
+ Let's add 2 Link to navigate to other pages.
+
+ Here is the code.(In later part we will refactor it)
+
+<CodeContainer fileName="page.tsx">
+
+```tsx
+
+import { users } from "@/db/schema";
+import { db } from "@/db/setup";
+import Link from "next/link";
+
+interface SearchParamsProps {
+  searchParams: {
+    page: string;
+  };
+}
+export default async function Home({ searchParams }: SearchParamsProps) {
+  const pageNumber = Number(searchParams.page ?? 1);
+
+  const numberOfItems = 6;
+
+  const offsetItems = (pageNumber - 1) * numberOfItems;
+
+  const allUsers = await db.select().from(users).limit(numberOfItems).offset(offsetItems);
+  return (
+    <main className="max-w-7xl my-5 mx-auto px-3">
+      <h2 className="text-center text-2xl font-bold my-5">Users </h2>
+      <div className=" relative  overflow-hidden ">
+        <table className=" border-2  rounded-xl border-slate-700 table-fixed w-full text-sm">
+          <thead>
+            <tr>
+              <th className="border-b-2 border-slate-700  font-medium p-4 pl-8  pb-3 text-left">
+                ID
+              </th>
+              <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                Name
+              </th>
+              <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                Email
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {allUsers.map((user) => (
+              <tr key={user.id}>
+                <td className="border-b border-slate-700  p-4 pl-8  ">
+                  {user.id}
+                </td>
+                <td className="border-b border-slate-700  p-4 pl-8  ">
+                  {user.name}
+                </td>
+                <td className="border-b border-slate-700  p-4 pl-8  ">
+                  {user.email}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex my-5 justify-end items-center gap-5">
+        <Link
+          href={`/?page=${pageNumber - 1}`}
+          className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-500"
+        >
+          Previous
+        </Link>
+        <Link
+          href={`/?page=${pageNumber + 1}`}
+          className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-500"
+        >
+          Next
+        </Link>
+      </div>
+    </main>
+  );
+}
+```
+
+</CodeContainer>
+
+Now this works fine but lacks validation. For example we can go to page 0 that will cause error and we will prevent user from going to page beyond users are there.
+
+## Validation
+
+### For previous button
+
+Firstly let's prevent the users from going beyond page 1.
+
+Let's make use of URLSearchParams and we will use it to manage the params. Let's delete the params from the url if it is below 3. Also let's add a check in offsetItems.
+
+<CodeContainer>
+
+```jsx
+ const offsetItems = pageNumber > 1 ? (pageNumber - 1) * numberOfItems : 0;
+
+const prevSearchParams = new URLSearchParams();
+const nextSearchParams = new URLSearchParams();
+
+if (pageNumber > 2) {
+  prevSearchParams.set("page", `${pageNumber - 1}`);
+} else {
+  prevSearchParams.delete("page");
+}
+
+...
+
+<Link
+  href={pageNumber < 2 ? `` : `/?${prevSearchParams}`}
+  className={`${
+    pageNumber < 2
+    ? "bg-gray-500 cursor-not-allowed"
+    : "bg-blue-600 hover:bg-blue-500"
+  } px-5 py-2 rounded-md text-white`}
+  >
+  Previous
+</Link>
+
+```
+
+</CodeContainer>
+
+### For Next Button
+
+User can go to any arbitary page number so we have to prevent the users from going beyond the data page. So firstly we will have to know how many pages do we need.
+
+So to calculate the number of pages we will first **count the number of entries and divide it by the numberOfItems**.
+
+To calculate the number of rows or number of entries in drizzle orm run the following command
+<CodeContainer>
+
+```jsx
+const totalUsers = await db
+  .select({ count: sql<number>`count(*)` })
+  .from(users);
+```
+
+</CodeContainer>
+If you  log it, output will be
+
+<CodeContainer>
+
+```js
+[ { count: 500 } ]
+```
+
+</CodeContainer>
+
+ Let's calculate the number of pages
+
+<CodeContainer>
+
+```js
+const totalUsers = await db
+  .select({ count: sql<number>`count(*)` })
+  .from(users);
+
+  const numberOfPages = Math.ceil(totalUsers[0].count / numberOfItems);
+```
+
+</CodeContainer>
+
+Now let's add the validation. Here is the complete final page.tsx file.
+
+<CodeContainer fileName="page.tsx">
+
+```tsx
+import { users } from "@/db/schema";
+import { db } from "@/db/setup";
+import { sql } from "drizzle-orm";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+interface SearchParamsProps {
+  searchParams: {
+    page: string;
+  };
+}
+
+export default async function Home({ searchParams }: SearchParamsProps) {
+  const pageNumber = Number(searchParams.page ?? 1);
+
+  const numberOfItems = 6;
+
+  const totalUsers = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(users);
+
+  const numberOfPages = Math.ceil(totalUsers[0].count / numberOfItems);
+
+  let safePageNumber = 1;
+
+  if (pageNumber < 1) {
+    redirect("/");
+  } else if (pageNumber > numberOfPages) {
+    redirect("/");
+  } else {
+    safePageNumber = pageNumber;
+  }
+
+  const offsetItems =
+    safePageNumber > 1 ? (safePageNumber - 1) * numberOfItems : 0;
+
+  const allUsers = await db.select().from(users).limit(6).offset(offsetItems);
+
+  const prevSearchParams = new URLSearchParams();
+  const nextSearchParams = new URLSearchParams();
+
+  if (safePageNumber > 2) {
+    prevSearchParams.set("page", `${safePageNumber - 1}`);
+  } else {
+    prevSearchParams.delete("page");
+  }
+
+  if (safePageNumber > 0) {
+    if (safePageNumber === numberOfPages) {
+      nextSearchParams.set("page", `${numberOfPages}`);
+    } else {
+      nextSearchParams.set("page", `${safePageNumber + 1}`);
+    }
+  } else {
+    nextSearchParams.delete("page");
+  }
+
+  return (
+    <main className="max-w-7xl my-5 mx-auto px-3">
+      <h2 className="text-center text-2xl font-bold my-5">Users </h2>
+      <div className=" relative  overflow-hidden ">
+        <table className=" border-2  rounded-xl border-slate-700 table-fixed w-full text-sm">
+          <thead>
+            <tr>
+              <th className="border-b-2 border-slate-700  font-medium p-4 pl-8  pb-3 text-left">
+                ID
+              </th>
+              <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                Name
+              </th>
+              <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                Email
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {allUsers.map((user) => (
+              <tr key={user.id}>
+                <td className="border-b border-slate-700  p-4 pl-8  ">
+                  {user.id}
+                </td>
+                <td className="border-b border-slate-700  p-4 pl-8  ">
+                  {user.name}
+                </td>
+                <td className="border-b border-slate-700  p-4 pl-8  ">
+                  {user.email}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex my-5 justify-end items-center gap-5">
+        <Link
+          href={`/?${prevSearchParams}`}
+          className={`${
+            safePageNumber < 2
+              ? "bg-gray-500 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-500"
+          } px-5 py-2 rounded-md text-white `}
+        >
+          Previous
+        </Link>
+
+        <Link
+          href={`/?${nextSearchParams}`}
+          className={`${
+            safePageNumber >= numberOfPages
+              ? "bg-gray-500 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-500"
+          } px-5 py-2 rounded-md text-white `}
+        >
+          Next
+        </Link>
+      </div>
+    </main>
+  );
+}
+```
+
+</CodeContainer>
+
+## Conclusion
+
+So in this post we implemented the server side pagination in server components in the Nextjs 13/14 with app router using drizzle orm.
+
+Please refer to this repo for the code.
+
+Also if you have any query feel free to reach out to me via [EverythingCS discord server](https://discord.gg/W3nubBNeXK).
