@@ -15,7 +15,7 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
   );
 
   return paginate(posts, {
-    pageSize: 12,
+    pageSize: 10,
   });
 }
 
@@ -39,6 +39,47 @@ const { page } = Astro.props as { page: Page<CollectionEntry<"blog">> };
           />
         ))
       }
+    </div>
+
+    <div>
+      <p class="text-center font-semibold mb-5">
+        Showing{" "}{
+          page.currentPage > 1 ? 10 + page.data.length : page.data.length
+        } posts out of{" "}
+        {page.total}
+      </p>
+      <div class="mb-5 flex items-center justify-center gap-5">
+        {
+          page.url.prev ? (
+            <a
+              href={`${page.url.prev}/`}
+              class="bg-blue-600 px-5 py-2 rounded-md  text-white"
+            >
+              Previous
+            </a>
+          ) : (
+            <span class="bg-gray-600 cursor-not-allowed px-5 py-2 rounded-md  text-white">
+              Previous
+            </span>
+          )
+        }
+        {
+          page.url.next ? (
+            <a
+              class="bg-blue-600 px-5 py-2 rounded-mdtext-white"
+              href={`${page.url.next}/`}
+            >
+              Next
+            </a>
+          ) : (
+            <span
+              class="bg-gray-600 cursor-not-allowed px-5 py-2 rounded-md  text-white"
+            >
+              Next
+            </span>
+          )
+        }
+      </div>
     </div>
   </section>
 </MainLayout>
