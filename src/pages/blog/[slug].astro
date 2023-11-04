@@ -2,8 +2,8 @@
 import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPostLayout from "../../components/layout/blog-post-layout.astro";
 import TableOfContents from "../../components/blog/table-of-contents.astro";
+
 export async function getStaticPaths() {
-  // const posts = await getCollection("blog");
   const posts = await getCollection("blog", ({ data }) => {
     return data.draft !== true;
   });

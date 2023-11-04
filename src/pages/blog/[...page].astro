@@ -29,13 +29,25 @@ const { page } = Astro.props as { page: Page<CollectionEntry<"blog">> };
   <section class="mt-10">
     <h1 class="text-xl md:text-3xl text-center font-bold">Latest Posts</h1>
 
-    <div class="my-10 flex flex-col gap-5">
+    <!-- <div class="my-10 flex flex-col gap-5">
       {
         page.data.map((post) => (
           <PostCard
             title={post.data.title}
             description={post.data.description}
             slug={post.slug}
+          />
+        ))
+      }
+    </div> -->
+    <div class="my-10 grid grid-cols-1 md:grid-cols-2 gap-5">
+      {
+        page.data.map((post) => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            slug={post.slug}
+            updatedDate={post.data.updatedDate}
           />
         ))
       }
