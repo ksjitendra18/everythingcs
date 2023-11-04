@@ -1,0 +1,158 @@
+---
+import { type CollectionEntry, getCollection } from "astro:content";
+
+import CategoryCard from "../../components/category-card.astro";
+import MainLayout from "../../components/layout/main-layout.astro";
+import PostCard from "../../components/blog/post-card.astro";
+import slugify from "../../utils/slugify";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog", ({ data }) => {
+    return data.draft !== true;
+  });
+
+  const uniqueCategories = [
+    ...new Set(posts.map((post) => post.data.category).flat()),
+  ];
+
+  return uniqueCategories.map((category) => {
+    const filteredPosts = posts
+      .filter((post) => post.data.category.includes(category))
+      .sort(
+        (a, b) =>
+          b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
+      );
+
+    console.log("category", category, slugify(category));
+    return {
+      params: { category: slugify(category) },
+      props: { posts: filteredPosts },
+    };
+  });
+}
+const { posts } = Astro.props;
+const { category } = Astro.params;
+
+interface Category {
+  title: string;
+  description: string;
+}
+
+const categoryMapper: Record<string, Category> = {
+  javascript: {
+    title: "Posts realted to JavaScript",
+    description: "Browse all the post related to JavaScript",
+  },
+  typescript: {
+    title: "Posts realted to TypeScript",
+    description: "Browse all the post related to TypeScript",
+  },
+  nextjs: {
+    title: "Posts realted to Next.js",
+    description: "Browse all the post related to next.js",
+  },
+
+  nuxtjs: {
+    title: "Posts realted to Nuxt.js",
+    description: "Browse all the post related to Nuxt.js",
+  },
+  sveltekit: {
+    title: "Posts realted to Sveltekit",
+    description: "Browse all the post related to Sveltekit",
+  },
+
+  tailwindcss: {
+    title: "Posts realted to TailwindCSS",
+    description: "Browse all the post related to TailwindCSS",
+  },
+  reactjs: {
+    title: "Posts realted to React.js",
+    description: "Browse all the post related to React.js",
+  },
+  svelte: {
+    title: "Posts realted to Svelte",
+    description: "Browse all the post related to Svelte",
+  },
+  astro: {
+    title: "Posts realted to Astro",
+    description: "Browse all the post related to Astro",
+  },
+  vuejs: {
+    title: "Posts realted to Vue.js",
+    description: "Browse all the post related to Vue.js",
+  },
+  "cloudflare-workers": {
+    title: "Posts realted to Cloudflare Workers",
+    description: "Browse all the post related to Cloudflare Workers",
+  },
+  hono: {
+    title: "Posts realted to Hono",
+    description: "Browse all the post related to Hono",
+  },
+  expressjs: {
+    title: "Posts realted to Express",
+    description: "Browse all the post related to Express",
+  },
+  nodejs: {
+    title: "Posts realted to Node.js",
+    description: "Browse all the post related to Node.js",
+  },
+  deno: {
+    title: "Posts realted to Deno",
+    description: "Browse all the post related to Deno",
+  },
+  bun: {
+    title: "Posts realted to Bun",
+    description: "Browse all the post related to Bun",
+  },
+  "drizzle-orm": {
+    title: "Posts realted to DrizzleORM",
+    description: "Browse all the post related to DrizzleORM",
+  },
+  prisma: {
+    title: "Posts realted to prisma",
+    description: "Browse all the post related to prisma",
+  },
+  orm: {
+    title: "Posts realted to ORM",
+    description: "Browse all the post related to ORM",
+  },
+  firebase: {
+    title: "Posts realted to Firebase",
+    description: "Browse all the post related to Firebase",
+  },
+  "global-state-management-reactjs": {
+    title: "Posts realted to Global State Management in React",
+    description:
+      "Browse all the post related to Global State Management in React",
+  },
+  authentication: {
+    title: "Posts realted to Authentication",
+    description: "Browse all the post related to Authentication",
+  },
+};
+---
+
+<MainLayout
+  title={categoryMapper[category].title}
+  description={categoryMapper[category].description}
+>
+  <div class="mt-10">
+    <h2 class="text-xl md:text-3xl text-center font-bold">
+      {categoryMapper[category].title}
+    </h2>
+
+    <div class="my-10 flex flex-col gap-5">
+      {
+        posts.map((post) => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            slug={post.slug}
+            updatedDate={post.data.updatedDate}
+          />
+        ))
+      }
+    </div>
+  </div>
+</MainLayout>

@@ -12,36 +12,48 @@ import MainLayout from "../../components/layout/main-layout.astro";
       Browse all categories
     </h2>
 
-    <div class="my-5">
+    <div class="my-10">
       <h3 class="font-medium text-xl">Full Stack</h3>
 
-      <div class="flex gap-4 my-5">
+      <div class="category-section">
         <CategoryCard href={"/nextjs"} title={"Next.js"} />
         <CategoryCard href={"/nuxtjs"} title={"Nuxt.js"} />
         <CategoryCard href={"/sveltekit"} title={"Sveltekit"} />
       </div>
     </div>
-    <div class="my-5">
+    <div class="my-10">
       <h3 class="font-medium text-xl">Frontend</h3>
 
-      <div class="flex gap-4 my-5">
+      <div class="category-section">
         <CategoryCard href={"/reactjs"} title={"React.js"} />
         <CategoryCard href={"/vuejs"} title={"Vue.js"} />
         <CategoryCard href={"/svelte"} title={"Svelte"} />
+        <CategoryCard href={"/astro"} title={"Astro"} />
         <CategoryCard href={"/tailwindcss"} title={"Tailwind CSS"} />
       </div>
     </div>
-    <div class="my-5">
+    <div class="my-10">
       <h3 class="font-medium text-xl">Backend</h3>
 
-      <div class="flex gap-4 my-5">
+      <div class="category-section">
+        <CategoryCard href={"/nodejs"} title={"Node.js"} />
+        <CategoryCard href={"/deno"} title={"Deno"} />
+        <CategoryCard href={"/bun"} title={"Bun"} />
         <CategoryCard href={"/expressjs"} title={"Express.js"} />
-        <CategoryCard href={"/hono"} title={"Honow"} />
+        <CategoryCard href={"/hono"} title={"Hono"} />
         <CategoryCard
           href={"/cloudflare-workers"}
           title={"Cloudflare Workers"}
         />
+        <CategoryCard href={"/drizzle-orm"} title={"Drizzle ORM"} />
+        <CategoryCard href={"/prisma"} title={"Prisma"} />
       </div>
     </div>
   </div>
 </MainLayout>
+
+<style>
+  .category-section {
+    @apply flex flex-col md:flex-row flex-wrap gap-4 my-5;
+  }
+</style>
