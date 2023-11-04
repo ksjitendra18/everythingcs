@@ -1,0 +1,7 @@
+---
+const { title, href } = Astro.props;
+---
+
+<a href={`/category${href}/`} class="border-2 px-16 py-8 rounded-sm hover:bg-white/10  w-fit">
+  <span class="w-fit">{title}</span>
+</a>
