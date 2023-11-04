@@ -1,18 +1,17 @@
 ---
-
-title: 'Tailwind CSS not applying style to Next.js error'
+title: "Tailwind CSS not applying style to Next.js error"
 publishedDate: 2022-09-26
 updatedDate: 2023-09-15
-description: 'Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS?'
-featuredImage: '/images/posts/img1.jpg'
+description: "Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS?"
+featuredImage: "/images/posts/img1.jpg"
 ogImage: "https://static.everythingcs.dev/blog/tailwindcss-not-applying-style-nextjs-image.png"
-category: ['JavaScript']
-author: 'Jitendra'
+category: ["JavaScript", "TailwindCSS", "Nextjs"]
+author: "Jitendra"
 isFeatured: true
 draft: false
 ---
-import CodeContainer from "../../components/blog/code-container.astro"
 
+import CodeContainer from "../../components/blog/code-container.astro";
 
 Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS? So let’s fix this problem.
 
@@ -27,16 +26,13 @@ The very first step is to remove the current installation.
 For npm:
 
 <CodeContainer fileName="terminal">
-```bash
-npm uninstall tailwindcss postcss autoprefixer
-```
+  ```bash npm uninstall tailwindcss postcss autoprefixer ```
 </CodeContainer>
 
 For yarn:
+
 <CodeContainer fileName="terminal">
-```bash
-yarn remove tailwindcss postcss autoprefixer
-```
+  ```bash yarn remove tailwindcss postcss autoprefixer ```
 </CodeContainer>
 
 Then clear cache
@@ -46,7 +42,8 @@ Then clear cache
 npm : npm cache clean --force
 
 yarn : yarn cache clean
- ```
+
+````
 </CodeContainer>
 
 
@@ -56,53 +53,48 @@ Also clear the .next folder generated
 ```shell
 Windows Powershell: Remove-Item .\.next\ -Recurse
 Bash/zsh: rm -rf ./next
- ```
+````
+
 </CodeContainer>
 
-
 Then again install tailwindcss with all the dependencies
+
 <CodeContainer fileName="terminal">
-```bash
-npm i -D tailwindcss postcss autoprefixer
-or
-yarn add --dev tailwindcss postcss autoprefixer
-```
+  ```bash npm i -D tailwindcss postcss autoprefixer or yarn add --dev
+  tailwindcss postcss autoprefixer ```
 </CodeContainer>
 
 then run
+
 <CodeContainer fileName="terminal">
 
 ```bash
 npx tailwindcss init -p
 ```
+
 </CodeContainer>
 
 then modify tailwind.config.js
 
 instead of
+
 <CodeContainer>
 
 ```js
-content:[]  
+content: [];
 ```
+
 </CodeContainer>
 
 replace with
 
 <CodeContainer>
-```js
-  content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
- 
-    // Or if using `src` directory:
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
-```
+  ```js content: [ "./app/**/*.{(js, ts, jsx, tsx, mdx)}", "./pages/**/*.
+  {(js, ts, jsx, tsx, mdx)}", "./components/**/*.{(js, ts, jsx, tsx, mdx)}", // Or
+  if using `src` directory: "./src/**/*.{(js, ts, jsx, tsx, mdx)}", ], ```
 </CodeContainer>
 
-Your  tailwind.config.js should look like this 👇
+Your tailwind.config.js should look like this 👇
 
 <CodeContainer fileName="tailwind.config.js">
 ```js
@@ -124,7 +116,7 @@ module.exports = {
 ```
 </CodeContainer>
 
-## Incorrect Syntax 
+## Incorrect Syntax
 
 This happened with me once and honestly I was unable to figure out for like good 5 minutes 😥
 
@@ -133,28 +125,20 @@ The reason was I did not copy the content path from docs and I wrote it without 
 The main reason was the spaces after the comma.
 
 <CodeContainer fileName="tailwind.config.js">
-```js
-//error code
-content: ["./src/**/*.{js, ts, tsx, jsx}"],
-```
+  ```js //error code content: ["./src/**/*.{(js, ts, tsx, jsx)}"], ```
 </CodeContainer>
 
 Now these gaps are invalid and tailwind will not pickup the classes used. So make sure it is valid.
 
 <CodeContainer fileName="tailwind.config.js">
-```js
-// valid
-content: ["./src/**/*.{js,ts,tsx,jsx}"],
-```
+  ```js // valid content: ["./src/**/*.{(js, ts, tsx, jsx)}"], ```
 </CodeContainer>
-
-
 
 ## Incorrect Path
 
 This could be the reason for tailwind classes not being applied. Check where your actual source file is stored. For example next.js has multiple way to create routes like app folder and pages folder and optionally you can use src directory also.
 
-If you have moved your pages folder  into src folder or any such things just change your tailwind.config.js. Your tailwind.config.js should look like this
+If you have moved your pages folder into src folder or any such things just change your tailwind.config.js. Your tailwind.config.js should look like this
 
 <CodeContainer fileName="tailwind.config.js">
 ```js
@@ -172,6 +156,7 @@ module.exports = {
 </CodeContainer>
 
 for app directory in src folder
+
 <CodeContainer fileName="tailwind.config.js">
 ```js
 module.exports = {

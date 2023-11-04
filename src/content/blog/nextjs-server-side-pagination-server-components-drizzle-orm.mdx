@@ -5,15 +5,13 @@ updatedDate: 2023-10-31
 description: "Setup server side pagination in Next.js server components using Drizzle ORM and planetscale"
 ogImage: "https://static.everythingcs.dev/blog/nextjs-server-side-pagination-server-components-drizzle-orm.png"
 featuredImage: "https://static.everythingcs.dev/blog/nextjs-server-side-pagination-server-components-drizzle-orm.png"
-category: ["JavaScript"]
+category: ["Nextjs"]
 author: "Jitendra"
 isFeatured: true
 draft: false
 ---
 
-
-
-import CodeContainer from "../../components/blog/code-container.astro"
+import CodeContainer from "../../components/blog/code-container.astro";
 
 With the introduction of Server Components we can easily perform server side pagination in the Next.js app router with the help of query params so in this article we are going to see how to achieve exactly this using the Drizzle ORM.
 
@@ -22,7 +20,7 @@ Please refer to the [github repo](https://github.com/ksjitendra18/nextjs-paginat
 Here is the demonstration.
 
 <video muted controls>
- <source src="https://static.everythingcs.dev/blog/pagination-nextjs-291023/nextjs-server-side-pagination-server-components-drizzle-orm.mp4"/>
+  <source src="https://static.everythingcs.dev/blog/pagination-nextjs-291023/nextjs-server-side-pagination-server-components-drizzle-orm.mp4" />
 </video>
 
 ## Setup
@@ -32,24 +30,17 @@ I have setup a basic Next.js app with Drizzle ORM. [Download the setup from gith
 After installing create a local db or use a remote database. I am using a local mysql database.
 
 <CodeContainer fileName="terminal">
-```bash
-mysql -u username -p
-# enter password
-```
+  ```bash mysql -u username -p # enter password ```
 </CodeContainer>
 
 <CodeContainer fileName="terminal">
-```bash
-create database paginationguide;
-```
+  ```bash create database paginationguide; ```
 </CodeContainer>
 
 Now create a .env.local file and add the database url.
 
 <CodeContainer fileName="terminal">
-```bash
-DB_URL=mysql://username:password@localhost:3306/paginationguide
-```
+  ```bash DB_URL=mysql://username:password@localhost:3306/paginationguide ```
 </CodeContainer>
 
 Now let's push the schema to the database and let's seed the database with the data.
@@ -57,6 +48,7 @@ Now let's push the schema to the database and let's seed the database with the d
 If you're not familiar with the drizzle orm here is the [Node.js Drizzle ORM Setup Guide with CRUD operations](https://everythingcs.dev/blog/nodejs-drizzle-orm-setup-crud-operation-typescript/)
 
 In the terminal run
+
 <CodeContainer fileName="terminal">
 
 ```bash
@@ -66,20 +58,19 @@ npm run drizzle-kit generate:mysql
 </CodeContainer>
 
 <CodeContainer fileName="terminal">
-```bash
-npm run drizzle-kit push:mysql
-```
+  ```bash npm run drizzle-kit push:mysql ```
 </CodeContainer>
 
 After this let's run the seed script. I have already installed tsx to run the script so in terminal run
 
 <CodeContainer fileName="terminal">
-```bash
-npx tsx src/scripts/seed.ts
-```
+  ```bash npx tsx src/scripts/seed.ts ```
 </CodeContainer>
 
-<img src="https://static.everythingcs.dev/blog/pagination-nextjs-291023/seed-db.png" loading="lazy"/>
+<img
+  src="https://static.everythingcs.dev/blog/pagination-nextjs-291023/seed-db.png"
+  loading="lazy"
+/>
 
 Now that our database has test data you can finally run the app with **npm run dev** command. You will see currently we are loading complete 500 data and this is not good performance wise and also for users.
 
@@ -88,6 +79,7 @@ So let's fix it and add pagination to it.
 ## Adding pagination
 
 Firstly let's limit the number of items we are getting from the database. We can easily do it by calling the limit function.
+
 <CodeContainer>
 
 ```js
@@ -111,16 +103,17 @@ So this will skip first 6 and will show users from id 7 to 12. So by manipulatin
 Now we to implement pagination we will use the parameter that will keep the page number and based on page number we will offset the user.
 
 Let's get the value stored in the url in server components
+
 <CodeContainer fileName="page.tsx">
 
 ```jsx
 interface SearchParamsProps {
   searchParams: {
-    page: string;
+    page: string,
   };
 }
 export default async function Home({ searchParams }: SearchParamsProps) {
-  console.log(searchParams.page)
+  console.log(searchParams.page);
 }
 ```
 
@@ -132,12 +125,11 @@ Now let's talk about the functionality the core concept.
 
 For example let's say we want to show 6 post every page. Let's store it in the constant **numberOfItems**. for page 1 it will offset 0 and for page 2 it will offset numberOfItems value. For page 3 it will offset by twice the numberOfItems.
 
-So the generalised formula is **offsetItems = (pageNumber - 1) * numberOfItems**
+So the generalised formula is **offsetItems = (pageNumber - 1) \* numberOfItems**
 
 <CodeContainer>
 
 ```jsx
-
 const pageNumber = searchParams.page ?? 1;
 
 const numberOfItems = 6;
@@ -145,19 +137,17 @@ const numberOfItems = 6;
 const offsetItems = (Number(pageNumber) - 1) * numberOfItems;
 
 const allUsers = await db.select().from(users).limit(6).offset(offsetItems);
-
 ```
 
 </CodeContainer>
 
- Let's add 2 Link to navigate to other pages.
+Let's add 2 Link to navigate to other pages.
 
- Here is the code.(In later part we will refactor it)
+Here is the code.(In later part we will refactor it)
 
 <CodeContainer fileName="page.tsx">
 
 ```tsx
-
 import { users } from "@/db/schema";
 import { db } from "@/db/setup";
 import Link from "next/link";
@@ -174,7 +164,11 @@ export default async function Home({ searchParams }: SearchParamsProps) {
 
   const offsetItems = (pageNumber - 1) * numberOfItems;
 
-  const allUsers = await db.select().from(users).limit(numberOfItems).offset(offsetItems);
+  const allUsers = await db
+    .select()
+    .from(users)
+    .limit(numberOfItems)
+    .offset(offsetItems);
   return (
     <main className="max-w-7xl my-5 mx-auto px-3">
       <h2 className="text-center text-2xl font-bold my-5">Users </h2>
@@ -280,11 +274,12 @@ User can go to any arbitary page number so we have to prevent the users from goi
 So to calculate the number of pages we will first **count the number of entries and divide it by the numberOfItems**.
 
 To calculate the number of rows or number of entries in drizzle orm run the following command
+
 <CodeContainer>
 
 ```jsx
 const totalUsers = await db
-  .select({ count: sql<number>`count(*)` })
+  .select({ count: sql < number > `count(*)` })
   .from(users);
 ```
 
@@ -294,21 +289,21 @@ If you  log it, output will be
 <CodeContainer>
 
 ```js
-[ { count: 500 } ]
+[{ count: 500 }];
 ```
 
 </CodeContainer>
 
- Let's calculate the number of pages
+Let's calculate the number of pages
 
 <CodeContainer>
 
 ```js
 const totalUsers = await db
-  .select({ count: sql<number>`count(*)` })
+  .select({ count: sql < number > `count(*)` })
   .from(users);
 
-  const numberOfPages = Math.ceil(totalUsers[0].count / numberOfItems);
+const numberOfPages = Math.ceil(totalUsers[0].count / numberOfItems);
 ```
 
 </CodeContainer>
@@ -445,6 +440,6 @@ export default async function Home({ searchParams }: SearchParamsProps) {
 
 So in this post we implemented the server side pagination in server components in the Nextjs 13/14 with app router using drizzle orm.
 
-Please refer to this repo for the code.
+Please [refer to this repo for the code](https://github.com/ksjitendra18/nextjs-pagination).
 
 Also if you have any query feel free to reach out to me via [EverythingCS discord server](https://discord.gg/W3nubBNeXK).
