@@ -66,15 +66,13 @@ const { page } = Astro.props as { page: Page<CollectionEntry<"blog">> };
         {
           page.url.next ? (
             <a
-              class="bg-blue-600 px-5 py-2 rounded-mdtext-white"
+              class="bg-blue-600 px-5 py-2 rounded-md text-white"
               href={`${page.url.next}/`}
             >
               Next
             </a>
           ) : (
-            <span
-              class="bg-gray-600 cursor-not-allowed px-5 py-2 rounded-md  text-white"
-            >
+            <span class="bg-gray-600 cursor-not-allowed px-5 py-2 rounded-md  text-white">
               Next
             </span>
           )
