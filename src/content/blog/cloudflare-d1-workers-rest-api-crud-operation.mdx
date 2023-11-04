@@ -1,26 +1,29 @@
 ---
-
 title: "Cloudflare D1 Database and Workers REST API CRUD Operation with Hono"
 publishedDate: 2023-10-05
 updatedDate: 2023-10-05
 description: "Build a complete REST API running on edge by cloudflare workers using D1 database using Hono Framework"
 ogImage: "https://static.everythingcs.dev/blog/d1-crud-021023/cloudflare-d1-workers-rest-api-crud-operation.png"
 featuredImage: "https://static.everythingcs.dev/blog/d1-crud-021023/cloudflare-d1-workers-rest-api-crud-operation.png"
-category: ["JavaScript"]
+category: ["Cloudflare Workers", "Hono"]
 author: "Jitendra"
 isFeatured: true
 draft: false
 ---
 
-import CodeContainer from "../../components/blog/code-container.astro"
+import CodeContainer from "../../components/blog/code-container.astro";
 
 Cloudflare D1 is a SQLite database offering as a service by Cloudflare which is now in Beta version. Lets explore D1 database using Cloudflare workers and design a restful API performing CRUD (Create, Read, Update, Delete) operations using the Hono Framework.
 
 In this tutorial I am going to build basic Todo application, nothing fancy. I will use basic features provided by cloudflare D1 and in next post I will dive deeper into it like using relations, joins etc and might bring DrizzleORM too.
 
 Watch this demo on what we are going to build
+
 <video title="Video demonstrating CRUD operation" controls muted class="mb-3">
-  <source src="https://static.everythingcs.dev/blog/d1-crud-021023/crud-operations.mp4" type="video/mp4" />
+  <source
+    src="https://static.everythingcs.dev/blog/d1-crud-021023/crud-operations.mp4"
+    type="video/mp4"
+  />
 </video>
 
 Here is the [repository link](https://github.com/ksjitendra18/d1-workers-crud). Also if you're facing any issue contact me on [discord](https://discord.gg/W3nubBNeXK). Now let's begin.
@@ -33,23 +36,18 @@ Just [download the zip](https://github.com/ksjitendra18/d1-workers-crud/archive/
 
 Make sure you are in the frontend folder then install the packages using
 
-<CodeContainer fileName="terminal">
-```bash
-npm i
-```
-</CodeContainer>
+<CodeContainer fileName="terminal">```bash npm i ```</CodeContainer>
 
 Then run the following command to run the react program
 
-<CodeContainer fileName="terminal">
-```bash
-npm run dev
-```
-</CodeContainer>
+<CodeContainer fileName="terminal">```bash npm run dev ```</CodeContainer>
 
 You will see something like this...
 
-<img src="https://static.everythingcs.dev/blog/d1-crud-021023/todos-app-setup-fe.png" loading="lazy"/>
+<img
+  src="https://static.everythingcs.dev/blog/d1-crud-021023/todos-app-setup-fe.png"
+  loading="lazy"
+/>
 
 Don't mind the error for now. That will be fixed
 
@@ -64,7 +62,8 @@ I am going to keep frontend and api in single folder. So firstly I will create a
 mkdir api
 
 cd api
-```
+
+````
 </CodeContainer>
 
 Now in api folder I will create a new hono app using **create-hono** cli
@@ -72,22 +71,25 @@ Now in api folder I will create a new hono app using **create-hono** cli
 <CodeContainer fileName="terminal">
 ```bash
 npm create hono@latest
-```
+````
+
 </CodeContainer>
 
-<img src="https://static.everythingcs.dev/blog/d1-crud-021023/todos-api-setup.png" loading="lazy"/>
+<img
+  src="https://static.everythingcs.dev/blog/d1-crud-021023/todos-api-setup.png"
+  loading="lazy"
+/>
 
-Here is what folder looks like 
+Here is what folder looks like
 
-<img src="https://static.everythingcs.dev/blog/d1-crud-021023/initial-folder-structure.png" loading="lazy"/>
+<img
+  src="https://static.everythingcs.dev/blog/d1-crud-021023/initial-folder-structure.png"
+  loading="lazy"
+/>
 
-Now in api folder run **npm i** to install the packages. 
+Now in api folder run **npm i** to install the packages.
 
-<CodeContainer fileName="terminal">
-```bash
-npm i
-```
-</CodeContainer>
+<CodeContainer fileName="terminal">```bash npm i ```</CodeContainer>
 
 Then run **npm run dev** to run developement server and visit **http://127.0.0.1:8787/** and you will see basic hello hono text.
 
@@ -98,37 +100,45 @@ Now we will create the database and initialiase the schema.
 Now we will create the database. Ensure you have wrangler installed globally. If not install it through **npm i wrangler -G** and login to your cloudflare account by running **wrangler login** (after installing restart the VSCode if you get wrangler is not recognised command).
 
 ### Creating Database
+
 Now to create a new D1 database just run **wrangler d1 create \<database name\>**. I am naming my database as todos-app.
 
-<img src="https://static.everythingcs.dev/blog/d1-crud-021023/create-db.png" loading="lazy"/>
+<img
+  src="https://static.everythingcs.dev/blog/d1-crud-021023/create-db.png"
+  loading="lazy"
+/>
 
 Copy the last 4 lines starting from [[d1_databases]] and paste it in **wrangler.toml** file. Here is my wrangler.toml file. Please make sure to make these credentials secure. Don't push it to github or something. I will delete these credentials.
 
-<img class="border-2 rounded-md" src="https://static.everythingcs.dev/blog/d1-crud-021023/wrangler-toml-file.png" loading="lazy"/>
+<img
+  class="border-2 rounded-md"
+  src="https://static.everythingcs.dev/blog/d1-crud-021023/wrangler-toml-file.png"
+  loading="lazy"
+/>
 
 ### Setting up schema for database
 
 Now we will have to set up the table and also setup schema for that table. It's quite easy so let's begin.
 
-Create a db folder inside src folder and inside db folder create a schema.sql file and then paste the following schema for our todo app. 
+Create a db folder inside src folder and inside db folder create a schema.sql file and then paste the following schema for our todo app.
 
 <CodeContainer fileName="api/src/db/schema.sql">
-```sql
-DROP TABLE IF EXISTS todos;
-CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, todo TEXT NOT NULL, is_completed INTEGER NOT NULL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
-```
+  ```sql DROP TABLE IF EXISTS todos; CREATE TABLE IF NOT EXISTS todos (id
+  INTEGER PRIMARY KEY, todo TEXT NOT NULL, is_completed INTEGER NOT NULL DEFAULT
+  0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP); ```
 </CodeContainer>
 
-Now we will have to push these changes to the the database. Currently we will be pushing this to the  local database and later we will push the schema to the remote database(production database) in the deployment step.
+Now we will have to push these changes to the the database. Currently we will be pushing this to the local database and later we will push the schema to the remote database(production database) in the deployment step.
 
 <CodeContainer fileName="terminal">
-```bash
-wrangler d1 execute todos-app  --local --file=./src/db/schema.sql
-```
+  ```bash wrangler d1 execute todos-app --local --file=./src/db/schema.sql ```
 </CodeContainer>
 
-
-<img class="border-2 rounded-md" src="https://static.everythingcs.dev/blog/d1-crud-021023/local-schema.png" loading="lazy"/>
+<img
+  class="border-2 rounded-md"
+  src="https://static.everythingcs.dev/blog/d1-crud-021023/local-schema.png"
+  loading="lazy"
+/>
 
 Now we have schema in place let's setup routes and start making queries to the database.
 
@@ -156,9 +166,9 @@ import todosRoutes from "./routes/todos";
 import { cors } from "hono/cors";
 
 type Bindings = {
-  DB: D1Database;
-  database_id: string;
-  database_name: string;
+DB: D1Database;
+database_id: string;
+database_name: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -166,11 +176,11 @@ const app = new Hono<{ Bindings: Bindings }>();
 app.get("/", (c) => c.text("Hello Hono!"));
 
 app.use(
-  "/*",
-  cors({
-    origin: ["http://localhost:5173"],
-    allowMethods: ["POST", "GET", "OPTIONS", "DELETE", "PATCH"],
-  })
+"/\*",
+cors({
+origin: ["http://localhost:5173"],
+allowMethods: ["POST", "GET", "OPTIONS", "DELETE", "PATCH"],
+})
 );
 app.route("/todos", todosRoutes);
 
@@ -182,14 +192,13 @@ Now let's create the controllers folders in src folder and in controllers folder
 
 ## Create Operation
 
-Lets start with the create operation. Make a **createTodo.ts** file. 
+Lets start with the create operation. Make a **createTodo.ts** file.
 
 We will make a simple SQL query to insert the data. In bind we will pass the value we want to replace the ? (question mark) sign.
 
 <CodeContainer>
-```ts
-await c.env.DB.prepare("INSERT INTO todos (todo) values (?)").bind(todo).run();
-```
+  ```ts await c.env.DB.prepare("INSERT INTO todos (todo) values
+  (?)").bind(todo).run(); ```
 </CodeContainer>
 
 <CodeContainer fileName="api/src/controllers/todos/createTodo.ts">
@@ -197,21 +206,21 @@ await c.env.DB.prepare("INSERT INTO todos (todo) values (?)").bind(todo).run();
 import { Context } from "hono";
 
 const createTodos = async (c: Context) => {
-  const { todo } = await c.req.json();
+const { todo } = await c.req.json();
 
-  if (!todo) {
-    return c.json({
-      success: false,
-      data: null,
-      message: "todo is required",
-    });
-  }
-  try {
-    const { success } = await c.env.DB.prepare(
-      "INSERT INTO todos (todo) values (?)"
-    )
-      .bind(todo)
-      .run();
+if (!todo) {
+return c.json({
+success: false,
+data: null,
+message: "todo is required",
+});
+}
+try {
+const { success } = await c.env.DB.prepare(
+"INSERT INTO todos (todo) values (?)"
+)
+.bind(todo)
+.run();
 
     if (!success) {
       return c.json(
@@ -229,12 +238,13 @@ const createTodos = async (c: Context) => {
       },
       { status: 201 }
     );
-  } catch (error) {
-    return c.json({
-      success: false,
-      message: "Error while adding new todo",
-    });
-  }
+
+} catch (error) {
+return c.json({
+success: false,
+message: "Error while adding new todo",
+});
+}
 };
 
 export default createTodos;
@@ -267,21 +277,22 @@ Create a new files in todos under controller folder named **getTodos.ts**. We wi
 import { Context } from "hono";
 
 const getTodos = async (c: Context) => {
-  try {
-    const { results: todos } = await c.env.DB.prepare(
-      "SELECT * FROM todos ORDER BY created_at desc"
-    ).all();
+try {
+const { results: todos } = await c.env.DB.prepare(
+"SELECT \* FROM todos ORDER BY created_at desc"
+).all();
 
     return c.json({
       success: true,
       data: todos,
     });
-  } catch (error) {
-    return c.json({
-      success: false,
-      message: "Error while fetching  todos",
-    });
-  }
+
+} catch (error) {
+return c.json({
+success: false,
+message: "Error while fetching todos",
+});
+}
 };
 
 export default getTodos;
@@ -306,9 +317,7 @@ export default todosRoutes;
 ```
 </CodeContainer>
 
-
-<img src="https://static.everythingcs.dev/blog/d1-crud-021023/todo-create-get-operation-gif.gif"/>
-
+<img src="https://static.everythingcs.dev/blog/d1-crud-021023/todo-create-get-operation-gif.gif" />
 
 ## Update Operation
 
@@ -319,27 +328,28 @@ Here we will update the todo as completed. Create a file **api/src/controllers/t
 import { Context } from "hono";
 
 const updateTodos = async (c: Context) => {
-  const { todoStatus } = await c.req.json();
-  const todoId = c.req.param("todoId");
+const { todoStatus } = await c.req.json();
+const todoId = c.req.param("todoId");
 
-  try {
-    const { success } = await c.env.DB.prepare(
-      "UPDATE todos SET is_completed = ? WHERE id = ?"
-    )
-      .bind(Number(todoStatus), todoId)
-      .run();
+try {
+const { success } = await c.env.DB.prepare(
+"UPDATE todos SET is_completed = ? WHERE id = ?"
+)
+.bind(Number(todoStatus), todoId)
+.run();
 
     console.log("success", success);
 
     return c.json({
       success: true,
     });
-  } catch (error) {
-    return c.json({
-      success: false,
-      message: "Error while updating  todos",
-    });
-  }
+
+} catch (error) {
+return c.json({
+success: false,
+message: "Error while updating todos",
+});
+}
 };
 
 export default updateTodos;
@@ -361,7 +371,8 @@ const todosRoutes = new Hono();
 todosRoutes.post("/", createTodos);
 todosRoutes.get("/", getTodos);
 todosRoutes.patch("/:todoId", updateTodos);
-```
+
+````
 </CodeContainer>
 
 
@@ -409,7 +420,8 @@ const deleteTodo = async (c: Context) => {
 };
 
 export default deleteTodo;
-```
+````
+
 </CodeContainer>
 
 Now register the routes in **routes/todos.ts**
@@ -435,26 +447,20 @@ export default todosRoutes;
 
 ## Deployment
 
-Now we will have to update the schema of remote database. 
+Now we will have to update the schema of remote database.
 
 <CodeContainer fileName="terminal">
-```bash
-wrangler d1 execute todos-app --file=./src/db/schema.sql
-```
+  ```bash wrangler d1 execute todos-app --file=./src/db/schema.sql ```
 </CodeContainer>
 
-Now your remote database will have the schema setup and todos-app table created. 
+Now your remote database will have the schema setup and todos-app table created.
 
-Now host your api on cloudflare workers. 
+Now host your api on cloudflare workers.
 
-<CodeContainer fileName="terminal">
-```bash
-npm run deploy
-```
-</CodeContainer>
+<CodeContainer fileName="terminal">```bash npm run deploy ```</CodeContainer>
 
 You will get the live production url. Replace the url of localhost with the live url and you can finally host the frontend.
 
 ## Conclusion
 
-So we have implemented the REST API performing CRUD functionality using Cloudflare D1 database hosted on Cloudflare Workers. The complete code is on [github](https://github.com/ksjitendra18/d1-workers-crud). If you have any queries we can discuss it on [discord](https://discord.gg/W3nubBNeXK). 
+So we have implemented the REST API performing CRUD functionality using Cloudflare D1 database hosted on Cloudflare Workers. The complete code is on [github](https://github.com/ksjitendra18/d1-workers-crud). If you have any queries we can discuss it on [discord](https://discord.gg/W3nubBNeXK).

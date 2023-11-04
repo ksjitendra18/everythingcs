@@ -1,0 +1,593 @@
+---
+title: "React Zustand Setup: Building Ecommerce App with Cart Actions"
+publishedDate: 2023-11-04
+updatedDate: 2023-11-04
+description: "Build a small ecommerce app with cart functionality to understand the global state management using zustand"
+ogImage: "https://static.everythingcs.dev/blog/zustand-setup-react-ecommerce-cart-actions.png"
+featuredImage: "https://static.everythingcs.dev/blog/zustand-setup-react-ecommerce-cart-actions.png"
+category: ["Reactjs"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+
+import CodeContainer from "../../components/blog/code-container.astro";
+
+Zustand is a state management library for React applications. Zustand is easy to use as compared to context api or the react redux. So in this article let's explore how to manage global state using zustand in our react.js
+
+This is second part of the Exploring Global State management in React Series. In the first part we discussed about the [Redux Toolkit Setup](https://everythingcs.dev/blog/react-ecommerce-cart-actions-global-state-redux-toolkit).
+
+In this guide we are going to implement the Ecommerce cart actions functionality like adding item to car, increasing quantity, decreasing quantity and removing item from the cart. Here is the demonstration. We will implement all these functionality and at last we will also look at how to persist data in the local storage.
+
+<video controls muted>
+  <source
+    src="https://static.everythingcs.dev/blog/zustand-react-041123/zustand-react-setup-ecommerce-cart-actions.mp4"
+    type="video/mp4"
+  />
+</video>
+
+## Setup frontend
+
+I have already prepared a basic markup for the application. [Download it](https://github.com/ksjitendra18/zustand-setup/archive/refs/heads/starter-code.zip) and extract it in you desired repository and then run npm i to install the dependency.
+
+Here is the [repo for this article](https://github.com/ksjitendra18/zustand-setup.git).
+
+## Setup Zustand
+
+Install the zustand package
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm i zustand
+```
+
+</CodeContainer>
+
+Now create a store file in the src folder and inside the store folder create a cart.ts file. Here is the basic boilerplate.
+
+<CodeContainer fileName="src/store/cart.ts">
+
+```ts
+import { create } from "zustand";
+
+const useCartStore = create((set) => ({
+  // state
+  // update functions
+}));
+
+export default useCartStore;
+```
+
+</CodeContainer>
+
+Now we have this we can start using directly in our components. No need to wrap anything and all.
+
+Let's start defining the state. We will have only one state that will be cartItems which will hold all the items.
+
+## Defining state
+
+It's as simple as defining the constant. We are defining a new state called cartItem here and also providing type.
+
+<CodeContainer fileName="src/store/cart.ts">
+
+```ts
+import { create } from "zustand";
+import CartProduct from "../types/CartProduct";
+
+interface CartState {
+  cartItems: CartProduct[];
+}
+
+const useCartStore = create<CartState>((set) => ({
+  cartItems: [],
+}));
+
+export default useCartStore;
+```
+
+</CodeContainer>
+
+## Adding actions
+
+Actions are just functions that we want to perform on the items. So let's start with adding actions.
+
+### Adding item to cart
+
+This is the basic way to add item to cart
+
+<CodeContainer fileName="src/store/cart.ts">
+
+```ts
+import { create } from "zustand";
+import CartProduct from "../types/CartProduct";
+import Product from "../types/Product";
+
+interface CartState {
+  cartItems: CartProduct[];
+  addItemToCart: (item: Product) => void;
+}
+
+const useCartStore = create<CartState>((set, get) => ({
+  cartItems: [],
+
+  addItemToCart: (item) => {
+    set({ cartItems: [...get().cartItems, { ...item, quantity: 1 }] });
+  },
+}));
+
+export default useCartStore;
+```
+
+</CodeContainer>
+
+Now let's add a check if the item exists in cart then we will increase the quantity or else we will add that item to the cart.
+
+<CodeContainer fileName="src/store/cart.ts">
+
+```ts
+import { create } from "zustand";
+import CartProduct from "../types/CartProduct";
+import Product from "../types/Product";
+
+interface CartState {
+  cartItems: CartProduct[];
+  addItemToCart: (item: Product) => void;
+}
+
+const useCartStore = create<CartState>((set, get) => ({
+  cartItems: [],
+
+  addItemToCart: (item) => {
+    const itemExists = get().cartItems.find(
+      (cartItem) => cartItem.id === item.id
+    );
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        itemExists.quantity++;
+      }
+
+      set({ cartItems: [...get().cartItems] });
+    } else {
+      set({ cartItems: [...get().cartItems, { ...item, quantity: 1 }] });
+    }
+  },
+}));
+
+export default useCartStore;
+```
+
+</CodeContainer>
+
+Now let's try to perform this action. We can easily get the action in any components
+
+<CodeContainer>
+
+```js
+const { addItemToCart } = useCartStore();
+```
+
+</CodeContainer>
+
+Go to ProductCard.tsx
+
+<CodeContainer fileName="src/components/ProductCard.tsx">
+
+```tsx
+import { ShoppingCart } from "lucide-react";
+import React from "react";
+import Product from "../types/Product";
+import toast from "react-hot-toast";
+import useCartStore from "../store/cart";
+
+interface ProductCardProps {
+  product: Product;
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const { addItemToCart } = useCartStore();
+  const onAddToCart = () => {
+    addItemToCart(product);
+    toast.success("Added to cart");
+  };
+  return (
+    <div className="flex hover:shadow-lg  transition-all ease-in duration-150 basis-1/4 flex-1  flex-col border-2 border-slate-500 px-3 py-2 rounded-md">
+      <div className="flex flex-col items-center">
+        <img
+          className=" w-[225px] h-[225px] object-contain"
+          src={product.image}
+          alt={product.title}
+        />
+        <div className="my-5">
+          <h3 className="text-center  font-bold">{product.title}</h3>
+          <h3 className="text-center mt-3 font-medium">${product.price}</h3>
+        </div>
+      </div>
+
+      <div className="flex justify-end items-end">
+        <button
+          onClick={onAddToCart}
+          title="Add to Cart"
+          className="bg-orange-500 px-3 py-3 text-white rounded-full"
+        >
+          <ShoppingCart />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ProductCard;
+```
+
+</CodeContainer>
+
+Now the data is stored in the centralised store let's try to access the values.
+
+### Accessing store values
+
+We can access the cart value in any component. Here is basically how to access the value
+
+<CodeContainer>
+
+```jsx
+const { cartItems } = useCartStore();
+```
+
+</CodeContainer>
+
+Let's access the value in the Cart page and shows items that are in the cart. Here is updated Cart.tsx page
+
+<CodeContainer>
+
+```tsx
+import CartItemCard from "../components/CartItemCard";
+import OrderValue from "../components/OrderValue";
+import { Link } from "react-router-dom";
+import useCartStore from "../store/cart";
+
+const Cart = () => {
+  const { cartItems } = useCartStore();
+
+  if (cartItems && cartItems.length < 1) {
+    return (
+      <div className="h-72 flex flex-col items-center justify-center">
+        <h2 className="text-3xl mt-10 mb-5 font-bold">Cart is Empty</h2>
+        <Link
+          to="/shop"
+          className="px-6 py-2 rounded-md text-white bg-orange-500"
+        >
+          Shop
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className=" flex  flex-col-reverse md:flex-row  gap-10 items-center md:items-start md:select-none md:justify-between">
+      <div className="flex flex-wrap flex-col md:flex-row mb-10  gap-10 ">
+        {cartItems?.map((item) => (
+          <CartItemCard product={item} />
+        ))}
+      </div>
+
+      <div className="md:sticky md:top-28 bg-orange-500 text-white flex-none w-72 h-[300px] rounded-2xl">
+        <OrderValue />
+      </div>
+    </div>
+  );
+};
+
+export default Cart;
+```
+
+</CodeContainer>
+
+Now let's access the value in the OrderValue page.
+
+<CodeContainer fileName="OrderValue.tsx" hasPartialCode>
+
+```tsx
+// remove this
+const cartItems = [];
+
+// replace with this
+const { cartItems } = useCartStore();
+```
+
+</CodeContainer>
+And now you can see OrderValue displaying the right information.
+
+Also update the navbar that will display the right count of elements in the cart.
+
+<CodeContainer fileName="Navbar.tsx" hasPartialCode>
+
+```tsx
+// remove this
+const cartCount = 0;
+
+// replace with this
+const { cartItems } = useCartStore();
+const cartCount = cartItems.length;
+```
+
+</CodeContainer>
+
+### Increasing and decreasing quantity
+
+Let's add the action related to increasing and decreasing quantity
+
+<CodeContainer fileName="src/store/cart.ts">
+
+```ts
+import { create } from "zustand";
+import CartProduct from "../types/CartProduct";
+import Product from "../types/Product";
+
+interface CartState {
+  cartItems: CartProduct[];
+  addItemToCart: (item: Product) => void;
+  increaseQuantity: (productId: number) => void;
+  decreaseQuantity: (productId: number) => void;
+}
+
+const useCartStore = create<CartState>((set, get) => ({
+  cartItems: [],
+
+  addItemToCart: (item) => {
+    const itemExists = get().cartItems.find(
+      (cartItem) => cartItem.id === item.id
+    );
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        itemExists.quantity++;
+      }
+
+      set({ cartItems: [...get().cartItems] });
+    } else {
+      set({ cartItems: [...get().cartItems, { ...item, quantity: 1 }] });
+    }
+  },
+
+  increaseQuantity: (productId) => {
+    const itemExists = get().cartItems.find(
+      (cartItem) => cartItem.id === productId
+    );
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        itemExists.quantity++;
+      }
+
+      set({ cartItems: [...get().cartItems] });
+    }
+  },
+  decreaseQuantity: (productId) => {
+    const itemExists = get().cartItems.find(
+      (cartItem) => cartItem.id === productId
+    );
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        if (itemExists.quantity === 1) {
+          const updatedCartItems = get().cartItems.filter(
+            (item) => item.id !== productId
+          );
+          set({ cartItems: updatedCartItems });
+        } else {
+          itemExists.quantity--;
+          set({ cartItems: [...get().cartItems] });
+        }
+      }
+    }
+  },
+}));
+
+export default useCartStore;
+```
+
+</CodeContainer>
+
+Now let's call these actions in the CardItemCard component.
+
+<CodeContainer fileName="CardItemCard.tsx" hasPartialCode>
+
+```tsx
+const { increaseQuantity, decreaseQuantity } = useCartStore();
+const onIncreaseQuantity = (productId: number) => {
+  increaseQuantity(productId);
+};
+
+const onDecreaseQuantity = (productId: number) => {
+  decreaseQuantity(productId);
+};
+```
+
+</CodeContainer>
+
+### Removing items
+
+Add the new action in the cartStore
+
+<CodeContainer hasPartialCode fileName="src/store/cart.ts">
+
+```ts
+import { create } from "zustand";
+import CartProduct from "../types/CartProduct";
+import Product from "../types/Product";
+
+interface CartState {
+  cartItems: CartProduct[];
+  addItemToCart: (item: Product) => void;
+  increaseQuantity: (productId: number) => void;
+  decreaseQuantity: (productId: number) => void;
+  removeItemFromCart: (productId: number) => void;
+}
+
+const useCartStore = create<CartState>((set, get) => ({
+  cartItems: [],
+
+  addItemToCart: (item) => {
+   ...
+  },
+
+  increaseQuantity: (productId) => {
+   ...
+  },
+
+  removeItemFromCart: (productId) => {
+    const itemExists = get().cartItems.find(
+      (cartItem) => cartItem.id === productId
+    );
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        const updatedCartItems = get().cartItems.filter(
+          (item) => item.id !== productId
+        );
+        set({ cartItems: updatedCartItems });
+      }
+    }
+  },
+}));
+
+export default useCartStore;
+```
+
+</CodeContainer>
+
+Then call the action in the CardItemCard.tsx
+
+<CodeContainer fileName="CardItemCard.tsx" hasPartialCode>
+
+```tsx
+const { increaseQuantity, decreaseQuantity } = useCartStore();
+const onIncreaseQuantity = (productId: number) => {
+  increaseQuantity(productId);
+};
+
+const onDecreaseQuantity = (productId: number) => {
+  decreaseQuantity(productId);
+};
+
+const onRemoveItem = (productId: number) => {
+  removeItemFromCart(productId);
+};
+```
+
+</CodeContainer>
+
+## Bonus: Persisting state in localstorage
+
+Let's persist the cart state in the localstorage. Zustand provides first class support for it.
+
+Other browser storage can also be used. Please [refer to the docs](https://docs.pmnd.rs/zustand/integrations/persisting-store-data).
+
+To implement we will have to call the persist from zustand middleware along with the the storage (if using other than localstorage) and then simply wrap the complete create function content with the persist function.
+
+Here is updated store/cart.ts page.
+
+<CodeContainer  fileName="src/store/cart.ts">
+
+```ts
+import { create } from "zustand";
+import CartProduct from "../types/CartProduct";
+import Product from "../types/Product";
+import { persist } from "zustand/middleware";
+
+interface CartState {
+  cartItems: CartProduct[];
+  addItemToCart: (item: Product) => void;
+  increaseQuantity: (productId: number) => void;
+  decreaseQuantity: (productId: number) => void;
+  removeItemFromCart: (productId: number) => void;
+}
+
+const useCartStore = create(
+  persist<CartState>(
+    (set, get) => ({
+      cartItems: [],
+
+      addItemToCart: (item) => {
+        const itemExists = get().cartItems.find(
+          (cartItem) => cartItem.id === item.id
+        );
+
+        if (itemExists) {
+          if (typeof itemExists.quantity === "number") {
+            itemExists.quantity++;
+          }
+
+          set({ cartItems: [...get().cartItems] });
+        } else {
+          set({ cartItems: [...get().cartItems, { ...item, quantity: 1 }] });
+        }
+      },
+
+      increaseQuantity: (productId) => {
+        const itemExists = get().cartItems.find(
+          (cartItem) => cartItem.id === productId
+        );
+
+        if (itemExists) {
+          if (typeof itemExists.quantity === "number") {
+            itemExists.quantity++;
+          }
+
+          set({ cartItems: [...get().cartItems] });
+        }
+      },
+      decreaseQuantity: (productId) => {
+        const itemExists = get().cartItems.find(
+          (cartItem) => cartItem.id === productId
+        );
+
+        if (itemExists) {
+          if (typeof itemExists.quantity === "number") {
+            if (itemExists.quantity === 1) {
+              const updatedCartItems = get().cartItems.filter(
+                (item) => item.id !== productId
+              );
+              set({ cartItems: updatedCartItems });
+            } else {
+              itemExists.quantity--;
+              set({ cartItems: [...get().cartItems] });
+            }
+          }
+        }
+      },
+
+      removeItemFromCart: (productId) => {
+        const itemExists = get().cartItems.find(
+          (cartItem) => cartItem.id === productId
+        );
+
+        if (itemExists) {
+          if (typeof itemExists.quantity === "number") {
+            const updatedCartItems = get().cartItems.filter(
+              (item) => item.id !== productId
+            );
+            set({ cartItems: updatedCartItems });
+          }
+        }
+      },
+    }),
+    {
+      name: "cart-items",
+    }
+  )
+);
+
+export default useCartStore;
+```
+
+</CodeContainer>
+Now if you add some items to the cart it will be persisted in the localstorage and next time you open the initial cartItem won't be empty. Instead it will contain the previous added items
+
+## Conclusion
+
+So in this post we configured the zustand state management library in nextjs and implemented the cart functionality and all the actions associated with it like adding item to the cart, increasing and decreasing quantity and also removing the specific item from the cart.
+
+If you are facing any error please [refer this repo for code](https://github.com/ksjitendra18/zustand-setup.git). Also free to reach out to me via [EverythingCS discord server](https://discord.gg/W3nubBNeXK).

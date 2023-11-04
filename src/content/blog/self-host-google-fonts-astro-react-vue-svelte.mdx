@@ -5,19 +5,19 @@ updatedDate: 2023-09-21
 description: "Step by step guide on how to self host google fonts in Astro, React, Svelte,Vue"
 ogImage: "https://static.everythingcs.dev/blog/190923/self-host-font.png"
 featuredImage: "https://static.everythingcs.dev/blog/190923/self-host-font.png"
-category: ["JavaScript"]
+category: ["Reactjs", "Vuejs", "Astro", "Svelte"]
 author: "Jitendra"
 isFeatured: false
 draft: false
 ---
-import CodeContainer from "../../components/blog/code-container.astro"
 
+import CodeContainer from "../../components/blog/code-container.astro";
 
 Self hosting google fonts comes with advantages like no having to rely on 3rd party and also you can speed up your website and it helps with some privacy concerns.
 
 Self hosting is really easy and simple. In this tutorial I am going to use font source which is open source package which provides free fonts from various sources including google fonts to include in the project.
 
-## Step 1:  Choose the font
+## Step 1: Choose the font
 
 The first step is to choose the font you want to use. I am choosing Jakarta Plus sans which is a variable font and Roboto font which is not a variable font. This is for demonstration purpose so that you get idea of installing and using both the fonts.
 
@@ -26,40 +26,27 @@ The first step is to choose the font you want to use. I am choosing Jakarta Plus
 This step is similar for all the frameworks.
 
 <CodeContainer fileName="terminal">
-```bash
-npm install @fontsource/roboto
-# installing variable fonts
-npm install @fontsource-variable/plus-jakarta-sans
-```
+  ```bash npm install @fontsource/roboto # installing variable fonts npm install
+  @fontsource-variable/plus-jakarta-sans ```
 </CodeContainer>
 
-
 ## Self Hosting Google Fonts in Astro
+
 After installing, import the files in your main layout file so that it is available throught the project.
 
 Firstly we will see installing non variable font. Now to import we will have to import the css of every font weight we are going to use. For example
 
 <CodeContainer fileName="terminal">
-```js
----
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/600.css';
-import '@fontsource/roboto/700.css';
----
-```
+  ```js --- import '@fontsource/roboto/400.css'; import
+  '@fontsource/roboto/500.css'; import '@fontsource/roboto/600.css'; import
+  '@fontsource/roboto/700.css'; --- ```
 </CodeContainer>
 
 To install variable font we just have to import one file
 
 <CodeContainer fileName="terminal">
-```js
----
-import '@fontsource-variable/plus-jakarta-sans';
----
-```
+  ```js --- import '@fontsource-variable/plus-jakarta-sans'; --- ```
 </CodeContainer>
-
 
 Now create a css file in your desired directory inside the src folder. I am creating a **global.css** in src directory only.
 
@@ -76,20 +63,23 @@ body {
 </CodeContainer>
 
 Now import the css file in your main layout
+
 <CodeContainer fileName="src/components/layout.astro">
 ```js
 ---
 import '@fontsource-variable/plus-jakarta-sans';
 
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
 
-# please change the path according to 
+# please change the path according to
+
 # where your layout and css file is
-import "./app.css"
----
-```
+
+## import "./app.css"
+
+````
 </CodeContainer>
 
 ## Self Hosting Google fonts in Svelte
@@ -107,7 +97,8 @@ body {
 body {
   font-family: 'Roboto', sans-serif;
 }
-```
+````
+
 </CodeContainer>
 
 now import the fonts and css file in your **+layout.svelte** file inside **src/routes**
@@ -117,17 +108,18 @@ now import the fonts and css file in your **+layout.svelte** file inside **src/r
 <script>
 import '@fontsource-variable/plus-jakarta-sans';
 
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
 
-# please change the path according to 
+# please change the path according to
+
 # where your layout and css file is
+
 import "../app.css"
 </script>
 ```
 </CodeContainer>
-
 
 ## Self Hosting Google fonts in React
 
@@ -155,14 +147,15 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 
-import "@fontsource-variable/plus-jakarta-sans"
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
+import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
 
-import './index.css'
+import "./index.css";
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
+
   <React.StrictMode>
     <App />
   </React.StrictMode>,
@@ -190,7 +183,6 @@ body {
 
 Now import the css and font files in **main.ts**
 
-
 <CodeContainer fileName="src/main.ts">
 ```js
 import './assets/main.css'
@@ -199,12 +191,11 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 
+import { createApp } from "vue";
+import { createPinia } from "pinia";
 
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-
-import App from './App.vue'
-import router from './router'
+import App from "./App.vue";
+import router from "./router";
 
 const app = createApp(App)
 
@@ -219,3 +210,4 @@ app.mount('#app')
 ## Conclusion
 
 So finally you will be able to self host google fonts and hence will be able to increase the speed and privacy of your website.
+```
