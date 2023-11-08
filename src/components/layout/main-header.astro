@@ -65,5 +65,22 @@ const { title, description } = Astro.props;
     data-token={import.meta.env.PUBLIC_BEAM_TOKEN}
     async></script>
 
+  <!-- Google tag (gtag.js) -->
+  <script
+    type="text/partytown"
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=G-XM2RTJ14VB"></script>
+  <script type="text/partytown">
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "G-XM2RTJ14VB");
+  </script>
+
+  <meta name="google-adsense-account" content="ca-pub-4587134058392926" />
+
   <slot />
 </head>
