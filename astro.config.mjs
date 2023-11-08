@@ -17,7 +17,11 @@ export default defineConfig({
     svelte(),
     robotsTxt(),
     preact(),
-    partytown(),
+    partytown({
+      config: {
+        forward: ["dataLayer.push"],
+      },
+    }),
   ],
   site: "https://everythingcs.dev",
   markdown: {
