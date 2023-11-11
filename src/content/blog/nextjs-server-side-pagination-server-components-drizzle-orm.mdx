@@ -30,17 +30,29 @@ I have setup a basic Next.js app with Drizzle ORM. [Download the setup from gith
 After installing create a local db or use a remote database. I am using a local mysql database.
 
 <CodeContainer fileName="terminal">
-  ```bash mysql -u username -p # enter password ```
+
+  ```bash 
+  mysql -u username -p # enter password 
+  ```
+
 </CodeContainer>
 
 <CodeContainer fileName="terminal">
-  ```bash create database paginationguide; ```
+
+```bash 
+create database paginationguide;
+```
+
 </CodeContainer>
 
 Now create a .env.local file and add the database url.
 
 <CodeContainer fileName="terminal">
-  ```bash DB_URL=mysql://username:password@localhost:3306/paginationguide ```
+
+```bash 
+DB_URL=mysql://username:password@localhost:3306/paginationguide 
+```
+
 </CodeContainer>
 
 Now let's push the schema to the database and let's seed the database with the data.
@@ -58,13 +70,21 @@ npm run drizzle-kit generate:mysql
 </CodeContainer>
 
 <CodeContainer fileName="terminal">
-  ```bash npm run drizzle-kit push:mysql ```
+
+```bash 
+npm run drizzle-kit push:mysql 
+```
+
 </CodeContainer>
 
 After this let's run the seed script. I have already installed tsx to run the script so in terminal run
 
 <CodeContainer fileName="terminal">
-  ```bash npx tsx src/scripts/seed.ts ```
+
+```bash 
+npx tsx src/scripts/seed.ts 
+```
+
 </CodeContainer>
 
 <img

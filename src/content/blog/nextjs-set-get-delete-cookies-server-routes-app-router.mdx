@@ -31,28 +31,34 @@ Server components allows you to perform actions without needing to make an api r
 
 For setting cookie we will make use of server actions. So go to **page.tsx** and let's firstly import the cookies function
 
-<CodeContainer>```js import {cookies} from "next/headers"; ```</CodeContainer>
+<CodeContainer>
+
+```js
+import {cookies} from "next/headers";
+```
+
+</CodeContainer>
 
 So if you will set the login action it's a simple server action. We are getting the email and password from input and we have to set cookies if the login is successful. I have not written authentication logic here.
 
 So simply we will call the set method and pass the key value and optional options in which you can pass value to configure your cookie. Please refer to MDN docs for all options available.
 
 <CodeContainer>
+
 ```js
 cookies().set(key, value, {
    options...
 });
 ```
+
 </CodeContainer>
 
-<p class="bg-red-500  text-white rounded-md px-3 py-2">
-  Please note that you can perform this action in server actions and route
-  handlers only. It will throw error even if it is a server component.{" "}
-</p>
+<p class="bg-red-500  text-white rounded-md px-3 py-2">Please note that you can perform this action in server actions and route handlers only. It will throw error even if it is a server component.</p>
 
 Here is the updated page.tsx
 
 <CodeContainer fileName="page.tsx">
+
 ```tsx
 import { cookies } from "next/headers";
 
@@ -70,15 +76,13 @@ export default function Home() {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
     });
-
 };
 
 return (
-
-<main className="flex mx-3 flex-col items-center justify-center">
-<h1 className="my-5 text-center text-2xl font-bold">
-Getting and Setting Cookies in Next.js
-</h1>
+  <main className="flex mx-3 flex-col items-center justify-center">
+    <h1 className="my-5 text-center text-2xl font-bold">
+      Getting and Setting Cookies in Next.js
+    </h1>
 
       <div>
         <h2 className="mt-10 text-center text-3xl font-semibold">Set Cookie</h2>
@@ -105,7 +109,8 @@ Getting and Setting Cookies in Next.js
 );
 }
 
-````
+```
+
 </CodeContainer>
 
 Open the console in your browser and open the **Application tab**  then select the cookies tab. Hit the login button and you will see that cookies get stored.
@@ -121,6 +126,7 @@ Getting the cookies is very easy. Just call the **cookies().get(name)** method.
 Here is updated page.tsx. I am simply displaying the cookie value if it exists and also using it one function. You can do more with it depending on the use case.
 
 <CodeContainer fileName="page.tsx">
+
 ```tsx
 import { cookies } from "next/headers";
 
@@ -192,7 +198,7 @@ export default function Home() {
     </main>
   );
 }
-````
+```
 
 </CodeContainer>
 
@@ -201,12 +207,14 @@ export default function Home() {
 You may want to delete some cookie based on action like logout you can do so easily by calling the delete method
 
 <CodeContainer hasPartialCode>
-  ```js const logout = async ()=>
-  {
+
+```js 
+const logout = async ()=>{
     // remove stored token
     cookies().delete("auth-token")
-  }
-  ```
+ }
+```
+
 </CodeContainer>
 
 Here is the video demonstrating the cookies actions server components
@@ -223,6 +231,7 @@ Here is the video demonstrating the cookies actions server components
 For getting and setting cookie in the client component we will make use of js-cookie library. So install the library first.
 
 <CodeContainer fileName="terminal">
+
 ```bash
 npm i js-cookie
 
@@ -230,25 +239,28 @@ npm i js-cookie
 
 npm i @types/js-cookie
 
-````
+```
 </CodeContainer>
 
 ### Setting Cookie
 
 Setting a cookie is very simple and easy. Firstly import the Cookie from "js-cookie" and just call the set method of it.
+
 <CodeContainer>
+
 ```jsx
 import Cookie from "js-cookie"
 Cookie.set(key, value, {
   ...options
 })
-````
+```
 
 </CodeContainer>
 
 Here is updated **client/page.tsx**
 
 <CodeContainer fileName="client/page.tsx">
+
 ```jsx
 "use client";
 import Cookies from "js-cookie";
@@ -257,27 +269,26 @@ import { useEffect, useState } from "react";
 export default function ClientPage() {
   const [isMounted, setIsMounted] = useState(false);
 
-// for hydration errors
-useEffect(() => {
-setIsMounted(true);
-}, []);
-const router = useRouter();
-const setCookie = async () => {
-Cookies.set("user-pref", "some-value-by-client-comp", {
-expires: 2,
-});
-router.refresh();
-};
+  // for hydration errors
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  const router = useRouter();
+  const setCookie = async () => {
+    Cookies.set("user-pref", "some-value-by-client-comp", {
+      expires: 2,
+    });
+    router.refresh();
+  };
 
-if (!isMounted) {
-return null;
-}
-return (
-
-<main className="flex mx-3 flex-col items-center justify-center">
-<h1 className="my-5 text-center text-2xl font-bold">
-Getting and Setting Cookies in Next.js (Client Component)
-</h1>
+  if (!isMounted) {
+    return null;
+  }
+  return (
+    <main className="flex mx-3 flex-col items-center justify-center">
+      <h1 className="my-5 text-center text-2xl font-bold">
+        Getting and Setting Cookies in Next.js (Client Component)
+      </h1>
 
       <div>
         <h2 className="mt-10 text-center text-3xl font-semibold">Set Cookie</h2>
@@ -290,11 +301,10 @@ Getting and Setting Cookies in Next.js (Client Component)
         </button>
       </div>
     </main>
-
-);
+  );
 }
+```
 
-````
 </CodeContainer>
 
 ### Getting Cookie
@@ -302,8 +312,10 @@ Getting and Setting Cookies in Next.js (Client Component)
 Use the Cookie.get(key) to get the cookie value
 
 Here is updated **client/page.tsx**
+
 <CodeContainer fileName="client/page.tsx">
-```jsx
+
+```tsx
 "use client";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
@@ -363,7 +375,7 @@ export default function ClientPage() {
     </main>
   );
 }
-````
+```
 
 </CodeContainer>
 
@@ -374,7 +386,8 @@ Delete the cookie by calling **Cookie.remove(key)** to remove or delete the cook
 Here is updated **client/page.tsx**
 
 <CodeContainer fileName="client/page.tsx">
-```jsx
+
+```tsx
 "use client";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
@@ -450,7 +463,8 @@ Getting and Setting Cookies in Next.js (Client Component)
 );
 }
 
-````
+```
+
 </CodeContainer>
 
 
@@ -465,6 +479,7 @@ Getting and Setting Cookies in Next.js (Client Component)
 There are two ways to set cookie. One is to use the **next/headers**. Here is the example
 
 <CodeContainer fileName="api/test/route.ts">
+
 ```ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
@@ -475,36 +490,38 @@ export async function GET(request: Request) {
   });
   return NextResponse.json({ success: true });
 }
-````
+```
 
 </CodeContainer>
 
 The second method is using the standard Response object and passing cookies in the header
 
 <CodeContainer fileName="api/test/route.ts">
+
 ```ts
 export async function GET(request: Request) {
   // method 2
   const date = new Date();
   date.setTime(date.getTime() + 48 * 60 * 60 * 1000);
 
-return Response.json(
-{ success: true },
-{
-headers: {
-"Set-Cookie": `route_value=some_value_api_routes; Expires=${date.toUTCString()};`,
-},
-}
-);
+  return Response.json(
+    { success: true },
+    {
+      headers: {
+        "Set-Cookie": `route_value=some_value_api_routes; Expires=${date.toUTCString()};`,
+      },
+    }
+  );
 }
 
-````
+```
 </CodeContainer>
 
 ### Getting cookie
 Getting the cookie is same as we did in server component. Just use the **cookies().get(key)** method
 
 <CodeContainer fileName="api/test/route.ts">
+
 ```ts
 import { cookies } from "next/headers";
 
@@ -513,7 +530,7 @@ export async function GET(request: Request) {
 
   return Response.json({ cookieVal });
 }
-````
+```
 
 </CodeContainer>
 
@@ -530,6 +547,7 @@ Here is the output
 For deleting the cookie in next.js api route handlers just call the **cookies.delete()** method.
 
 <CodeContainer fileName="api/test/route.ts">
+
 ```ts
 import { cookies } from "next/headers";
 
@@ -539,8 +557,8 @@ export async function GET(request: Request) {
   });
   const cookieVal = cookies().get("route_value")?.value;
 
-cookies().delete("route_value");
-return Response.json({ success: true });
+  cookies().delete("route_value");
+  return Response.json({ success: true });
 }
 
 ```
@@ -552,4 +570,4 @@ return Response.json({ success: true });
 In this post we explored how to get, set and delete cookies in Next.js server components, server actions, client components and API route handlers.
 
 If you have any doubt, you can contact me via [form](https://everythingcs.dev/contact/) or via the [EverythingCS discord server](https://discord.gg/W3nubBNeXK)
-```
+
