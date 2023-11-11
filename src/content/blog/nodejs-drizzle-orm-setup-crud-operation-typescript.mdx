@@ -49,11 +49,19 @@ I am using local mysql database for this project. Create a database with any nam
 Here how to create it via terminal
 
 <CodeContainer fileName="terminal">
-  ```bash mysql -u username -p ```
+
+```bash
+mysql -u username -p
+```
+
 </CodeContainer>
 
 <CodeContainer fileName="terminal">
-  ```bash create database drizzlenode; ```
+
+```bash
+create database drizzlenode;
+```
+
 </CodeContainer>
 
 You can verified it is created or not by running command. You will see all the databases.
@@ -63,7 +71,11 @@ You can verified it is created or not by running command. You will see all the d
 Now create a .env file in root folder
 
 <CodeContainer fileName=".env">
-  ```bash DB_URL="mysql:username@password:3306/drizzlenode" ```
+
+```bash
+DB_URL="mysql:username@password:3306/drizzlenode"
+```
+
 </CodeContainer>
 
 ## Step 3: Setting up Drizzle ORM
@@ -71,7 +83,11 @@ Now create a .env file in root folder
 ### Step 3.1: Start setting up drizzle ORM by installing ORM and Drizzle Kit.
 
 <CodeContainer fileName="terminal">
-  ```bash npm install drizzle-orm mysql2 npm install drizzle-kit -D ```
+
+```bash
+npm install drizzle-orm mysql2 npm install drizzle-kit -D
+```
+
 </CodeContainer>
 
 In src directory make a db folder and inside db create a setup.ts file
@@ -140,14 +156,15 @@ export default {
 Now let's create 2 scripts in package.json to create migrations and push changes.
 
 <CodeContainer fileName="package.json">
-```json
+
+```js
 "scripts": {
   "dev": "nodemon src/index.ts",
   "build": "tsc",
   "db:generate": "drizzle-kit generate:mysql",
   "db:push": "drizzle-kit push:mysql"
 },
-````
+```
 
 </CodeContainer>
 
@@ -406,14 +423,18 @@ return res.status(500).json({ success: true, message: "Cannot Update" });
 export default updateUser;
 
 ````
+
 </CodeContainer>
 
 Send request to from your frontend or postman. PATCH request to (http://localhost:5000/users/{id})
 
 Output:
 
-<img src="https://static.everythingcs.dev/blog/update-user-output-2356.png" loading="lazy" alt="Update user output"/>
-
+<img
+  src="https://static.everythingcs.dev/blog/update-user-output-2356.png"
+  loading="lazy"
+  alt="Update user output"
+/>
 
 ### Step 4.3 Delete Operation
 

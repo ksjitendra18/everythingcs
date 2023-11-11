@@ -40,11 +40,12 @@ Here is the video demonstration of what we are going to build
   />
 </video>
 
-## Method One: useState
+## Method 1: useState
 
 This is the most easy to use method to collect the form values. Here is a simplified example.
 
 <CodeContainer>
+
 ```jsx
 const [nameInput, setNameInput] = useState("")
 
@@ -54,6 +55,7 @@ const [nameInput, setNameInput] = useState("")
  onChange = {(event)=> setNameInput(event.target.value)} 
 />
 ```
+
 </CodeContainer>
 
 Now you can easily access the value of the input through the **nameInput** value of useState.
@@ -63,6 +65,7 @@ Now let's say you have 10 fields so you will have to make 10 seperate useState v
 Here is the simplified example.
 
 <CodeContainer>
+
 ```jsx
 const [formValues, setFormValues] = useState()
 
@@ -83,6 +86,7 @@ const [formValues, setFormValues] = useState()
  onChange = {(event)=> setFormValues({...formValues, description: event.target.value})} 
 />
 ```
+
 </CodeContainer>
 
 Now again if you will see we are repeating some stuff over. Like `{(event)=> setFormValues({...formValues, name: event.target.value})}` and `{(event)=> setFormValues({...formValues, name: event.target.value})}`. Now here if you will see for name we have name and for description we have description. That field name of the object is basically the **name field of html input elment**, so we can get that by **[event.target.name]**.
@@ -90,16 +94,17 @@ Now again if you will see we are repeating some stuff over. Like `{(event)=> set
 So let's make a generic function **handleInputChange**
 
 <CodeContainer>
+
 ```jsx
 const [formValues, setFormValues] = useState()
 
 const handleInputChange = (
-event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 ) => {
-setFormData({
-...formData,
-[event.target.name]: event.target.value,
-});
+  setFormData({
+    ...formData,
+    [event.target.name]: event.target.value,
+  });
 };
 
 <label htmlFor="name">Name</label>
@@ -130,15 +135,16 @@ Now we console.log the values formData. Here's the output
 Now let's add some validation checks. It will depend on your project requirement. Here I am considering product name is required should be more than 5 characters and less than 50 characters. In similar way description should be more than 10 characters and less than than 150 characters. Based on this validation we will show error states.
 
 <CodeContainer>
+
 ```jsx
 const [formValues, setFormValues] = useState()
 
 const handleInputChange = (
-event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 ) => {
-setFormData({
-...formData,
-[event.target.name]: event.target.value,
+  setFormData({
+  ...formData,
+  [event.target.name]: event.target.value,
 });
 };
 
@@ -155,27 +161,20 @@ setFormData({
 
 {formData?.name && formData.name.length < 5 && (
 
-{" "}
-
-<p className="text-red-500 mb-2">
-  Product Name should be more than 5 characters
-</p>
+  <p className="text-red-500 mb-2">
+    Product Name should be more than 5 characters
+  </p>
 )}
 
 {formData?.name && formData.name.length > 50 && (
 
-{" "}
-
-<p className="text-red-500 mb-2">
-  Product Name should not be more than 50 characters
-</p>
+  <p className="text-red-500 mb-2">
+    Product Name should not be more than 50 characters
+  </p>
 )}
 
 {formData?.name?.length === 0 && (
-
-{" "}
-
-<p className="text-red-500 mb-2">Product Name is required</p>
+  <p className="text-red-500 mb-2">Product Name is required</p>
 )}
 
 <label htmlFor="description">Description</label>
@@ -191,8 +190,6 @@ setFormData({
 
 {formData?.description && formData.description.length < 5 && (
 
-{" "}
-
 <p className="text-red-500 mb-2">
   Product Description should be more than 10 characters
 </p>
@@ -200,15 +197,12 @@ setFormData({
 
 {formData?.description && formData.description.length > 150 && (
 
-{" "}
-
 <p className="text-red-500 mb-2">
   Product Description should not be more than 150 characters
 </p>
 )}
 
 {formData?.description?.length === 0 && (
-
   <p className="text-red-500 mb-2">Product Description is required</p>
 )}
 ```
@@ -222,46 +216,55 @@ setFormData({
 
 Now this validation logic needs to be repeated again in the submit form section too right. So let's bring zod which is used to validation.
 
-<CodeContainer fileName="terminal">```bash npm i zod ```</CodeContainer>
+<CodeContainer fileName="terminal">
+
+```bash
+npm i zod
+```
+
+</CodeContainer>
 
 Let's declare the form schema for the entire form.
 
 <CodeContainer>
+
 ```js
 import {z} from "zod"
 
 const formSchema = z.object({
-name: z
-.string({ required_error: "Name is required" })
-.min(5, { message: "Name must be more than 5 characters" })
-.max(50, { message: "Name must be less than 50 characters" })
-.trim(),
+  name: z
+    .string({ required_error: "Name is required" })
+    .min(5, { message: "Name must be more than 5 characters" })
+    .max(50, { message: "Name must be less than 50 characters" })
+    .trim(),
 
-description: z
-.string({ required_error: "Description is required" })
-.min(10, { message: "Description must be more than 10 characters" })
-.max(150, { message: "Description must be less than 150 characters" })
-.trim(),
+  description: z
+    .string({ required_error: "Description is required" })
+    .min(10, { message: "Description must be more than 10 characters" })
+    .max(150, { message: "Description must be less than 150 characters" })
+    .trim(),
 
-price: z.coerce
-.number({ required_error: "Price is required" })
-.min(0, { message: "Price should be more than 0" }),
+  price: z.coerce
+    .number({ required_error: "Price is required" })
+    .min(0, { message: "Price should be more than 0" }),
 
-category: z
-.string({ required_error: "Category is required" })
-.refine((val) => val !== "uncategorised", {
-message: "Choose category other than uncategorised",
-}),
+  category: z
+    .string({ required_error: "Category is required" })
+    .refine((val) => val !== "uncategorised", {
+      message: "Choose category other than uncategorised",
+    }),
 
-is_featured: z.boolean(),
+  is_featured: z.boolean(),
 });
 
-````
+```
+
 </CodeContainer>
 
 We will use this schema for our useState also also currently with nothing initial value typescript must be throwing a lot of errors.
 
 <CodeContainer>
+
 ```js
 const [formData, setFormData] = useState<z.infer<typeof formSchema>>({
   name: "",
@@ -269,7 +272,7 @@ const [formData, setFormData] = useState<z.infer<typeof formSchema>>({
   price: 0,
   is_featured: false,
 });
-````
+```
 
 </CodeContainer>
 
@@ -282,7 +285,6 @@ const [formError, setFormError] = useState<z.ZodFormattedError<FormSchema, strin
 
 useEffect(() => {
   const parsedData = formSchema.safeParse(formData);
-
   if (!parsedData.success) {
   const err = parsedData.error.format();
   setFormError(err);
@@ -310,60 +312,62 @@ Now while submitting the form, the data will be parsed the formValues against th
 Here is final code
 
 <CodeContainer fileName="FormOne.tsx">
-```jsx
+
+```tsx
 import { FormEvent, useEffect, useState } from "react";
 import { z } from "zod";
 
 const formSchema = z.object({
-name: z
-.string({ required_error: "Name is required" })
-.min(5, { message: "Name must be more than 5 characters" })
-.max(50, { message: "Name must be less than 50 characters" })
-.trim(),
+  name: z
+    .string({ required_error: "Name is required" })
+    .min(5, { message: "Name must be more than 5 characters" })
+    .max(50, { message: "Name must be less than 50 characters" })
+    .trim(),
 
-description: z
-.string({ required_error: "Description is required" })
-.min(10, { message: "Description must be more than 10 characters" })
-.max(150, { message: "Description must be less than 150 characters" })
-.trim(),
+  description: z
+    .string({ required_error: "Description is required" })
+    .min(10, { message: "Description must be more than 10 characters" })
+    .max(150, { message: "Description must be less than 150 characters" })
+    .trim(),
 
-price: z.coerce
-.number({ required_error: "Price is required" })
-.min(0, { message: "Price should be more than 0" }),
+  price: z.coerce
+    .number({ required_error: "Price is required" })
+    .min(0, { message: "Price should be more than 0" }),
 
-category: z
-.string({ required_error: "Category is required" })
-.refine((val) => val !== "uncategorised", {
-message: "Choose category other than uncategorised",
-}),
+  category: z
+    .string({ required_error: "Category is required" })
+    .refine((val) => val !== "uncategorised", {
+      message: "Choose category other than uncategorised",
+    }),
 
-is_featured: z.boolean(),
+  is_featured: z.boolean(),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
-
 const FormOne = () => {
+  const [formData, setFormData] = useState<z.infer<typeof formSchema>>({
+    name: "",
+    description: "",
+    price: 0,
+    is_featured: false,
+    category: "",
+  });
 
-const [formData, setFormData] = useState<z.infer<typeof formSchema>>({
-name: "",
-description: "",
-price: 0,
-is_featured: false,
-category: "",
-});
+  const [formError, setFormError] = useState<z.ZodFormattedError<
+    FormSchema,
+    string
+  > | null>(null);
 
-const [formError, setFormError] =
-useState<z.ZodFormattedError<FormSchema, string> | null>(null);
+  const [touchedInput, setTouchedInput] = useState<string[]>([]);
 
-const [touchedInput, setTouchedInput] = useState<string[]>([]);
-
-const handleInputChange = (
-event: React.ChangeEvent<
-HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement >
-) => {
-if (!touchedInput.includes(event.target.name)) {
-setTouchedInput([...touchedInput, event.target.name]);
-}
+  const handleInputChange = (
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    if (!touchedInput.includes(event.target.name)) {
+      setTouchedInput([...touchedInput, event.target.name]);
+    }
 
     if (event.target.type === "checkbox") {
       if (event.target && event.target instanceof HTMLInputElement) {
@@ -378,23 +382,21 @@ setTouchedInput([...touchedInput, event.target.name]);
         [event.target.name]: event.target.value,
       }));
     }
+  };
 
-};
-
-useEffect(() => {
-const parsedData = formSchema.safeParse(formData);
+  useEffect(() => {
+    const parsedData = formSchema.safeParse(formData);
 
     if (!parsedData.success) {
       const err = parsedData.error.format();
       setFormError(err);
-    } else{
-      setFormError(null)
+    } else {
+      setFormError(null);
     }
+  }, [formData]);
 
-}, [formData]);
-
-const handleSubmit = async (e: FormEvent) => {
-e.preventDefault();
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
 
     try {
       const parsedFormValue = formSchema.safeParse(formData);
@@ -404,8 +406,6 @@ e.preventDefault();
 
         setFormError(err);
         return;
-      } else{
-        setFormError(null)
       }
 
       // send data to database
@@ -414,37 +414,35 @@ e.preventDefault();
       console.log("caught error");
       //handle additional erros ...
     }
+  };
 
-};
-
-return (
-
-<>
-<div className="my-10 w-full">
-<h2 className="text-2xl text-center font-bold">Add New</h2>
-<form onSubmit={handleSubmit} className="lg:w-1/2 mx-auto px-5 py-5">
-<label className=" block" htmlFor="name">
-Product Name
-</label>
-<input
-type="text"
-min={5}
-max={50}
-className="border-2 mb-2 border-gray-500 focus-visible:border-0 focus-visible:outline-2 rounded-md px-3 py-2 w-full"
-onChange={(event) => handleInputChange(event)}
-name="name"
-id="text"
-required
-/>
-{touchedInput.includes("name") && formError?.name && (
-<>
-{formError?.name?.\_errors.map((err) => (
-<p className="text-red-500 mb-2" key={err}>
-{err}
-</p>
-))}
-</>
-)}
+  return (
+    <>
+      <div className="my-10 w-full">
+        <h2 className="text-2xl text-center font-bold">Add New</h2>
+        <form onSubmit={handleSubmit} className="lg:w-1/2 mx-auto px-5 py-5">
+          <label className=" block" htmlFor="name">
+            Product Name
+          </label>
+          <input
+            type="text"
+            min={2}
+            max={50}
+            className="border-2 mb-2 border-gray-500  focus-visible:border-0 focus-visible:outline-2  rounded-md px-3 py-2 w-full"
+            onChange={(event) => handleInputChange(event)}
+            name="name"
+            id="text"
+            required
+          />
+          {touchedInput.includes("name") && formError?.name && (
+            <>
+              {formError?.name?._errors.map((err) => (
+                <p className="text-red-500 mb-2" key={err}>
+                  {err}
+                </p>
+              ))}
+            </>
+          )}
 
           <label className="block" htmlFor="description">
             Product Description
@@ -532,8 +530,7 @@ required
         </form>
       </div>
     </>
-
-);
+  );
 };
 
 export default FormOne;
@@ -551,6 +548,7 @@ in App.tsx comment FormOne and uncomment FormTwo.
 Simplified example for useRef.
 
 <CodeContainer>
+
 ```jsx
 const nameInput = useRef<HTMLInputElement>(null);
 const handleSubmit = async (e: FormEvent) => {
@@ -569,6 +567,7 @@ const handleSubmit = async (e: FormEvent) => {
   required
 />
 ```
+
 </CodeContainer>
 
 Now we will make use of the zod schema to validate the input.
@@ -576,48 +575,53 @@ Now we will make use of the zod schema to validate the input.
 Here is the complete code.
 
 <CodeContainer fileName="FormTwo.tsx">
+
 ```jsx
 import { z } from "zod";
 import { useRef, FormEvent, useState } from "react";
 
 const formSchema = z.object({
-name: z
-.string({ required_error: "Name is required" })
-.min(5, { message: "Name must be more than 5 characters" })
-.trim(),
+  name: z
+    .string({ required_error: "Name is required" })
+    .min(5, { message: "Name must be more than 5 characters" })
+    .max(50, { message: "Name must be less than 50 characters" })
+    .trim(),
 
-description: z
-.string({ required_error: "Description is required" })
-.min(10, { message: "Description must be more than 10 characters" })
-.trim(),
+  description: z
+    .string({ required_error: "Description is required" })
+    .min(10, { message: "Description must be more than 10 characters" })
+    .max(150, { message: "Description must be less than 150 characters" })
+    .trim(),
 
-price: z.coerce
-.number({ required_error: "Price is required" })
-.min(0, { message: "Price should be more than 0" }),
+  price: z.coerce
+    .number({ required_error: "Price is required" })
+    .min(0, { message: "Price should be more than 0" }),
 
-category: z
-.string({ required_error: "Category is required" })
-.refine((val) => val !== "uncategorised", {
-message: "Choose category other than uncategorised",
-}),
+  category: z
+    .string({ required_error: "Category is required" })
+    .refine((val) => val !== "uncategorised", {
+      message: "Choose category other than uncategorised",
+    }),
 
-is_featured: z.boolean(),
+  is_featured: z.boolean(),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
 
 const FormTwo = () => {
-const nameInput = useRef<HTMLInputElement>(null);
-const descriptionInput = useRef<HTMLTextAreaElement>(null);
-const priceInput = useRef<HTMLInputElement>(null);
-const categoryInput = useRef<HTMLSelectElement>(null);
-const featuredInput = useRef<HTMLInputElement>(null);
+  const nameInput = useRef<HTMLInputElement>(null);
+  const descriptionInput = useRef<HTMLTextAreaElement>(null);
+  const priceInput = useRef<HTMLInputElement>(null);
+  const categoryInput = useRef<HTMLSelectElement>(null);
+  const featuredInput = useRef<HTMLInputElement>(null);
 
-const [formError, setFormError] =
-useState<z.ZodFormattedError<FormSchema, string> | null>(null);
+  const [formError, setFormError] = useState<z.ZodFormattedError<
+    FormSchema,
+    string
+  > | null>(null);
 
-const handleSubmit = async (e: FormEvent) => {
-e.preventDefault();
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
 
     const formData = {
       name: nameInput.current?.value,
@@ -631,29 +635,26 @@ e.preventDefault();
 
       if (!parsedFormValue.success) {
         const err = parsedFormValue.error.format();
-
         setFormError(err);
         return;
-      } else{
-        setFormError(null)
+      } else {
+        setFormError(null);
       }
 
       console.log("formdata", parsedFormValue.data);
     } catch (error) {
       console.log(error);
     }
-
-};
-return (
-
-<>
-<div className="my-10 w-full">
-<h2 className="text-2xl text-center font-bold">Add New</h2>
-<form onSubmit={handleSubmit} className="lg:w-1/2 mx-auto px-5 py-5">
-<label className=" block" htmlFor="name">
-Product Name
-</label>
-<input
+  };
+  return (
+    <>
+      <div className="my-10 w-full">
+        <h2 className="text-2xl text-center font-bold">Add New</h2>
+        <form onSubmit={handleSubmit} className="lg:w-1/2 mx-auto px-5 py-5">
+          <label className=" block" htmlFor="name">
+            Product Name
+          </label>
+          <input
             type="text"
             min={2}
             max={50}
@@ -766,18 +767,18 @@ Product Name
         </form>
       </div>
     </>
-
-);
+  );
 };
 
 export default FormTwo;
 ```
+
 </CodeContainer>
 
 <div className="my-3 bg-red-600 rounded-md px-5 py-2 text-white">
 <p className="text-xl font-bold">Heads Up:</p>
 <p>
-You must be think that that we have added basic validation like length and required in the element itself so that will be handled by browser, so what's the use of formError useState and
+You must be thinking that that we have added basic validation like length and required in the element itself so that will be handled by browser, so what's the use of formError useState and
 
 ```jsx
 {
@@ -806,6 +807,7 @@ I am using this method quite a lot these day as it is very easy. In this method 
 Simplified example
 
 <CodeContainer>
+
 ```jsx
 const handleSubmit = async (e: FormEvent) => {
   e.preventDefault();
@@ -818,6 +820,7 @@ const handleSubmit = async (e: FormEvent) => {
 ...
 </form>
 ```
+
 </CodeContainer>
 
 Please comment FormTwo and uncomment FormThree in App.tsx
@@ -825,42 +828,47 @@ Please comment FormTwo and uncomment FormThree in App.tsx
 Complete code for FormThree
 
 <CodeContainer fileName="FormThree.tsx">
+
 ```tsx
 import { FormEvent, useState } from "react";
 import { z } from "zod";
 
 const formSchema = z.object({
-name: z
-.string({ required_error: "Name is required" })
-.min(5, { message: "Name must be more than 5 characters" })
-.trim(),
+  name: z
+    .string({ required_error: "Name is required" })
+    .min(5, { message: "Name must be more than 5 characters" })
+    .max(50, { message: "Name must be less than 50 characters" })
+    .trim(),
 
-description: z
-.string({ required_error: "Description is required" })
-.min(10, { message: "Description must be more than 10 characters" })
-.trim(),
+  description: z
+    .string({ required_error: "Description is required" })
+    .min(10, { message: "Description must be more than 10 characters" })
+    .max(150, { message: "Description must be less than 150 characters" })
+    .trim(),
 
-price: z.coerce
-.number({ required_error: "Price is required" })
-.min(0, { message: "Price should be more than 0" }),
+  price: z.coerce
+    .number({ required_error: "Price is required" })
+    .min(0, { message: "Price should be more than 0" }),
 
-category: z
-.string({ required_error: "Category is required" })
-.refine((val) => val !== "uncategorised", {
-message: "Choose category other than uncategorised",
-}),
+  category: z
+    .string({ required_error: "Category is required" })
+    .refine((val) => val !== "uncategorised", {
+      message: "Choose category other than uncategorised",
+    }),
 
-is_featured: z.boolean(),
+  is_featured: z.boolean(),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
 
 const FormThree = () => {
-const [formError, setFormError] =
-useState<z.ZodFormattedError<FormSchema, string> | null>(null);
+  const [formError, setFormError] = useState<z.ZodFormattedError<
+    FormSchema,
+    string
+  > | null>(null);
 
-const handleSubmit = async (e: FormEvent) => {
-e.preventDefault();
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
 
     const formData = new FormData(e.target as HTMLFormElement);
 
@@ -876,31 +884,28 @@ e.preventDefault();
 
       if (!parsedFormValue.success) {
         const err = parsedFormValue.error.format();
-
         console.log(err);
         setFormError(err);
         return;
-      } else{
-        setFormError(null)
+      } else {
+        setFormError(null);
       }
 
       console.log("formdata", parsedFormValue.data);
     } catch (error) {
       console.log(error);
     }
+  };
 
-};
-
-return (
-
-<>
-<div className="my-10 w-full">
-<h2 className="text-2xl text-center font-bold">Add New</h2>
-<form onSubmit={handleSubmit} className="lg:w-1/2 mx-auto px-5 py-5">
-<label className=" block" htmlFor="name">
-Product Name
-</label>
-<input
+  return (
+    <>
+      <div className="my-10 w-full">
+        <h2 className="text-2xl text-center font-bold">Add New</h2>
+        <form onSubmit={handleSubmit} className="lg:w-1/2 mx-auto px-5 py-5">
+          <label className=" block" htmlFor="name">
+            Product Name
+          </label>
+          <input
             type="text"
             min={2}
             max={50}
@@ -1008,8 +1013,7 @@ Product Name
         </form>
       </div>
     </>
-
-);
+  );
 };
 
 export default FormThree;

@@ -46,27 +46,47 @@ const formattedUpdatedDate = `${
         class="max-w-7xl md:w-[85%] lg:w-full mx-auto post-content text-[19px]"
       >
         {
-          process.env.NODE_ENV === "development" ? null : (
-            <>
-              <ins
-                class="adsbygoogle"
-                style="display:block"
-                data-ad-client="ca-pub-4587134058392926"
-                data-ad-slot="7175656160"
-                data-ad-format="auto"
-                data-full-width-responsive="true"
-              />
-              <script>
-                (adsbygoogle = window.adsbygoogle || []).push({});
-              </script>
-            </>
-          )
+          process.env.NODE_ENV === "production" &&
+            process.env.SHOW_ADS &&
+            process.env.SHOW_POST_HEADER_AD && (
+              <>
+                <ins
+                  class="adsbygoogle"
+                  style="display:block"
+                  data-ad-client="ca-pub-4587134058392926"
+                  data-ad-slot="7175656160"
+                  data-ad-format="auto"
+                  data-full-width-responsive="true"
+                />
+                <script>
+                  (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+              </>
+            )
         }
         <NewPostHeader {title} {publishedDate} {updatedDate} />
 
         <slot />
       </section>
     </main>
+
+    {
+      process.env.NODE_ENV === "production" &&
+        process.env.SHOW_ADS &&
+        process.env.SHOW_POST_FOOTER_AD && (
+          <>
+            <ins
+              class="adsbygoogle"
+              style="display:block"
+              data-ad-client="ca-pub-4587134058392926"
+              data-ad-slot="2972116450"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            />
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+          </>
+        )
+    }
     <Footer />
   </body>
 </html>
