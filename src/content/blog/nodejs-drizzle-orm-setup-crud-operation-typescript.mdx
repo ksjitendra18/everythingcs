@@ -66,7 +66,13 @@ create database drizzlenode;
 
 You can verified it is created or not by running command. You will see all the databases.
 
-<CodeContainer fileName="terminal">```bash show databases; ```</CodeContainer>
+<CodeContainer fileName="terminal">
+
+```bash
+show databases;
+```
+
+</CodeContainer>
 
 Now create a .env file in root folder
 
@@ -135,6 +141,7 @@ Let start by creating a drizzle config file.
 Create drizzle.config.ts in root folder.
 
 <CodeContainer fileName="drizzle.config.ts">
+
 ```ts
 import type { Config } from "drizzle-kit";
 import dotenv from "dotenv";
@@ -149,8 +156,8 @@ export default {
   },
   driver: "mysql2",
 } satisfies Config;
+```
 
-````
 </CodeContainer>
 
 Now let's create 2 scripts in package.json to create migrations and push changes.
@@ -170,7 +177,13 @@ Now let's create 2 scripts in package.json to create migrations and push changes
 
 Now run generate command which will generate the migrations in our db folder.
 
-<CodeContainer fileName="terminal">```js npm run db:generate ```</CodeContainer>
+<CodeContainer fileName="terminal">
+
+```js
+npm run db:generate
+```
+
+ </CodeContainer>
 
 Output:
 
@@ -182,7 +195,13 @@ Output:
 
 Now run push command. It will create the table according to the schema.
 
-<CodeContainer fileName="terminal">```js npm run db:push ```</CodeContainer>
+<CodeContainer fileName="terminal">
+
+```js
+npm run db:push
+```
+
+ </CodeContainer>
 
 Output:
 
@@ -205,55 +224,58 @@ Open the src/controllers/createrUser.ts file
 To insert first we will have to import the `db` which we intialised in db/setup.ts. And with that db we will call the insert method which takes table name as an arguement and call values method in which we will pass the values.
 
 <CodeContainer>
+
 ```ts
 import { db } from "../../db/setup";
 import { users } from "../../db/schema";
 ...
 await db.insert(users).values({ name: name, email: email });
 ```
+
 </CodeContainer>
 
 Here is the complete createUser.ts code
 
 <CodeContainer fileName="src/controllers/createrUser.ts">
+
 ```ts
 import { Request, Response } from "express";
 import { users } from "../../db/schema";
 import { db } from "../../db/setup";
 
 const createUser = async (req: Request, res: Response) => {
-const { name, email }: { name: string; email: string } = req.body;
+  const { name, email }: { name: string; email: string } = req.body;
 
-if (!name) {
-return res
-.status(400)
-.json({ success: false, data: null, message: "Name is required" });
-}
+  if (!name) {
+    return res
+      .status(400)
+      .json({ success: false, data: null, message: "Name is required" });
+  }
 
-if (!email) {
-return res
-.status(400)
-.json({ success: false, data: null, message: "Email is required" });
-}
+  if (!email) {
+    return res
+      .status(400)
+      .json({ success: false, data: null, message: "Email is required" });
+  }
 
-try {
-await db.insert(users).values({ name: name, email: email });
+  try {
+    await db.insert(users).values({ name: name, email: email });
 
     return res.status(201).json({
       success: true,
       data: { name, email },
       message: "Added Successfully",
     });
-
-} catch (error) {
-return res
-.status(500)
-.json({ success: false, data: null, message: "Unable to add" });
-}
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, data: null, message: "Unable to add" });
+  }
 };
 
 export default createUser;
 ```
+
 </CodeContainer>
 
 Send request to from your frontend or postman and pass 2 values name and email. POST REQUEST TO (http://localhost:5000/users)
@@ -275,33 +297,40 @@ Open the src/controllers/getUsers.ts file
 In this again we will import both the db and user schema and make use of select method and get it from the desired table.
 
 <CodeContainer>
-  ```ts import {db} from "../../db/setup"; import {users} from
-  "../../db/schema"; ... await db.select().from(users); ```
+
+```ts
+import {db} from "../../db/setup";
+import {users} from"../../db/schema";
+...
+
+await db.select().from(users);
+```
+
 </CodeContainer>
 
 Here is the complete getUsers.ts code
 
 <CodeContainer fileName="src/controllers/getUsers.ts">
+
 ```ts
 import { Request, Response } from "express";
 import { db } from "../../db/setup";
 import { users } from "../../db/schema";
 
 const getUsers = async (req: Request, res: Response) => {
-try {
-const allUsers = await db.select().from(users);
-
+  try {
+    const allUsers = await db.select().from(users);
     return res.status(200).json({ success: true, data: allUsers });
-
-} catch (error) {
-return res
-.status(500)
-.json({ success: false, data: null, message: "Unable to get users" });
-}
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, data: null, message: "Unable to get users" });
+  }
 };
 
 export default getUsers;
 ```
+
 </CodeContainer>
 
 Send request to from your frontend or postman. GET request to (http://localhost:5000/users)
@@ -319,14 +348,21 @@ Output:
 Open the src/controllers/getUser.ts file
 
 <CodeContainer>
-  ```ts import {db} from "../../db/setup"; import {users} from
-  "../../db/schema"; ... await db.select().from(users).where(eq(users.id,
-  Number(userId))); ```
+
+```ts
+  import {db} from "../../db/setup";
+  import {users} from "../../db/schema";
+  ...
+  await db.select().from(users).where(eq(users.id,Number(userId)));
+
+```
+
 </CodeContainer>
 
 Here is the complete getUser.ts code
 
 <CodeContainer fileName="src/controllers/getUser.ts">
+
 ```ts
 import { Request, Response } from "express";
 import { db } from "../../db/setup";
@@ -334,24 +370,24 @@ import { users } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 const getUser = async (req: Request, res: Response) => {
-const { userId } = req.params;
-try {
-const userById = await db
-.select()
-.from(users)
-.where(eq(users.id, Number(userId)));
+  const { userId } = req.params;
+  try {
+    const userById = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, Number(userId)));
 
     return res.status(200).json({ success: true, data: userById });
-
-} catch (error) {
-return res
-.status(500)
-.json({ success: false, data: null, message: "Unable to get users" });
-}
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, data: null, message: "Unable to get users" });
+  }
 };
 
 export default getUser;
 ```
+
 </CodeContainer>
 
 Send request to from your frontend or postman. GET request to (http://localhost:5000/users/{id})
@@ -369,15 +405,18 @@ Output:
 Drizzle ORM provides a **update** method to update the table
 
 <CodeContainer>
+
 ```ts
 import { db } from "../../db/setup";
 import { users } from "../../db/schema";
 ...
 await db.update(users).set({name: "new name", email : "new@email.com"}).where(eq(users.id, Number(userId)));
 ```
+
 </CodeContainer>
 
 <CodeContainer fileName="src/controllers/updateUser.ts">
+
 ```ts
 import { Request, Response } from "express";
 import { db } from "../../db/setup";
@@ -385,21 +424,21 @@ import { users } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 const updateUser = async (req: Request, res: Response) => {
-const { name, email }: { name: string; email: string } = req.body;
-const { userId } = req.params;
+  const { name, email }: { name: string; email: string } = req.body;
+  const { userId } = req.params;
 
-try {
-if (!userId) {
-return res
-.status(400)
-.json({ success: false, message: "Please provide user_id to update" });
-}
-if (!name && !email) {
-return res
-.status(400)
-.json({ success: false, message: "Please provide field to update" });
-}
-const updateData: { name?: string; email?: string } = {};
+  try {
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Please provide user_id to update" });
+    }
+    if (!name && !email) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Please provide field to update" });
+    }
+    const updateData: { name?: string; email?: string } = {};
 
     if (name) {
       updateData.name = name;
@@ -414,15 +453,13 @@ const updateData: { name?: string; email?: string } = {};
     return res
       .status(200)
       .json({ success: true, message: "Updated Successfully" });
-
-} catch (error) {
-return res.status(500).json({ success: true, message: "Cannot Update" });
-}
+  } catch (error) {
+    return res.status(500).json({ success: true, message: "Cannot Update" });
+  }
 };
 
 export default updateUser;
-
-````
+```
 
 </CodeContainer>
 
@@ -441,16 +478,18 @@ Output:
 Drizzle ORM provides a **delete** method to delete the column the table by unique identified (here I am using id. Email field can also be used)
 
 <CodeContainer>
+
 ```ts
 import { db } from "../../db/setup";
 import { users } from "../../db/schema";
 ...
 await db.delete(users).where(eq(users.id, Number(userId)));
-````
+```
 
 </CodeContainer>
 
 <CodeContainer fileName="src/controllers/deleteUser.ts">
+
 ```ts
 import { Request, Response } from "express";
 import { db } from "../../db/setup";
@@ -458,20 +497,21 @@ import { users } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 const deleteUser = async (req: Request, res: Response) => {
-const { userId } = req.params;
+  const { userId } = req.params;
 
-try {
-await db.delete(users).where(eq(users.id, Number(userId)));
-return res
-.status(200)
-.json({ success: true, message: "Delete Successfully" });
-} catch (error) {
-return res.status(500).json({ success: true, message: "Cannot Delete" });
-}
+  try {
+    await db.delete(users).where(eq(users.id, Number(userId)));
+    return res
+      .status(200)
+      .json({ success: true, message: "Delete Successfully" });
+  } catch (error) {
+    return res.status(500).json({ success: true, message: "Cannot Delete" });
+  }
 };
 
 export default deleteUser;
 ```
+
 </CodeContainer>
 
 Send request to from your frontend or postman. DELETE request to (http://localhost:5000/users/{id})
