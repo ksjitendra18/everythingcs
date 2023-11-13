@@ -26,8 +26,13 @@ The first step is to choose the font you want to use. I am choosing Jakarta Plus
 This step is similar for all the frameworks.
 
 <CodeContainer fileName="terminal">
-  ```bash npm install @fontsource/roboto # installing variable fonts npm install
-  @fontsource-variable/plus-jakarta-sans ```
+
+```bash
+npm install @fontsource/roboto
+# installing variable fonts
+npm install @fontsource-variable/plus-jakarta-sans
+```
+
 </CodeContainer>
 
 ## Self Hosting Google Fonts in Astro
@@ -37,20 +42,34 @@ After installing, import the files in your main layout file so that it is availa
 Firstly we will see installing non variable font. Now to import we will have to import the css of every font weight we are going to use. For example
 
 <CodeContainer fileName="terminal">
-  ```js --- import '@fontsource/roboto/400.css'; import
-  '@fontsource/roboto/500.css'; import '@fontsource/roboto/600.css'; import
-  '@fontsource/roboto/700.css'; --- ```
+
+```js
+---
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/600.css';
+import '@fontsource/roboto/700.css';
+---
+```
+
 </CodeContainer>
 
-To install variable font we just have to import one file
+To use variable font we just have to import one file
 
 <CodeContainer fileName="terminal">
-  ```js --- import '@fontsource-variable/plus-jakarta-sans'; --- ```
+
+```js
+---
+import '@fontsource-variable/plus-jakarta-sans';
+---
+```
+
 </CodeContainer>
 
 Now create a css file in your desired directory inside the src folder. I am creating a **global.css** in src directory only.
 
 <CodeContainer fileName="src/global.css">
+
 ```css
 body {
   font-family: 'Plus Jakarta Sans Variable', sans-serif;
@@ -60,11 +79,13 @@ body {
   font-family: 'Roboto', sans-serif;
 }
 ```
+
 </CodeContainer>
 
 Now import the css file in your main layout
 
 <CodeContainer fileName="src/components/layout.astro">
+
 ```js
 ---
 import '@fontsource-variable/plus-jakarta-sans';
@@ -79,7 +100,8 @@ import "@fontsource/roboto/700.css";
 
 ## import "./app.css"
 
-````
+```
+
 </CodeContainer>
 
 ## Self Hosting Google fonts in Svelte
@@ -89,6 +111,7 @@ I am using sveltekit for creating a sveltekit application. Install the desired f
 Create a css file in your src folder.
 
 <CodeContainer fileName="src/app.css">
+
 ```css
 body {
   font-family: 'Plus Jakarta Sans Variable', sans-serif;
@@ -97,13 +120,14 @@ body {
 body {
   font-family: 'Roboto', sans-serif;
 }
-````
+```
 
 </CodeContainer>
 
 now import the fonts and css file in your **+layout.svelte** file inside **src/routes**
 
 <CodeContainer fileName="src/routes/+layout.svelte">
+
 ```js
 <script>
 import '@fontsource-variable/plus-jakarta-sans';
@@ -119,6 +143,7 @@ import "@fontsource/roboto/700.css";
 import "../app.css"
 </script>
 ```
+
 </CodeContainer>
 
 ## Self Hosting Google fonts in React
@@ -128,6 +153,7 @@ I have vite react setup. Now firstly install the font as demonstrated in step 2.
 Now modify the **index.css** file and add the font to the body you want to use.
 
 <CodeContainer fileName="src/index.css">
+
 ```css
 body {
   font-family: 'Plus Jakarta Sans Variable', sans-serif;
@@ -137,11 +163,13 @@ body {
   font-family: 'Roboto', sans-serif;
 }
 ```
+
 </CodeContainer>
 
 Now import the css file and fonts files in the **main.tsx**
 
 <CodeContainer fileName="src/main.tsx">
+
 ```js
 import React from 'react'
 import ReactDOM from 'react-dom/client'
@@ -161,6 +189,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 ```
+
 </CodeContainer>
 
 ## Self Hosting Google fonts in Vue
@@ -170,6 +199,7 @@ I have created a basic vue app using the vue cli. As usual install font package 
 I have deleted all the contents of **assets/main.css** file. Add these lines to it.
 
 <CodeContainer fileName="src/assets/main.css">
+
 ```css
 body {
   font-family: 'Plus Jakarta Sans Variable', sans-serif;
@@ -179,11 +209,13 @@ body {
   font-family: 'Roboto', sans-serif;
 }
 ```
+
 </CodeContainer>
 
 Now import the css and font files in **main.ts**
 
 <CodeContainer fileName="src/main.ts">
+
 ```js
 import './assets/main.css'
 font-family: 'Plus Jakarta Sans Variable', sans-serif;
@@ -203,11 +235,11 @@ app.use(createPinia())
 app.use(router)
 
 app.mount('#app')
-
 ```
+
 </CodeContainer>
 
 ## Conclusion
 
 So finally you will be able to self host google fonts and hence will be able to increase the speed and privacy of your website.
-```
+

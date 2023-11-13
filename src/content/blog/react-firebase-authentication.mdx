@@ -170,7 +170,13 @@ This will install all the packages.
 
 Now run
 
-<CodeContainer>```bash npm run dev ```</CodeContainer>
+<CodeContainer>
+
+```bash
+npm run dev
+```
+
+</CodeContainer>
 
 and you will see the welcome screen.
 
@@ -245,6 +251,7 @@ We are going to use FormData constructor to get the data.
 Try this
 
 <CodeContainer>
+
 ```js
 const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
@@ -253,12 +260,11 @@ const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     const formValues = new FormData(form);
 
     console.log("formData", formValues.get("name"));
-
 };
 
-````
-</CodeContainer>
+```
 
+</CodeContainer>
 
 You will see the name entered in the form. Please remember that the parameter inside the formValues.get() must match the input name field.
 
@@ -293,7 +299,7 @@ import { auth } from "../libs/firebase";
 
     console.log("after signup", userCredential);
   };
-````
+```
 
 </CodeContainer>
 
@@ -319,25 +325,26 @@ user: Object { providerId: "firebase", uid: "Bda2dT4zdEfPIUyP7XDoeQuJuqk2", acce
 The firebase returns a lot of value. We will store the user name by thier uid using **setDoc()** method in the users collection.
 
 <CodeContainer>
+
 ```jsx
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from "../libs/firebase";
 
 await setDoc(doc(db, 'users', userCredential.user.uid), {
-name: data.get('name') as string,
-email: data.get('email') as string,
-timeStamp: serverTimestamp()
+  name: data.get('name') as string,
+  email: data.get('email') as string,
+  timeStamp: serverTimestamp()
 });
+```
 
-````
 </CodeContainer>
-
 
 Also I am adding loading states and error handling and after signup I will redirect user to the verify page to verify their email address.
 
 Updated Signup page code
 
 <CodeContainer fileName="src/pages/Signup.tsx">
+
 ```jsx
 import { useState } from "react";
 import { Link, redirect } from "react-router-dom";
@@ -518,7 +525,7 @@ const Signup = () => {
 };
 
 export default Signup;
-````
+```
 
 </CodeContainer>
 
@@ -558,6 +565,7 @@ User is logged in and have email already verified
 In above case we will redirect user to the login page and dashboard page respectively.
 
 <CodeContainer fileName="src/pages/VerifyEmail.tsx">
+
 ```tsx
 import { useEffect, useState } from "react";
 import { auth } from "../libs/firebase";
@@ -566,18 +574,18 @@ import { sendEmailVerification } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 
 const VerifyEmail = () => {
-const [isCheckingStatus, setIsCheckingStatus] = useState(true);
-const [isVerified, setIsVerified] = useState(false);
-const [sentMail, setSentMail] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
+  const [sentMail, setSentMail] = useState(false);
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-const sendVerificationEmail = async () => {
-try {
-auth.authStateReady().then(() => {
-if (!auth.currentUser || auth.currentUser === null) {
-return navigate("/login");
-}
+  const sendVerificationEmail = async () => {
+    try {
+      auth.authStateReady().then(() => {
+        if (!auth.currentUser || auth.currentUser === null) {
+          return navigate("/login");
+        }
 
         if (auth.currentUser?.emailVerified) {
           setIsVerified(true);
@@ -593,34 +601,33 @@ return navigate("/login");
     } finally {
       setIsCheckingStatus(false);
     }
+  };
 
-};
+  useEffect(() => {
+    sendVerificationEmail();
+  }, []);
 
-useEffect(() => {
-sendVerificationEmail();
-}, []);
-
-return (
-<div className="md:w-1/2 mx-auto mt-32 py-10 rounded-md px-3 flex items-center justify-center bg-slate-100 shadow-md">
-{isCheckingStatus ? (
-<div>Checking Auth Status...</div>
-) : (
-<>
-{isVerified ? (
-<>
-<p className="text-center">
-You have already verified your email. Redirecting you to
-dashboard
-</p>
-</>
-) : (
-<>
-{sentMail ? (
-<div className="flex flex-col gap-3 items-center justify-center">
-<p>Sent Verification mail successfully.</p>
-<p>
-Please check your spam folder if you can't find it in inbox.
-</p>
+  return (
+    <div className="md:w-1/2 mx-auto mt-32 py-10 rounded-md px-3 flex items-center justify-center bg-slate-100 shadow-md">
+      {isCheckingStatus ? (
+        <div>Checking Auth Status...</div>
+      ) : (
+        <>
+          {isVerified ? (
+            <>
+              <p className="text-center">
+                You have already verified your email. Redirecting you to
+                dashboard
+              </p>
+            </>
+          ) : (
+            <>
+              {sentMail ? (
+                <div className="flex flex-col gap-3 items-center justify-center">
+                  <p>Sent Verification mail successfully.</p>
+                  <p>
+                    Please check your spam folder if you can't find it in inbox.
+                  </p>
 
                   <Link
                     to="/login"
@@ -641,12 +648,13 @@ Please check your spam folder if you can't find it in inbox.
         </>
       )}
     </div>
-
-);
+  );
 };
 
 export default VerifyEmail;
+
 ```
+
 </CodeContainer>
 
 Please note one thing here. I am using **auth.authStateReady()** as it take some time to setup firebase and get auth option for firebase after the component mounts. So this ensures that we have now got the auth information.
@@ -677,7 +685,11 @@ const provider = new GoogleAuthProvider();
 then we will use the **signInWithRedirect()** function which takes 2 arguements: auth and provider
 
 <CodeContainer>
-  ```js await signInWithRedirect(auth, provider); ```
+
+```js
+await signInWithRedirect(auth, provider);
+ ```
+
 </CodeContainer>
 
 now if the user clicks on the button then the user is redirected to the google auth page where they can choose thier account and after successfull login they are redirected to the same login page of our app.
@@ -892,6 +904,7 @@ So I am performing logout of the user to clear any values that firebase would ha
 Here is finished code.
 
 <CodeContainer fileName="src/pages/Login.tsx">
+
 ```jsx
 import React, { useState, useContext } from "react";
 import GoogleLogin from "../components/GoogleLogin";
@@ -903,41 +916,39 @@ import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { AuthContext } from "../context/AuthContext";
 
 const Login = () => {
-const [isLoading, setIsLoading] = useState(false);
-const [showPass, setShowPass] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPass, setShowPass] = useState(false);
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-const [errHandler, setErrHandler] = useState({
-isError: false,
-errorMsg: "",
-});
+  const [errHandler, setErrHandler] = useState({
+    isError: false,
+    errorMsg: "",
+  });
 
-const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
 
-const { currentUser } = useContext(AuthContext);
-if (currentUser) {
-return <Navigate to="/dashboard" />;
-}
+  const { currentUser } = useContext(AuthContext);
+  if (currentUser) {
+    return <Navigate to="/dashboard" />;
+  }
 
-const FIREBASE_ERRORS = {
-"auth/email-already-in-use": "A user with that email already exists",
-"auth/weak-password":
-"Please check your password. It should be 6+ characters",
-"auth/user-not-found": "Invalid email or password",
-"auth/wrong-password": "Invalid email or password",
-};
+  const FIREBASE_ERRORS = {
+    "auth/email-already-in-use": "A user with that email already exists",
+    "auth/weak-password":
+      "Please check your password. It should be 6+ characters",
+    "auth/user-not-found": "Invalid email or password",
+    "auth/wrong-password": "Invalid email or password",
+  };
 
-const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-e.preventDefault();
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
     const form = e.target as HTMLFormElement;
     const formValues = new FormData(form);
 
     try {
-      // this is a trick to resolve the issue of the
-      // onAuthStateChanged when user verifies their email and login then
-      //it does not changes as it is same as signup
+      // this is a trick to resolve the issue to resolve the authStateChanged when user verifies their email and login then it doesnot changes as it is same as signup
       await signOut(auth);
       setIsLoading(true);
       setEmailNotVerified(false);
@@ -968,52 +979,52 @@ e.preventDefault();
     } finally {
       setIsLoading(false);
     }
+  };
 
-};
-
-return (
-<div>
-<h2 className="text-4xl font-medium mt-10 text-center">Log in</h2>
-<div className="auth-options w-full flex flex-col items-center justify-center">
-<GoogleLogin
+  return (
+    <div>
+      <h2 className="text-4xl font-medium mt-10 text-center">Log in</h2>
+      <div className="auth-options w-full flex flex-col items-center justify-center">
+        <GoogleLogin
           isLoading={isLoading}
           setIsLoading={setIsLoading}
           message="Sign in with Google"
         />
-<div className="mt-5 mb-3 w-full md:w-[380px] flex items-center justify-center">
-<div className="before-or w-[100%] h-[2px] bg-gray-300 mr-2"></div>
-<p className="text-gray-500 or">OR</p>
-<div className="after-or w-[100%] h-[2px] bg-gray-300 ml-2"></div>
-</div>
-<form onSubmit={handleLogin} className="w-[100%] mx-auto md:w-auto">
-<label htmlFor="email" className="mt-5 block text-gray-600">
-Email
-</label>
-<input
+        <div className="mt-5 mb-3 w-full md:w-[380px] flex items-center justify-center">
+          <div className="before-or w-[100%] h-[2px] bg-gray-300 mr-2"></div>
+          <p className="text-gray-500 or">OR</p>
+          <div className="after-or w-[100%] h-[2px] bg-gray-300 ml-2"></div>
+        </div>
+        <form onSubmit={handleLogin} className="w-[100%] mx-auto md:w-auto">
+          <label htmlFor="email" className="mt-5 block text-gray-600">
+            Email
+          </label>
+          <input
             type="text"
             name="email"
             id="email"
             className="border-slate-400 px-3 w-full md:w-[400px] py-2 rounded-md border-2 "
           />
-<label htmlFor="password" className="mt-5 block text-gray-600">
-Password
-</label>
-<div className="relative">
-<input
-type={showPass ? "text" : "password"}
-name="password"
-id="password"
-required
-className="border-slate-400 px-3 w-full md:w-[400px] py-2 rounded-md border-2 "
-/>
-<button
-type="button"
-aria-label={showPass ? "Password Visible" : "Password Invisible"}
-onClick={() => {
-setShowPass((prev) => !prev);
-}} >
-{showPass ? (
-<svg
+          <label htmlFor="password" className="mt-5 block text-gray-600">
+            Password
+          </label>
+          <div className="relative">
+            <input
+              type={showPass ? "text" : "password"}
+              name="password"
+              id="password"
+              required
+              className="border-slate-400 px-3 w-full md:w-[400px] py-2 rounded-md border-2 "
+            />
+            <button
+              type="button"
+              aria-label={showPass ? "Password Visible" : "Password Invisible"}
+              onClick={() => {
+                setShowPass((prev) => !prev);
+              }}
+            >
+              {showPass ? (
+                <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -1021,19 +1032,19 @@ setShowPass((prev) => !prev);
                   stroke="currentColor"
                   className="w-6 select-none text-gray-700 cursor-pointer h-6 absolute top-2 right-2"
                 >
-<path
+                  <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
                   ></path>
-<path
+                  <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                   ></path>
-</svg>
-) : (
-<svg
+                </svg>
+              ) : (
+                <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -1041,14 +1052,14 @@ setShowPass((prev) => !prev);
                   stroke="currentColor"
                   className="w-6 select-none text-gray-700 cursor-pointer h-6 absolute top-2 right-2"
                 >
-<path
+                  <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
                   ></path>
-</svg>
-)}
-</button>
+                </svg>
+              )}
+            </button>
 
             <div className="mt-2 flex justify-end">
               <Link to="/forgot-password">Forgot Password?</Link>
@@ -1084,12 +1095,12 @@ setShowPass((prev) => !prev);
         </p>
       </div>
     </div>
-
-);
+  );
 };
 
 export default Login;
 ```
+
 </CodeContainer>
 
 <div class="bg-red-500 px-3 py-2 text-white rounded-md mb-3">
@@ -1102,6 +1113,7 @@ Now let's implement how to send reset password if the user forgets the password.
 Create ForgotPassword page in the pages folder and register the route.
 
 <CodeContainer hasPartialCode={true} fileName="src/App.tsx">
+
 ```jsx
 <Suspense fallback={<Loading />}>
   <Routes>
@@ -1117,7 +1129,8 @@ Create ForgotPassword page in the pages folder and register the route.
   </Routes>
 </Suspense>
 
-````
+```
+
 </CodeContainer>
 
 ForgotPassword.tsx
@@ -1209,7 +1222,7 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
-````
+```
 
 </CodeContainer>
 
@@ -1232,13 +1245,14 @@ Let's begin the setup. Create a folder context in src folder.
 Create a file named AuthContext.tsx. Let's setup the context. Here is the basic setup.
 
 <CodeContainer fileName="src/context/AuthContext.tsx">
+
 ```jsx
 import { User } from "firebase/auth";
 import React, { createContext, useEffect, useState } from "react";
 import { auth } from "../libs/firebase";
 
 type InitialState = {
-currentUser: User | null;
+  currentUser: User | null;
 };
 export const AuthContext = createContext<InitialState>({ currentUser: null });
 
@@ -1249,14 +1263,15 @@ export const AuthContextProvider = ({
 }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-return (
-<AuthContext.Provider value={{ currentUser }}>
-{children}
-</AuthContext.Provider>
-);
+  return (
+    <AuthContext.Provider value={{ currentUser }}>
+     {children}
+    </AuthContext.Provider>
+  );
 };
 
-````
+```
+
 </CodeContainer>
 
 Now we will have to wrap the app within the context so that other components can access these values.
@@ -1264,6 +1279,7 @@ Now we will have to wrap the app within the context so that other components can
 So go to App.tsx and wrap the whole app in AuthContextProvider
 
 <CodeContainer fileName="App.tsx">
+
 ```tsx
 import { Routes, Route } from "react-router-dom";
 
@@ -1302,13 +1318,14 @@ const App = () => {
 };
 
 export default App;
-````
+```
 
 </CodeContainer>
 
 Now we will have to listen for auth changes like when the user sign up, log in or log out so for that we need auth change observer. Firebase provides a very helpful method **onAuthStateChanged** to achieve this process.
 
 <CodeContainer>
+
 ```jsx
 onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -1318,6 +1335,7 @@ onAuthStateChanged(auth, (user) => {
       }
 });
 ```
+
 </CodeContainer>
 
 So we will use this observer with the useEffect hook to run once when the component mounts.
@@ -1374,7 +1392,11 @@ Now we can access the value anywhere and in any component.
 Very easy. Just use the useContext hook and pass the context from which you're trying to read from. In this case we are trying to access value (currentUser) of AuthContext
 
 <CodeContainer>
-  ```js const {currentUser} = useContext(AuthContext); ```
+
+```js
+const {currentUser} = useContext(AuthContext);
+```
+
 </CodeContainer>
 
 Let's show Logout option to user when the user is logged in and will hide the login and sign up option.
@@ -1386,47 +1408,49 @@ If currentUser exists(which means it is not null) then conditionally render the 
 Updated Navbar.tsx
 
 <CodeContainer fileName="src/components/Navbar.tsx">
+
 ```jsx
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 const Navbar = () => {
-const { currentUser } = useContext(AuthContext);
+  const { currentUser } = useContext(AuthContext);
 
-return (
-<header className="px-3 md:w-[1140px] my-3 mx-auto flex justify-between">
-<h1 className="text-2xl font-bold">
-<Link to="/">Learn Auth</Link>
-</h1>
-<nav>
-<ul className="flex gap-4">
-<li>
-<Link to="/">Home</Link>
-</li>
-{currentUser ? (
-<>
-<li>
-<a href="/dashboard">Dashboard</a>
-</li>
-<li>
-<button>Logout</button>
-</li>
-</>
-) : (
-<>
-<Link to="/login">Login</Link>
-<Link to="/signup">Signup</Link>
-</>
-)}
-</ul>
-</nav>
-</header>
-);
+  return (
+    <header className="px-3 md:w-[1140px] my-3 mx-auto flex justify-between">
+      <h1 className="text-2xl font-bold">
+        <Link to="/">Learn Auth</Link>
+      </h1>
+      <nav>
+        <ul className="flex gap-4">
+          <li>
+            <Link to="/">Home</Link>
+          </li>
+          {currentUser ? (
+            <>
+              <li>
+                <a href="/dashboard">Dashboard</a>
+              </li>
+              <li>
+                <button>Logout</button>
+              </li>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Login</Link>
+              <Link to="/signup">Signup</Link>
+            </>
+          )}
+        </ul>
+      </nav>
+    </header>
+  );
 };
 
 export default Navbar;
 ```
+
 </CodeContainer>
 
 Also update the homepage. If the user is authenticated then they will be redirected to the dashboard else to login page.
@@ -1468,6 +1492,7 @@ We will implement this in the Navbar. We will also redirect the user to the home
 Updated code Navbar.tsx
 
 <CodeContainer fileName="src/components/Navbar.tsx">
+
 ```jsx
 import { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -1482,40 +1507,44 @@ const Navbar = () => {
     navigate("/");
   };
 
-return (
-<header className="px-3 md:w-[1140px] my-3 mx-auto flex justify-between">
-<h1 className="text-2xl font-bold">
-<Link to="/">Learn Auth</Link>
-</h1>
-<nav>
-<ul className="flex gap-4">
-<li>
-<Link to="/">Home</Link>
-</li>
-{currentUser ? (
-<>
-<li>
-<Link to="/dashboard">Dashboard</Link>
-</li>
-<li>
-<button onClick={handleLogout}>Logout</button>
-</li>
-</>
-) : (
-<>
-<Link to="/login">Login</Link>
-<Link to="/signup">Signup</Link>
-</>
-)}
-</ul>
-</nav>
-</header>
-);
+  return (
+    <header className="px-3 md:w-[1140px] my-3 mx-auto flex justify-between">
+      <h1 className="text-2xl font-bold">
+        <Link to="/">Learn Auth</Link>
+      </h1>
+      <nav>
+        <ul className="flex gap-4">
+          <li>
+            <Link to="/">Home</Link>
+          </li>
+          {currentUser ? (
+            <>
+              <li>
+                <Link to="/dashboard">Dashboard</Link>
+              </li>
+              <li>
+                <button onClick={handleLogout}>Logout</button>
+              </li>
+            </>
+          ) : (
+            <>
+              <li>
+                <Link to="/login">Login</Link>
+              </li>
+              <li>
+                <Link to="/signup">Signup</Link>
+              </li>
+            </>
+          )}
+        </ul>
+      </nav>
+    </header>
+  );
 };
 
 export default Navbar;
+```
 
-````
 </CodeContainer>
 
 ## Section 7: Protecting Routes
@@ -1529,6 +1558,7 @@ In components create a new file called AuthPages.tsx.
 In this we will will check the user auth status. It is async process so I will add the loading state too. Also I am using the **authStateReady** just as in the previous section. This ensures that auth is intialised properly.
 
 <CodeContainer fileName="src/components/AuthPage.tsx">
+
 ```jsx
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
@@ -1563,7 +1593,7 @@ const AuthPages = ({ children }: { children: JSX.Element }) => {
   );
 };
 export default AuthPages;
-````
+```
 
 </CodeContainer>
 
@@ -1578,28 +1608,30 @@ Let's redirect user who are authenticated and trying to access login and signup 
 Partial code Login.tsx
 
 <CodeContainer fileName="src/pages/Login.tsx" hasPartialCode={true}>
+
 ```jsx
 import { AuthContext } from "../context/AuthContext";
 const Login = () => {
-   const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-const [errHandler, setErrHandler] = useState({
-isError: false,
-errorMsg: "",
+  const [errHandler, setErrHandler] = useState({
+    isError: false,
+    errorMsg: "",
 });
 
-const { currentUser } = useContext(AuthContext);
-if (currentUser) {
-return <Navigate to="/dashboard" />;
-}
+  const { currentUser } = useContext(AuthContext);
+  if (currentUser) {
+    return <Navigate to="/dashboard" />;
+  }
 
 ...rest all same
 }
 
 ```
+
 </CodeContainer>
 
 ## Section 8: Conclusion
@@ -1613,4 +1645,3 @@ All the code regarding this is available on [github](https://github.com/ksjitend
 I hope you were able to follow up. If you are getting any error please open an issue in github.
 
 Also if you're struck join the [EverythingCS discord server](https://discord.gg/W3nubBNeXK). There you can chat with me. Currently it has very low member but you all join.
-```
