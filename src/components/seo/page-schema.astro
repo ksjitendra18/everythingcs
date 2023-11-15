@@ -11,8 +11,8 @@ const schema = {
   "@graph": [
     {
       "@type": "WebPage",
-      "@id": `https://everythingcs.dev/${Astro.url.pathname}`,
-      url: `https://everythingcs.dev/${Astro.url.pathname}`,
+      "@id": `https://everythingcs.dev${Astro.url.pathname}`,
+      url: `https://everythingcs.dev${Astro.url.pathname}`,
       name: { title },
       isPartOf: { "@id": "https://everythingcs.dev/#website" },
       about: { "@id": "https://everythingcs.dev/#organization" },

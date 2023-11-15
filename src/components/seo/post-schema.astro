@@ -15,9 +15,9 @@ const schema = {
   "@graph": [
     {
       "@type": "Article",
-      "@id": `https://everythingcs.dev/${Astro.url.pathname}#article`,
+      "@id": `https://everythingcs.dev${Astro.url.pathname}#article`,
       isPartOf: {
-        "@id": `https://everythingcs.dev/${Astro.url.pathname}`,
+        "@id": `https://everythingcs.dev${Astro.url.pathname}`,
       },
       author: {
         name: "Jitendra Kumar Singh",
@@ -27,11 +27,11 @@ const schema = {
       datePublished: publishedAt,
       dateModified: updatedAt,
       mainEntityOfPage: {
-        "@id": `https://everythingcs.dev/${Astro.url.pathname}`,
+        "@id": `https://everythingcs.dev${Astro.url.pathname}`,
       },
       publisher: { "@id": "https://everythingcs.dev/#organization" },
       image: {
-        "@id": `https://everythingcs.dev/${Astro.url.pathname}#primaryimage`,
+        "@id": `https://everythingcs.dev${Astro.url.pathname}#primaryimage`,
       },
       thumbnailUrl: featuredImage,
       articleSection: category,
@@ -39,8 +39,8 @@ const schema = {
     },
     {
       "@type": "WebPage",
-      "@id": `https://everythingcs.dev/${Astro.url.pathname}`,
-      url: `https://everythingcs.dev/${Astro.url.pathname}`,
+      "@id": `https://everythingcs.dev${Astro.url.pathname}`,
+      url: `https://everythingcs.dev${Astro.url.pathname}`,
       name: { title },
       isPartOf: { "@id": "https://everythingcs.dev/#website" },
       about: { "@id": "https://everythingcs.dev/#organization" },
