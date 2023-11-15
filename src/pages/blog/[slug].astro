@@ -17,17 +17,27 @@ type Props = CollectionEntry<"blog">;
 
 const post = Astro.props;
 
-const { title, description, ogImage, updatedDate, publishedDate } = post.data;
+const {
+  title,
+  description,
+  ogImage,
+  updatedDate,
+  publishedDate,
+  featuredImage,
+  category,
+} = post.data;
 
 const { Content, headings } = await post.render();
 ---
 
 <BlogPostLayout
-  title={title}
-  description={description}
-  ogImage={ogImage}
-  updatedDate={updatedDate}
-  publishedDate={publishedDate}
+  {title}
+  {description}
+  {ogImage}
+  {updatedDate}
+  {publishedDate}
+  {featuredImage}
+  {category}
 >
   <article class="flex gap-5 items-start w-full h-full">
     <div class="lg:w-[65%] w-full lg:mr-10">
