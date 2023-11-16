@@ -1,0 +1,330 @@
+---
+title: "How to setup TailwindCSS for 11ty Eleventy static site generator"
+publishedDate: 2023-11-15
+updatedDate: 2023-11-15
+description: "Step by step guide on how to setup tailwindcss for eleventy site"
+ogImage: "https://static.everythingcs.dev/blog/tailwindcss-eleventy-setup.png"
+featuredImage: "https://static.everythingcs.dev/blog/tailwindcss-eleventy-setup.png"
+category: ["Eleventy", "TailwindCSS"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+import CodeContainer from "../../components/blog/code-container.astro";
+
+Tailwind is a utility based CSS framework and is very popular. Eleventy is a static site generator which supports various templating engines. In this post we are going to add tailwind css for styling the eleventy site. And we will make sure that hot reloading is working for optimum developer experience.
+
+Please refer to the [repo](https://github.com/ksjitendra18/eleventy-tailwindcss) if you're facing any issues.
+
+## Step 1: Eleventy Setup
+
+Skip this step if you already have eleventy site setup.
+
+Initialise an empty nodejs project
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm init -y
+```
+
+</CodeContainer>
+
+Then install eleventy
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm install @11ty/eleventy --save-dev
+```
+
+</CodeContainer>
+
+Now make a src directory and add a **index.njk** file. (You can use any templating language)
+
+I have just added hello world to index.njk file for now.
+
+<CodeContainer fileName="src/index.njk">
+
+```html
+hello world
+```
+
+</CodeContainer>
+
+Now let's create a config file. In the root directory create a **.eleventy.js** file and add the basic config which defines the input and output folder and other configs too.
+
+<CodeContainer fileName=".eleventy.js">
+
+```js
+module.exports = function (config) {
+  return {
+    passthroughFileCopy: true,
+    dir: {
+      input: "src",
+      includes: "_includes",
+      data: "_data",
+      output: "_site",
+    },
+  };
+};
+```
+
+</CodeContainer>
+
+Now run
+
+<CodeContainer fileName="terminal">
+
+```bash
+npx eleventy --serve
+```
+
+</CodeContainer>
+
+Open http\:\/\/localhost:8080 and you will see hello world
+
+## Step 2: Setup TailwindCSS
+
+Lets install and configure tailwindcss for eleventy.
+
+### Installation
+
+Install the required libraries
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm i tailwindcss -D 
+```
+
+</CodeContainer>
+
+### Configuration
+
+Firstly create a **tailwind.config.js** file and write the config.
+
+<CodeContainer fileName="tailwind.config.js">
+
+```js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./src/**/*.{html,md,njk,ejs,pug}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+</CodeContainer>
+
+Now create a **_include** folder and inside create a css folder and inside css folder create a new **global.css** file.
+
+<CodeContainer fileName="src/_includes/css/global.css">
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+</CodeContainer>
+
+Let's create a layout so that it can be shared amongst the other pages in future.
+
+Create a main-layout.njk file inside the layouts folder in **src\/_includes** folder. We will also include the global.css file here.
+
+<CodeContainer fileName="src/_includes/layout/main-layout.njk">
+
+```html
+---
+title: Blog
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <meta name="description" value="{{ description }}">
+    <link rel="stylesheet" href="./global.css"/>
+
+  </head>
+  <body>
+    {{ content | safe }}
+  </body>
+</html>
+```
+
+</CodeContainer>
+
+Now let's modify the config file
+
+<CodeContainer fileName=".eleventy.js">
+
+```js
+module.exports = function (eleventyConfig) {
+  eleventyConfig.addPassthroughCopy({
+    "global.out.css": "global.css",
+  });
+  return {
+    passthroughFileCopy: true,
+    dir: {
+      input: "src",
+      includes: "_includes",
+      data: "_data",
+      output: "_site",
+    },
+  };
+};
+```
+
+</CodeContainer>
+
+Now we will have to run tailwind for generating the css. Update the package.json
+
+<CodeContainer fileName="package.json">
+
+```json
+{
+  "name": "eleventy-twcss",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "css": "tailwindcss -i ./src/_includes/css/global.css -o global.out.css --watch",
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1",
+    "tailwindcss": "^3.3.5"
+  }
+}
+
+```
+
+</CodeContainer>
+
+Now in one terminal run
+
+<CodeContainer fileName="terminal">
+
+```bash
+npx @11ty/eleventy --serve
+```
+
+</CodeContainer>
+
+And in second terminal run
+<CodeContainer fileName="terminal">
+
+```bash
+npm run css
+```
+
+</CodeContainer>
+
+Also update the index.njk file to add layout and tailwind classes.
+
+<CodeContainer fileName="src/index.njk">
+
+```html
+---
+layout: layout/main-layout.njk
+title: Hello World
+---
+
+<h1 class="text-3xl font-bold text-center mt-5 mb-2">Hello World!!</h1>
+
+<p class="text-xl text-center">Exploring Eleventy. Eleventy is a static site generator. </p>
+
+<div class="flex items-center justify-center ">
+<button class="rounded-md px-8 py-3 my-5 bg-amber-600 text-white">Let's go</button>
+</div>
+
+
+```
+
+</CodeContainer>
+
+Now refresh your browser and you will see tailwind styling being applied. Also hot reloading works too.
+
+## Deploy
+
+Now to deploy just add a build script. In this case I am using the & operator to run the script.
+
+<CodeContainer fileName="package.json">
+
+```json
+{
+  "name": "eleventy-twcss",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "css": "tailwindcss -i ./src/_includes/css/global.css -o global.out.css --watch",
+    "build": "npx @11ty/eleventy & tailwindcss -i ./src/_includes/css/global.css -o ./_site/global.css --minify"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1",
+    "tailwindcss": "^3.3.5"
+  }
+}
+```
+
+</CodeContainer>
+
+If this is not working or causing any error then use the concurrently package.
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm i concurrently -D
+```
+
+</CodeContainer>
+
+Then add a build script. I am naming it prod
+
+<CodeContainer fileName="package.json">
+
+```json
+{
+  "name": "eleventy-twcss",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "css": "tailwindcss -i ./src/_includes/css/global.css -o global.out.css --watch",
+    "build": "npx @11ty/eleventy & tailwindcss -i ./src/_includes/css/global.css -o ./_site/global.css --minify",
+    "prod": "concurrently \"npx @11ty/eleventy\" \"tailwindcss -i ./src/_includes/css/global.css -o ./_site/global.css --minify\"",
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1",
+    "concurrently": "^8.2.2",
+    "tailwindcss": "^3.3.5"
+  }
+}
+
+```
+
+</CodeContainer>
+
+Now add the npm run build or npm run prod command to your deployment service or just run it on you device and upload the _site folder
+
+## Conclusion
+
+So in this post we added tailwindcss for styling in eleventy site.
+
+Here is the [repo](https://github.com/ksjitendra18/eleventy-tailwindcss). Please refer it for the latest code.
+
+If you have any doubt, you can contact me  via the [EverythingCS discord server](https://discord.gg/W3nubBNeXK)

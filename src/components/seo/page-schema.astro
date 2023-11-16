@@ -1,0 +1,94 @@
+---
+interface Props {
+  title: string;
+  description: string;
+}
+const { title, description } = Astro.props;
+const publishedAt = new Date().toISOString();
+const updatedAt = new Date().toISOString();
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": `https://everythingcs.dev${Astro.url.pathname}`,
+      url: `https://everythingcs.dev${Astro.url.pathname}`,
+      name: { title },
+      isPartOf: { "@id": "https://everythingcs.dev/#website" },
+      about: { "@id": "https://everythingcs.dev/#organization" },
+      primaryImageOfPage: { "@id": "https://everythingcs.dev/#primaryimage" },
+      image: { "@id": "https://everythingcs.dev/#primaryimage" },
+      thumbnailUrl: "https://everythingcs.dev/default-image-ecs.png",
+      datePublished: "2023-11-15T10:44:10+00:00",
+      dateModified: updatedAt,
+      description: description,
+      breadcrumb: { "@id": "https://everythingcs.dev/#breadcrumb" },
+      inLanguage: "en-US",
+      potentialAction: [
+        { "@type": "ReadAction", target: ["https://everythingcs.dev/"] },
+      ],
+    },
+    {
+      "@type": "ImageObject",
+      inLanguage: "en-US",
+      "@id": "https://everythingcs.dev/#primaryimage",
+      url: "https://everythingcs.dev/default-image-ecs.png",
+      contentUrl: "https://everythingcs.dev/default-image-ecs.png",
+      width: 1200,
+      height: 630,
+      caption: "Read the latest posts.",
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://everythingcs.dev/#breadcrumb",
+      itemListElement: [{ "@type": "ListItem", position: 1, name: "Home" }],
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://everythingcs.dev/#website",
+      url: "https://everythingcs.dev/",
+      name: "EverythingCS",
+      description:
+        "EverythingCS is a blog related to Reactjs, Nextjs, Firebase tutorials and more of fullstack stuffs",
+      publisher: { "@id": "https://everythingcs.dev/#organization" },
+      inLanguage: "en-US",
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://everythingcs.dev/#organization",
+      name: "EverythingCS",
+      url: "https://everythingcs.dev/",
+      logo: {
+        "@type": "ImageObject",
+        inLanguage: "en-US",
+        "@id": "https://everythingcs.dev/#/schema/logo/image/",
+        url: "https://everythingcs.dev/default-image-ecs.png",
+        contentUrl: "https://everythingcs.dev/default-image-ecs.png",
+        width: 457,
+        height: 100,
+        caption: "EverythingCS",
+      },
+      image: { "@id": "https://everythingcs.dev/#/schema/logo/image/" },
+    },
+
+    {
+      "@type": "Person",
+      "@id": "https://everythingcs.dev/author/jitendra",
+      name: "Jitendra Kumar Singh",
+      url: "https://everythingcs.dev/author/jitendra",
+      image: {
+        "@type": "ImageObject",
+        "@id":
+          "https://gravatar.com/userimage/242689813/1ccdacc8c9b727030cb07d96802a2e21.jpeg?size=256",
+        url: "https://gravatar.com/userimage/242689813/1ccdacc8c9b727030cb07d96802a2e21.jpeg?size=256",
+        caption: "Jitendra Kumar Singh",
+        inLanguage: "en-US",
+      },
+
+      worksFor: { "@id": "https://everythingcs.dev/#organization" },
+    },
+  ],
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

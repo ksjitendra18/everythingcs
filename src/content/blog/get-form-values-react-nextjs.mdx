@@ -7,7 +7,7 @@ ogImage: "https://static.everythingcs.dev/blog/get-form-input-values-react-next-
 featuredImage: "https://static.everythingcs.dev/blog/get-form-input-values-react-next-validate-zod.png"
 category: ["Reactjs"]
 author: "Jitendra"
-isFeatured: true
+isFeatured: false
 draft: false
 ---
 
@@ -122,6 +122,7 @@ const handleInputChange = (
  onChange = {(event)=> handleInputChange(event)} 
 />
 ```
+
 </CodeContainer>
 
 Now we console.log the values formData. Here's the output
@@ -206,6 +207,7 @@ const handleInputChange = (
   <p className="text-red-500 mb-2">Product Description is required</p>
 )}
 ```
+
 </CodeContainer>
 
 <img
@@ -535,6 +537,7 @@ const FormOne = () => {
 
 export default FormOne;
 ```
+
 </CodeContainer>
 
 I am not very fond of this method as it triggers re-render on every change. Please remember rerender here in this case is not much that big of an issue. React handles rerender pretty well. But still we have optimised methods so let's see them.
@@ -1018,6 +1021,7 @@ const FormThree = () => {
 
 export default FormThree;
 ```
+
 </CodeContainer>
 
 Here is the output

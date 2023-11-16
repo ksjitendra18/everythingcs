@@ -4,13 +4,17 @@ import "@fontsource-variable/inter";
 import "../../global.css";
 import MainHeader from "./main-header.astro";
 import Footer from "../footer.astro";
+import PageSchema from "../seo/page-schema.astro";
 
 const { title, description } = Astro.props;
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <MainHeader {title} {description} />
+  <MainHeader {title} {description}>
+    <PageSchema {title} {description} />
+  </MainHeader>
+
   <body class="flex flex-col min-h-[100vh]">
     <div>
       <Navbar />
