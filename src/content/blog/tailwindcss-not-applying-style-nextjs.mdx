@@ -3,7 +3,7 @@ title: "Tailwind CSS not applying style to Next.js error"
 publishedDate: 2022-09-26
 updatedDate: 2023-09-15
 description: "Are you facing the problem that your styles are not being applied to your Next.js application by Tailwind CSS?"
-featuredImage: "/images/posts/img1.jpg"
+featuredImage: "https://static.everythingcs.dev/blog/tailwindcss-not-applying-style-nextjs-image.png"
 ogImage: "https://static.everythingcs.dev/blog/tailwindcss-not-applying-style-nextjs-image.png"
 category: ["JavaScript", "TailwindCSS", "Nextjs"]
 author: "Jitendra"
@@ -27,18 +27,20 @@ For npm:
 
 <CodeContainer fileName="terminal">
 
-```bash   
+```bash
 npm uninstall tailwindcss postcss autoprefixer 
 ```
+
 </CodeContainer>
 
 For yarn:
 
 <CodeContainer fileName="terminal">
 
-```bash 
+```bash
 yarn remove tailwindcss postcss autoprefixer 
 ```
+
 </CodeContainer>
 
 Then clear cache
@@ -53,7 +55,6 @@ yarn : yarn cache clean
 ```
 
 </CodeContainer>
-
 
 Also clear the .next folder generated
 
@@ -70,7 +71,7 @@ Then again install tailwindcss with all the dependencies
 
 <CodeContainer fileName="terminal">
 
-```bash 
+```bash
 npm i -D tailwindcss postcss autoprefixer
 or
 yarn add --dev tailwindcss postcss autoprefixer 
@@ -104,7 +105,7 @@ replace with
 
 <CodeContainer>
 
-  ```js 
+  ```js
 content: [
    "./app/**/*.{js,ts,jsx,tsx,mdx}",
    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -114,6 +115,7 @@ content: [
    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
 ```
+
 </CodeContainer>
 
 Your tailwind.config.js should look like this 👇
@@ -150,7 +152,7 @@ The main reason was the spaces after the comma.
 
 <CodeContainer fileName="tailwind.config.js">
 
-```js 
+```js
 //error code
 content: ["./src/**/*.{(js, ts, tsx, jsx)}"], 
 ```
