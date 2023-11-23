@@ -1,95 +1,87 @@
 ---
 title: "How to get current user IP Address in Deno"
-publishedDate: 2023-11-22
-updatedDate: 2023-11-22
+publishedDate: 2023-11-23
+updatedDate: 2023-11-23
 description: "Step by step guide on how to get current IP address in Deno"
-ogImage: "https://static.everythingcs.dev/blog/cw-ip/get-user-deno.png"
-featuredImage: "https://static.everythingcs.dev/blog/cw-ip/get-user-deno.png"
+ogImage: "https://static.everythingcs.dev/blog/cw-ip/get-user-ip-deno.png"
+featuredImage: "https://static.everythingcs.dev/blog/cw-ip/get-user-ip-deno.png"
 category: ["Deno"]
 author: "Jitendra"
 isFeatured: false
-draft: true
+draft: false
 ---
 
 import CodeContainer from "../../components/blog/code-container.astro";
 
-Sometimes there are security requirement to get the user ip address so let's see how can we get user ip while using cloudflare workers.
+In this post we are going to see how to get user IP address in deno.
 
 Please note that IP address is considered personal data so please ensure to follow the data privacy laws.
 
 ## Step 1: Setup
 
-Let's create a new cloudflare app
+Create a index.ts file and write hello world deno program
+<CodeContainer fileName="index.ts">
 
-<CodeContainer fileName="terminal">
+```ts
+const port = 8080;
 
-```bash
-npm create cloudflare@latest
+const handler = (request: Request): Response => {
+  return Response.json({ message: "hello world" });
+};
+
+Deno.serve({ port }, handler);
 ```
 
 </CodeContainer>
 
-Now select the "Website or web app" and then select hono. For git and deploy choose on your preference.
+Now in terminal run the following command and go to **http:\/\/localhost:8080**
 
-<img src="https://static.everythingcs.dev/blog/cw-ip/create-cloudflare-app-hono.png" loading="lazy" />
+<CodeContainer fileName="terminal">
+
+```bash
+deno run --allow-net --watch index.ts
+```
+
+</CodeContainer>
 
 ## Step 2: Getting User Ip
 
-Now in the src/index.ts file we will try to access the user ip.
-
-Cloudflare workers request has the header "CF-Connecting-IP". We can access this header to get the user ip address.
+Now to get ip address we will access the second arguement that would be info that contains the network information along with other informations
 
 <CodeContainer fileName="src/index.ts">
 
 ```ts
-import { Hono } from "hono";
+const port = 8080;
 
-const app = new Hono();
+const handler = (request: Request, info: Deno.ServeHandlerInfo): Response => {
+  return Response.json({ userIP: info.remoteAddr.hostname });
+};
 
-app.get("/", (c) =>
-  c.json({ userIP: c.req.raw.headers.get("CF-Connecting-IP") })
-);
-
-export default app;
+Deno.serve({ port }, handler);
 ```
 
 </CodeContainer>
 
-Now run the server in the remote mode.
-If you run the server without remote mode then you will not get the ip address.
-
-If you're using npm then add a new script in package.json
-
-<CodeContainer fileName="terminal">
-
-```bash
-"dev:remote": "wrangler dev src/index.ts --remote",
-```
-
-</CodeContainer>
-
-<CodeContainer fileName="terminal">
-
-```bash
-npm run dev:remote
-#or
-pnpm run dev --remote 
-```
-
-</CodeContainer>
+Now visit localhost again and you will see the output.
 
 You will get the response
 
 <CodeContainer fileName="terminal">
 
 ```json
-{"userIP": "xx.xx.xx.xx"}
+{"userIP":  "127.0.0.1"}
 ```
 
 </CodeContainer>
 
+This is not right, right? But don't worry this will perfectly work in the deployed version.
+
+To check go to deno playground (requires authentication) and paste the code and you will see the output
+
+<img src="https://static.everythingcs.dev/blog/cw-ip/deno-playground-response.png" loading="lazy" />
+
 ## Conclusion
 
-So in this post we used Hono framework running cloudflare workers  to get the user ip address.
+So in this post we used deno to get the current user ip address. Please note user ip is private info so you should follow the rule aroound this.
 
 If you have any queries we can discuss it on [discord channel](https://discord.gg/W3nubBNeXK).
