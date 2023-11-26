@@ -36,8 +36,6 @@ const formattedPublishedDate = `${
 const formattedUpdatedDate = `${
   new Date(updatedDate).toISOString().split("T")[0]
 }:T16:52:29+00:00`;
-
-console.log("featured", featuredImage);
 ---
 
 <!doctype html>
@@ -46,14 +44,14 @@ console.log("featured", featuredImage);
     <meta property="article:published_time" content={formattedPublishedDate} />
     <meta property="article:modified_time" content={formattedUpdatedDate} />
     <link rel="stylesheet" href="/prism-dracula.css" />
-    <PostSchema
+    <!-- <PostSchema
       {title}
       {description}
       publishedAt={formattedPublishedDate}
       updatedAt={formattedUpdatedDate}
       featuredImage={featuredImage}
       {category}
-    />
+    /> -->
   </MainHeader>
 
   <body>
