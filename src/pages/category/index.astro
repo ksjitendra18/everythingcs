@@ -13,6 +13,20 @@ import MainLayout from "../../components/layout/main-layout.astro";
     </h2>
 
     <div class="my-10">
+      <h3 class="font-medium text-xl">Series</h3>
+
+      <div class="category-section">
+        <CategoryCard
+          href={"/global-state-management-reactjs"}
+          title={"React State Management"}
+        />
+        <CategoryCard
+          href={"/astro-authentication"}
+          title={"Astro Authentication"}
+        />
+      </div>
+    </div>
+    <div class="my-10">
       <h3 class="font-medium text-xl">Full Stack</h3>
 
       <div class="category-section">
@@ -38,6 +52,7 @@ import MainLayout from "../../components/layout/main-layout.astro";
 
       <div class="category-section">
         <CategoryCard href={"/firebase"} title={"Firebase"} />
+        <CategoryCard href={"/vps"} title={"VPS"} />
       </div>
     </div>
     <div class="my-10">

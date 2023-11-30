@@ -47,7 +47,7 @@ const { page } = Astro.props as { page: Page<CollectionEntry<"blog">> };
             title={post.data.title}
             description={post.data.description}
             slug={post.slug}
-            updatedDate={post.data.updatedDate}
+            updatedDate={post.data.publishedDate}
           />
         ))
       }

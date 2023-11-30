@@ -1,0 +1,469 @@
+---
+title: "Setup Google Authentication in Astro"
+publishedDate: 2023-11-30
+updatedDate: 2023-11-30
+description: "Step by step guide on how to setup google authentication in astro and also persist user and protecting routes."
+ogImage: "https://static.everythingcs.dev/blog/astro-auth-291123/astro-authentication-google.png"
+featuredImage: "https://static.everythingcs.dev/blog/astro-auth-291123/astro-authentication-google.png"
+category: ["Astro", "Authentication", "Astro Authentication"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+import CodeContainer from "../../components/blog/code-container.astro";
+
+In this guide we are going to see how to setup google authentication in Astro js based application.
+
+We will make use of Astro SSR, API routes and JWT strategy and just two package to implement authentication. One is googleapis for interacting with google apis and another is jsonwebtoken for creating and decoding tokens.
+
+Here is live demonstration of what we are going to build.
+
+<video controls muted>
+<source src="https://static.everythingcs.dev/blog/astro-auth-291123/astro-google-authentication.mp4"/>
+</video>
+
+This post is part 1 in the series of exploring auth in astro framework. In second part we will implement the email password based authentication and in third and final part we will implement the passwordless magic email based authentication. Also in the future I will also implement authentication through firebase. I will update these links once those blog posts are ready. Although I already have [react firebase authentication guide](https://everythingcs.dev/blog/react-firebase-authentication/).
+
+## Setup
+
+I have setup the basic Astro TailwindCSS application and also setup three routes Home, Login and Dashboard. Home is accessible to everyone. Homepage will show login or dashboard link in navbar depending on user is logged in or not. Dashboard route is a protected route and only logged in user will be able to access it.
+
+[Download the setup](https://github.com/ksjitendra18/astro-google-auth/archive/refs/heads/starter-code.zip) for github. This is the starter branch from the [repo](https://github.com/ksjitendra18/astro-google-auth.git).
+
+Now unzip the package and install the packages using **npm i** and also run dev server using **npm run dev**
+
+## Getting client and secret keys
+
+Before starting let's get the client and secret keys from google.
+
+### Create New Project
+
+Go to developer console and create a new project. If you already have it go to next step.
+
+You can create a new project by going to this link [https:\/\/console.cloud.google.com/projectcreate](https://console.cloud.google.com/projectcreate).
+
+Now name the project as you wish. I am naming Astro Auth here and hit on create.
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/create-project.png" alt="Create Project"/>
+
+After the project is created choose the newly created project. (If you have multiple project you will be still have previous project you will have to choose the newly created project.)
+
+You can check which project is selected by seeing in the navbar.
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/project-home.png" alt="Project home"/>
+
+### Setting up OAuth screen
+
+Let setup the OAuth and finally get the credentials. Go to APIs and Services and select OAuth Consent screen.
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/oauth-screen.png" alt="oauth screen"/>
+
+Select External and and hit create
+
+Now input your app information. Add a name, User Support Email and Developer Contact Infomation. Also optionally you can add logo. Other fields are not required for this project.
+
+Go to save and continue and move ahead. You need need to input or change any other fields. Go back to dashboard.
+
+Now go to Credentials tabs and tap on Create Credentials and then new OAuth client id
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/create-oauth-client.png" alt="oauth screen"/>
+
+Now do the following setting
+
+**Application Type**: Web application
+
+**Name**: Any Name like Astro Dev
+
+**Authorised Javascript origins**: http:\/\/localhost:4321
+
+**Authorised redirect URIs**: http:\/\/localhost:4321\/api\/auth\/callback\/google
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/oauth-client-setup.png" alt="oauth screen"/>
+
+Now tap create and you will get client id and client secret.
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/oauth-output.png" alt="oauth screen"/>
+
+Note: Do not share these credentials. I will remove this before posting this blog.
+
+### Creating env file
+
+Copy the values and create a **.env** file and paste the values also add the SECRET_KEY for jwt encoding and decoding. Use any value I am using randomly generated 32 bit value here. Also make sure that env file is in .gitignore.
+
+<CodeContainer fileName=".env">
+
+```bash
+GOOGLE_AUTH_ID=""
+GOOGLE_AUTH_SECRET=""
+GOOGLE_AUTH_CALLBACK_URL="http://localhost:4321/api/auth/callback/google"
+
+SECRET_KEY="hijcY5ksft4lOZ3YVJkTCABwzzUiRBBn"
+```
+
+</CodeContainer>
+
+## Setting up auth
+
+Let's begin setting up the auth.
+
+Let's install the required packages.
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm i googleapis jsonwebtoken
+
+npm i @types/jsonwebtoken --save-dev
+
+```
+
+</CodeContainer>
+
+### OAuth initialization
+
+Let's create OAuth
+
+<CodeContainer fileName="src/lib/auth/google-oauth-client.ts">
+
+```ts
+import { google } from "googleapis";
+
+const oauth2Client = new google.auth.OAuth2(
+  import.meta.env.GOOGLE_AUTH_ID,
+  import.meta.env.GOOGLE_AUTH_SECRET,
+  import.meta.env.GOOGLE_AUTH_CALLBACK_URL
+);
+
+export default oauth2Client;
+```
+
+</CodeContainer>
+
+Now create a new api route that will login button go to once pressed. Make a new directory name api in page folder and inside it create auth and make a google.ts file
+
+We will use the above oauth2Client to generate the auth url and then we will redirect to that url.
+
+### Creating google auth endpoint
+
+<CodeContainer fileName="src/pages/api/auth/google.ts">
+
+```ts
+import oauth2Client from "../../../lib/auth/google-oauth-client";
+
+export async function GET() {
+  try {
+    const authorizationUrl = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: "openid email profile",
+      prompt: "consent",
+    });
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: authorizationUrl,
+      },
+    });
+  } catch (error) {
+    return new Response("Error while login. Please try again later", {
+      status: 500,
+    });
+  }
+}
+```
+
+</CodeContainer>
+
+Now if the login is successfull google will redirect to our website using the callback URI as we setup in the above step and I will contain some information like this.
+
+<CodeContainer>
+
+```
+http://localhost:4321/api/auth/callback/google?code=4%2F0AfJohXmhYc-JhtgJMel3qLqkNcPyQT3Py-Kg1ypjHFUFnBQP_S5I0z3wNxLGXA&scope=email+profile+openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&authuser=1&prompt=consent
+```
+
+</CodeContainer>
+
+We will use the code portion to get the user information from the google and using that information to create the token and save it in the cookies. So let's do this now. You can store the user info in database too.
+
+Create a new src/pages/api/auth/callback/google.ts file
+<CodeContainer fileName="src/pages/api/auth/callback/google">
+
+```ts
+import type { APIContext } from "astro";
+import jwt from "jsonwebtoken";
+
+import oauth2Client from "../../../../lib/auth/google-oauth-client";
+
+export async function GET({ request }: APIContext) {
+  const code = new URL(request.url).searchParams?.get("code");
+  try {
+    const { tokens } = await oauth2Client.getToken(code!);
+    oauth2Client.setCredentials(tokens);
+    const fetchUserInfo = await fetch(
+      "https://www.googleapis.com/oauth2/v2/userinfo",
+      {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      }
+    );
+    const userInfo = await fetchUserInfo.json();
+
+    const { email, name, picture } = userInfo;
+
+    // store the info in db if required
+    const cookie = jwt.sign(
+      { email, name, picture },
+      import.meta.env.SECRET_KEY,
+      {
+        expiresIn: "1 hour",
+      }
+    );
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/",
+        "Set-Cookie": `app_auth_token=${cookie}; Path=/; HttpOnly`,
+      },
+    });
+  } catch (error) {
+    console.error("Error in callback", error);
+    return new Response("Error while login. Please try again later.");
+  }
+}
+```
+
+</CodeContainer>
+
+Now check the Cookies in Application tab and you will find the jwt cookie. This will help to persist the auth.
+
+Now we will have to decode the jwt and get useful info
+
+## Getting stored auth info
+
+Now let's see how can we get the user info which is currently logged in. It's quite simple
+
+We will make a function that will accept the  request as paramater and get the cookie and then parse it and then decode it to give the user information. Create a new **get-user-session.ts** file in src/lib/auth directory and write the logic.
+
+<CodeContainer fileName="src/lib/auth/get-user-session.ts">
+
+```ts
+import jwt from "jsonwebtoken";
+
+export type UserSession = {
+  name: string;
+  email: string;
+  picture: string;
+};
+
+type ParsedCookieValue = {
+  name: string;
+  email: string;
+  picture: string;
+  exp: number;
+};
+
+export function parseAppAuthToken(
+  cookieHeader: string | null
+): string | undefined {
+  if (!cookieHeader || typeof cookieHeader !== "string") {
+    return undefined;
+  }
+  const cookiesArray = cookieHeader.split(";");
+  const authTokenCookie = cookiesArray.find((cookie) =>
+    cookie.trim().startsWith("app_auth_token=")
+  );
+
+  if (!authTokenCookie) {
+    return undefined;
+  }
+
+  const parts = authTokenCookie.split("=");
+  if (parts.length === 2) {
+    return parts[1].trim();
+  }
+
+  return undefined;
+}
+
+export function getUserSession(request: Request) {
+  try {
+    const session: UserSession = {
+      email: "",
+      name: "",
+      picture: "",
+    };
+
+    const cookies = parseAppAuthToken(request.headers.get("Cookie"));
+
+    if (!cookies) {
+      return null;
+    }
+
+    const decodedCookieValue = jwt.verify(
+      cookies,
+      import.meta.env.SECRET_KEY
+    ) as ParsedCookieValue;
+
+    if (
+      decodedCookieValue &&
+      new Date(decodedCookieValue.exp * 1000).getTime() >= new Date().getTime()
+    ) {
+      session["email"] = decodedCookieValue.email;
+      session["name"] = decodedCookieValue.name;
+      session["picture"] = decodedCookieValue.picture;
+      return session;
+    }
+  } catch (error) {
+    console.log("Error while parsing user session", error);
+    return null;
+  }
+}
+```
+
+</CodeContainer>
+
+Now we can use this function to check if user is logged in or not and depending on it we will show the conditional things.
+
+<CodeContainer fileName="src/components/navbar.astro">
+
+```astro
+---
+import { getUserSession } from "../lib/auth/get-user-session.ts";
+const session = getUserSession(Astro.request);
+---
+
+<header class="px-12 py-5 flex justify-between">
+  <a href="/" class="text-2xl font-bold">Astro Auth</a>
+  <nav>
+    <ul class="flex gap-5 items-center">
+      <li>
+        <a href="/">Home</a>
+      </li>
+      {
+        session ? (
+          <>
+            <li>
+              <a href="/dashboard">Dashboard</a>
+            </li>
+            <li>
+             <a href="/api/auth/logout"> Logout </a>
+            </li>
+          </>
+        ) : (
+          <li>
+            <a href="/login">Login</a>
+          </li>
+        )
+      }
+    </ul>
+  </nav>
+</header>
+```
+
+</CodeContainer>
+
+Same way you can update the index page so that the button take the user to dashboard instead of login page.
+
+<CodeContainer fileName="src/pages/index.astro">
+
+```astro
+---
+import MainLayout from "../layout/main-layout.astro";
+
+import { getUserSession } from "../lib/auth/get-user-session.ts";
+const session = getUserSession(Astro.request);
+---
+
+<MainLayout title="Astro Auth" description="Auth in Astro">
+  <div class="flex h-[400px] items-center justify-center flex-col">
+    <h1 class="text-3xl font-bold">Exploring auth in Astro</h1>
+
+    {
+      session ? (
+        <a
+          href="/dashboard"
+          class="px-7 py-3 text-white rounded-md my-5 bg-blue-600 hover:scale-95 transition-all ease-in-out duration-75"
+        >
+          Dashboard
+        </a>
+      ) : (
+        <a
+          href="/login"
+          class="px-7 py-3 text-white rounded-md my-5 bg-blue-600 hover:scale-95 transition-all ease-in-out duration-75"
+        >
+          Login
+        </a>
+      )
+    }
+  </div>
+</MainLayout>
+```
+
+</CodeContainer>
+
+## Protecting Page
+
+Dashboard page should not be accessible to logout user. So let's protect the page. We will redirect the users to logged in page if not authenticated.
+
+<CodeContainer fileName="src/pages/dashboard.astro">
+  
+```astro
+---
+import MainLayout from "../layout/main-layout.astro";
+import { getUserSession } from "../lib/auth/get-user-session";
+const session = getUserSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect("/login");
+}
+---
+
+<MainLayout title="Dashboard" description="dashboard page">
+  <h1 class="my-10 text-xl font-bold text-center">
+    This is protected page.
+  </h1>
+
+  <p class="text-center my-5">Hello {session?.name ?? "user"}</p>
+</MainLayout>
+```
+
+</CodeContainer>
+
+## Logout
+
+To implement the logout functionality we will remove the cookie. As it is http only cookie we will have to make an api route to manipulate it.
+
+<CodeContainer fileName="src/pages/api/auth/logout.ts">
+
+```ts
+export async function GET() {
+  return new Response(null, {
+    headers: {
+      Location: "/",
+      "Set-Cookie": `app_auth_token=""; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly`,
+    },
+  });
+}
+```
+
+</CodeContainer>
+
+Now call the api when logout button is clicked
+
+<CodeContainer fileName="src/components/navbar.astro" hasPartialCode>
+
+```astro
+<li class="cursor-pointer">
+  <a href="/api/auth/logout">Logout</a>
+</li>
+```
+
+</CodeContainer>
+
+## Deployment
+
+Trigger the deployment and you will get the domain in services like vercel. Now in the google credentials tab create a new OAuth Client ID for prod and also add the url in both the places replace the values in the deployment environment variable and retrigger the deployment.
+
+## Conclusion
+
+In this post we have implemented Google Authentication in Astro application by levraging the googleapis packages and persisting it via the jwt session strategy.
+
+Please refer to [this repo](https://github.com/ksjitendra18/astro-google-auth.git) for latest code. if you have any queries join the [EverythingCS discord server](https://discord.gg/W3nubBNeXK).
