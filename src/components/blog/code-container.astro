@@ -18,7 +18,7 @@ const { fileName, hasPartialCode } = Astro.props;
       {fileName ?? null}
     </span>
 
-    <span class="sr-only">Copy Code</span>
+    <!-- <span class="sr-only">Copy Code</span>
     <span class="cursor-pointer copyBtn">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -35,7 +35,7 @@ const { fileName, hasPartialCode } = Astro.props;
           d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
         ></path></svg
       >
-    </span>
+    </span> -->
   </div>
   {hasPartialCode && <p class="px-4 text-white">...rest same no changes</p>}
   <slot />
@@ -54,25 +54,3 @@ const { fileName, hasPartialCode } = Astro.props;
     @apply bg-[#2d2d2d] dark:bg-transparent  p-5 rounded-xl my-6;
   }
 </style>
-
-<script>
-  let codeBlocks = Array.from(document.querySelectorAll("pre"));
-  let copyButton = document.querySelector(".copyBtn");
-
-  console.log(copyButton, codeBlocks);
-
-  for (let codeBlock of codeBlocks) {
-    copyButton.addEventListener("click", async () => {
-      console.log("clicked");
-      await copyCode(codeBlock);
-    });
-  }
-
-  async function copyCode(block) {
-    console.log("in prog");
-    let code = block.querySelector("code");
-    let text = code.innerText;
-
-    await navigator.clipboard.writeText(text);
-  }
-</script>
