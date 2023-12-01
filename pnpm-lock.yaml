@@ -7,7 +7,7 @@ settings:
 dependencies:
   '@astrojs/mdx':
     specifier: ^1.1.5
-    version: 1.1.5(astro@3.6.0)
+    version: 1.1.5(astro@3.6.4)
   '@astrojs/partytown':
     specifier: ^2.0.2
     version: 2.0.2
@@ -22,16 +22,16 @@ dependencies:
     version: 3.0.3
   '@astrojs/svelte':
     specifier: ^4.0.4
-    version: 4.0.4(astro@3.6.0)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0)
+    version: 4.0.4(astro@3.6.4)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0)
   '@astrojs/tailwind':
     specifier: ^5.0.2
-    version: 5.0.2(astro@3.6.0)(tailwindcss@3.3.5)
+    version: 5.0.2(astro@3.6.4)(tailwindcss@3.3.5)
   '@fontsource-variable/inter':
     specifier: ^5.0.15
     version: 5.0.15
   astro:
-    specifier: ^3.6.0
-    version: 3.6.0(typescript@5.3.2)
+    specifier: ^3.6.4
+    version: 3.6.4(typescript@5.3.2)
   astro-robots-txt:
     specifier: ^1.0.0
     version: 1.0.0
@@ -85,13 +85,13 @@ packages:
     resolution: {integrity: sha512-06DD2ZnItMwUnH81LBLco3tWjcZ1lGU9rLCCBaeUCGYe9cI0wKyY2W3kDyoW1I6GmcWgt1fu+D1CTvz+FIKf8A==}
     dev: false
 
-  /@astrojs/markdown-remark@3.5.0(astro@3.6.0):
+  /@astrojs/markdown-remark@3.5.0(astro@3.6.4):
     resolution: {integrity: sha512-q7vdIqzYhxpsfghg2YmkmSXCfp4w7lBTYP+SSHw89wVhC5Riltr3u8w2otBRxNLSByNi+ht/gGkFC23Shetytw==}
     peerDependencies:
       astro: ^3.0.0
     dependencies:
       '@astrojs/prism': 3.0.0
-      astro: 3.6.0(typescript@5.3.2)
+      astro: 3.6.4(typescript@5.3.2)
       github-slugger: 2.0.0
       import-meta-resolve: 3.1.1
       mdast-util-definitions: 6.0.0
@@ -109,16 +109,16 @@ packages:
       - supports-color
     dev: false
 
-  /@astrojs/mdx@1.1.5(astro@3.6.0):
+  /@astrojs/mdx@1.1.5(astro@3.6.4):
     resolution: {integrity: sha512-4bveyB1Lb1vWo2kdHJjQYoCytWlrIjAxHATHUTuYnBPmdPjsfy9wuCnb9rozwyyarDABx87CzG5gotBNYd+dVA==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       astro: ^3.0.0
     dependencies:
-      '@astrojs/markdown-remark': 3.5.0(astro@3.6.0)
+      '@astrojs/markdown-remark': 3.5.0(astro@3.6.4)
       '@mdx-js/mdx': 2.3.0
       acorn: 8.11.2
-      astro: 3.6.0(typescript@5.3.2)
+      astro: 3.6.4(typescript@5.3.2)
       es-module-lexer: 1.4.1
       estree-util-visit: 1.2.1
       github-slugger: 2.0.0
@@ -182,7 +182,7 @@ packages:
       zod: 3.22.4
     dev: false
 
-  /@astrojs/svelte@4.0.4(astro@3.6.0)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0):
+  /@astrojs/svelte@4.0.4(astro@3.6.4)(svelte@4.2.7)(typescript@5.3.2)(vite@4.5.0):
     resolution: {integrity: sha512-7OIq3YWSq270TrJZhVNzGXB5+eCp1vyNS0+WcGixxtUSz8ciwO+PqZ6GIhvmEjbBPR0x0QS8t0p0B2qlKJu/EA==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
@@ -190,7 +190,7 @@ packages:
       svelte: ^3.55.0 || ^4.0.0 || ^5.0.0-next.1
     dependencies:
       '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@4.2.7)(vite@4.5.0)
-      astro: 3.6.0(typescript@5.3.2)
+      astro: 3.6.4(typescript@5.3.2)
       svelte: 4.2.7
       svelte2tsx: 0.6.27(svelte@4.2.7)(typescript@5.3.2)
     transitivePeerDependencies:
@@ -199,13 +199,13 @@ packages:
       - vite
     dev: false
 
-  /@astrojs/tailwind@5.0.2(astro@3.6.0)(tailwindcss@3.3.5):
+  /@astrojs/tailwind@5.0.2(astro@3.6.4)(tailwindcss@3.3.5):
     resolution: {integrity: sha512-oXqeqmBlkQmsltrsU9nEWeXOtrZIAHW8dcmX7BCdrjzPnU6dPwWzAwhddNQ9ihKiWwsLnlbwQZIo2CDigcZlIA==}
     peerDependencies:
       astro: ^3.2.4
       tailwindcss: ^3.0.24
     dependencies:
-      astro: 3.6.0(typescript@5.3.2)
+      astro: 3.6.4(typescript@5.3.2)
       autoprefixer: 10.4.16(postcss@8.4.31)
       postcss: 8.4.31
       postcss-load-config: 4.0.2(postcss@8.4.31)
@@ -1341,14 +1341,14 @@ packages:
       zod: 3.22.4
     dev: false
 
-  /astro@3.6.0(typescript@5.3.2):
-    resolution: {integrity: sha512-mRDzWXsaSBaN+juvunO4Ukq8HQ1WqrULlcZfKzaKEZEXvxiWmMKN9tH0onQH0EaQ7+f4nNR4VN9kYTM26uMrXQ==}
+  /astro@3.6.4(typescript@5.3.2):
+    resolution: {integrity: sha512-YatUyWEQ9GUC79Wc2zbovy6D6bXPW9++Z6PYs4GDamEDspUSnnzL/INB7WJqgFI0xAFk9jcUr+MZYjkdWqXYTw==}
     engines: {node: '>=18.14.1', npm: '>=6.14.0'}
     hasBin: true
     dependencies:
       '@astrojs/compiler': 2.3.2
       '@astrojs/internal-helpers': 0.2.1
-      '@astrojs/markdown-remark': 3.5.0(astro@3.6.0)
+      '@astrojs/markdown-remark': 3.5.0(astro@3.6.4)
       '@astrojs/telemetry': 3.0.4
       '@babel/core': 7.23.3
       '@babel/generator': 7.23.4
