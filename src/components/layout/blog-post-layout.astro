@@ -68,5 +68,42 @@ const formattedUpdatedDate = `${
     </main>
 
     <Footer />
+    <script>
+      setTimeout(() => {
+        eventDispatcher("after5s");
+      }, 5000);
+      setTimeout(() => {
+        eventDispatcher("after30s");
+      }, 30000);
+
+      let hasScrolled = false;
+      let isAtBottom = false;
+
+      window.addEventListener("scroll", function () {
+        let distanceToBottom =
+          document.body.offsetHeight - (window.innerHeight + window.scrollY);
+
+        if (distanceToBottom < 50) {
+          if (isAtBottom) return;
+
+          isAtBottom = true;
+          eventDispatcher("bottom");
+        }
+        if (hasScrolled) return;
+        hasScrolled = true;
+        eventDispatcher("scroll");
+      });
+
+      async function eventDispatcher(type: string) {
+        if (window.location.host !== "everythingcs.dev") return;
+        const slug = window.location.pathname.split("/")[2];
+        const device = window.navigator.userAgent;
+
+        await fetch("https://blog.events.everythingcs.dev/v1/events", {
+          method: "POST",
+          body: JSON.stringify({ type, slug, device }),
+        });
+      }
+    </script>
   </body>
 </html>
