@@ -1,17 +1,18 @@
-import { useState } from "preact/compat";
+import { createSignal, Show } from "solid-js";
 
 const ShowPassword = () => {
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = createSignal(false);
+
   return (
     <>
-      <div className="mt-2 mb-3">
-        <label className="block" htmlFor="password">
+      <div class="mt-2 mb-3">
+        <label class="block" for="password">
           Password
         </label>
-        <div className="relative">
+        <div class="relative">
           <input
-            className="bg-transparent border-2 border-gray-700 dark:border-gray-200 px-3 py-2 rounded-md"
-            type={showPassword ? "text" : "password"}
+            class="bg-transparent border-2 border-gray-700 dark:border-gray-200 px-3 py-2 rounded-md"
+            type={showPassword() ? "text" : "password"}
             name="password"
             id="password"
           />
@@ -19,14 +20,14 @@ const ShowPassword = () => {
           <button
             type="button"
             aria-label={
-              showPassword ? "Password Visible" : "Password Invisible."
+              showPassword() ? "Password Visible" : "Password Invisible."
             }
             class="text-black dark:text-white"
             onClick={() => {
               setShowPassword((prev) => !prev);
             }}
           >
-            {showPassword ? (
+            {showPassword() ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"

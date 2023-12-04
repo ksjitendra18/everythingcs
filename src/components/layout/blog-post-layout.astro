@@ -69,6 +69,9 @@ const formattedUpdatedDate = `${
 
     <Footer />
     <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        console.log("load");
+      });
       setTimeout(() => {
         eventDispatcher("after5s");
       }, 5000);
@@ -95,7 +98,7 @@ const formattedUpdatedDate = `${
       });
 
       async function eventDispatcher(type: string) {
-        if (window.location.host !== "everythingcs.dev") return;
+        // if (window.location.host !== "everythingcs.dev") return;
         const slug = window.location.pathname.split("/")[2];
         const device = window.navigator.userAgent;
 

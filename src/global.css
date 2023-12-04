@@ -6,6 +6,11 @@ body {
   font-family: "Inter Variable", sans-serif;
 }
 
+label[data-input-required]::after {
+  content: "*";
+  color: #be2f2f;
+}
+
 .post-content p {
   margin-block-end: 13px;
   /* look for possible ui shifts or errors */
@@ -31,23 +36,11 @@ body {
 }
 
 .post-content a {
-  /* color: #1d4ed8; */
-  /* text-decoration: underline; */
-
   @apply underline text-[#1A45BC] dark:text-[#8bb5f8];
 }
-/* pre {
-  margin-block-top: 20px !important;
-  margin-block-end: 20px !important;
-  @apply bg-[#2d2d2d] dark:bg-transparent dark:border-2 dark:border-gray-400 p-5 rounded-xl my-6;
-} */
 
 /* to make the footer stick to bottom */
 body {
-  /* display: flex;
-  flex-direction: column;
-  min-height: 100vh; */
-
   @apply flex flex-col min-h-[100vh];
 }
 
