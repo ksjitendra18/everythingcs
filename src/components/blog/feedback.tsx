@@ -113,7 +113,7 @@ function Feedback() {
         ></textarea>
         <div class="flex justify-end">
           <button
-            disabled={true}
+            disabled={isLoading()}
             class="bg-blue-600 disabled:bg-blue-600/10  px-3 py-2 rounded-md mt-3"
           >
             Submit
