@@ -34,7 +34,7 @@ function Feedback() {
 
       if (sendForm.status === 500) {
         setFormHandler((prev) => ({
-          ...prev,
+          isSuccess: false,
           isError: false,
           msg: "Server error. Please refresh the page and try again.",
         }));
@@ -43,15 +43,15 @@ function Feedback() {
       }
       if (sendForm.status === 500 && sendFormRes.error === "captcha_error") {
         setFormHandler((prev) => ({
-          ...prev,
-          isError: false,
+          isSuccess: false,
+          isError: true,
           msg: "Looks like captcha didn't load correctly. Please refresh again and try disabling ad blocker (if any). Alternatively please use different browser.",
         }));
         return;
       }
       if (sendForm.status === 500 && sendFormRes.error === "missing_field") {
         setFormHandler((prev) => ({
-          ...prev,
+          isSuccess: false,
           isError: false,
           msg: "Please provide rating and submit again.",
         }));
@@ -70,7 +70,7 @@ function Feedback() {
       }
     } catch (error) {
       setFormHandler((prev) => ({
-        ...prev,
+        isSuccess: false,
         isError: false,
         msg: "Please check all the fields and submit again.",
       }));
@@ -105,8 +105,8 @@ function Feedback() {
         </div>
 
         <textarea
-          name="feedback"
-          id="feedback"
+          name="message"
+          id="message"
           rows="3"
           placeholder={"How can I improve this post? (Optional)"}
           class="bg-transparent border-2 px-3 py-3 w-full"
@@ -116,7 +116,8 @@ function Feedback() {
             disabled={isLoading()}
             class="bg-blue-600 disabled:bg-blue-600/10  px-3 py-2 rounded-md mt-3"
           >
-            Submit
+            <Show when={isLoading()}>Submitting... </Show>
+            <Show when={!isLoading()}>Submit</Show>
           </button>
         </div>
         <div
