@@ -9,12 +9,9 @@ const ContactPage = () => {
     msg: "",
     isSuccess: false,
   });
-  console.log("mounted");
-  const handleQueryTypeChange = (e: any) => {
-    console.log(e.target.value);
 
+  const handleQueryTypeChange = (e: any) => {
     if (e.target.value === "dmca" || e.target.value === "blog") {
-      console.log("here");
       setShowBlogUrl(true);
     } else {
       setShowBlogUrl(false);
@@ -23,7 +20,7 @@ const ContactPage = () => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    console.log("submit");
+
     setFormHandler(() => ({ isSuccess: false, isError: false, msg: "" }));
     setIsLoading(true);
 
@@ -39,8 +36,7 @@ const ContactPage = () => {
     const cfTurnstileRes = formData.get("cf-turnstile-response");
 
     try {
-      // const sendForm = await fetch("https://api.everythingcs.dev/v1/contact", {
-      const sendForm = await fetch("http://127.0.0.1:8787/v1/contact", {
+      const sendForm = await fetch("https://apis.everythingcs.dev/v1/contact", {
         method: "POST",
         body: JSON.stringify({
           name,
