@@ -61,7 +61,11 @@ Select External and and hit create
 
 Now input your app information. Add a name, User Support Email and Developer Contact Infomation. Also optionally you can add logo. Other fields are not required for this project.
 
-Go to save and continue and move ahead. You need need to input or change any other fields. Go back to dashboard.
+Go to save and continue and move ahead. Now in scopes step check the email, profile and openid scope.
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/create-oauth-client.png" alt="google auth set scopes for email, profile and openid" />
+
+You need not to input or change any other fields for now. Just save and continue Go back to dashboard.
 
 Now go to Credentials tabs and tap on Create Credentials and then new OAuth client id
 
@@ -81,7 +85,7 @@ Now do the following setting
 
 Now tap create and you will get client id and client secret.
 
-<img src="https://static.everythingcs.dev/blog/astro-auth-291123/oauth-output.png" alt="oauth screen"/>
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/oauth-output.png" alt="credentials"/>
 
 Note: Do not share these credentials. I will remove this before posting this blog.
 
@@ -176,7 +180,7 @@ Now if the login is successfull google will redirect to our website using the ca
 
 <CodeContainer>
 
-```
+```bash
 http://localhost:4321/api/auth/callback/google?code=4%2F0AfJohXmhYc-JhtgJMel3qLqkNcPyQT3Py-Kg1ypjHFUFnBQP_S5I0z3wNxLGXA&scope=email+profile+openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&authuser=1&prompt=consent
 ```
 
