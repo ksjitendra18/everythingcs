@@ -1,5 +1,4 @@
 ---
-import PostHeader from "../blog/post-header.astro";
 import MainHeader from "./main-header.astro";
 import Navbar from "../navbar.astro";
 import "@fontsource-variable/inter";
@@ -8,6 +7,7 @@ import Footer from "../footer.astro";
 import NewPostHeader from "../blog/new-post-header.astro";
 import PageSchema from "../seo/page-schema.astro";
 import PostSchema from "../seo/post-schema.astro";
+import Feedback from "../blog/feedback";
 
 interface Props {
   title: string;
@@ -62,15 +62,18 @@ const formattedUpdatedDate = `${
         class="max-w-7xl md:w-[85%] lg:w-full mx-auto post-content text-[19px]"
       >
         <NewPostHeader {title} {publishedDate} {updatedDate} />
-
         <slot />
       </section>
+      <Feedback client:visible />
     </main>
 
     <Footer />
+
     <script>
+      const pageReferrer = document.referrer;
+
       setTimeout(() => {
-        eventDispatcher("after5s");
+        eventDispatcher("pageLoad");
       }, 5000);
       setTimeout(() => {
         eventDispatcher("after30s");
@@ -99,9 +102,9 @@ const formattedUpdatedDate = `${
         const slug = window.location.pathname.split("/")[2];
         const device = window.navigator.userAgent;
 
-        await fetch("https://blog.events.everythingcs.dev/v1/events", {
+        await fetch("https://apis.everythingcs.dev/v1/events", {
           method: "POST",
-          body: JSON.stringify({ type, slug, device }),
+          body: JSON.stringify({ type, slug, device, referrer: pageReferrer }),
         });
       }
     </script>

@@ -1,8 +1,11 @@
 ---
-import ContactForm from "../components/contact.svelte";
-import MainLayout from "../components/layout/main-layout.astro";
+import ContactForm from "../components/contact.tsx";
+import PageLayout from "../components/layout/page-layout.astro";
 ---
 
-<MainLayout title="Contact" description="Contact us">
+<PageLayout title="Contact" description="Contact us">
   <ContactForm client:load />
-</MainLayout>
+</PageLayout>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer
+></script>
