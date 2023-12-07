@@ -1,14 +1,336 @@
 ---
 title: "How to host Node.js Express server on VPS/Cloud Ubuntu Nginx with SSL Certificate"
-publishedDate: 2023-11-23
-updatedDate: 2023-11-23
-description: "Step by step guide on how to get current IP address in Deno"
-ogImage: "https://static.everythingcs.dev/blog/cw-ip/get-user-ip-deno.png"
-featuredImage: "https://static.everythingcs.dev/blog/cw-ip/get-user-ip-deno.png"
-category: ["Express Js"]
+publishedDate: 2023-12-06
+updatedDate: 2023-12-06
+description: "Host Node.js typescript express server on vps machine running ubuntu and use nginx as a proxy and configure SSL certificate "
+ogImage: "https://static.everythingcs.dev/blog/nodejs-hosting-vm/host-nodejs-server-vps-ssl-certificate.png"
+featuredImage: "https://static.everythingcs.dev/blog/nodejs-hosting-vm/host-nodejs-server-vps-ssl-certificate.png"
+category: ["Express Js", "Nodejs","Nodejs Hosting", "Hosting"]
 author: "Jitendra"
-isFeatured: false
-draft: true
+isFeatured: true
+draft: false
 ---
+import CodeContainer from "../../components/blog/code-container.astro";
 
-This is part one of
+In this post we are going to see step by step how to host a typescript nodejs express server on a cloud or a vps machine running ubunutu. We will use nginx as a proxy.
+
+I am going to [use this repo](https://github.com/ksjitendra18/nodejs-host-vps-guide.git) which uses mongodb (atlas) for database so we will also learn about how to get SSL certificate and setup custom domain.
+
+In this guide I am going to use Digital Ocean. [Get free 200$ credits for 2 months](https://m.do.co/c/0437ceebb62f) to try their services. This will work on any VPS provider running Ubuntu.
+
+So let's set the expectation first. After following this guide you will be able to deploy a nodejs typebased based application on the Ubuntu machine on any vps provider. You will use the pm2 to manage the node process. You will also configure nginx for reverse proxying and also add a custom domain and configure SSL certificate.
+
+## Requirements
+
+- A VPS Server
+- Domain (if you want to configure SSL certificate)
+
+## Step 1: Provisioning and Setup Machine
+
+Firstly we will provision a machine. In my case I will create a new droplet on digitalocean.
+
+Create a new droplet. Choose the location, then choose the configuration. I am going for ubuntu machine running version 23.10.For pricing I am going for basic 6$ package and then you can choose ssh or password based access. I am currently choosing password method here. Then click create and wait till it is provisioned.
+
+After the provisioning is done you will get ip address. Now login to the VM/droplet.
+
+Open you terminal and write ssh root@your_ip and then input your password
+
+<CodeContainer fileName="terminal">
+
+```
+ssh root@ip_address
+```
+
+</CodeContainer>
+
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/vm-login.png" alt="VM Login"/>
+
+Now create a non root user and create passoword for the user and leave other fields blank.
+<CodeContainer fileName="terminal">
+
+```bash
+adduser username
+```
+
+</CodeContainer>
+
+Provide sudo priveledges
+<CodeContainer fileName="terminal">
+
+```bash
+usermod -aG sudo username
+```
+
+</CodeContainer>
+
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/add-new-user-vm.png" alt="VM Login"/>
+
+Now login with the newly created user.
+
+After logging in update the packages using sudo apt update.
+
+## Step2: Installing nodejs
+
+I am going to use nvm to install and manage node version. Alternatively you can use nodesource.
+
+Install nvm (follow the guide from their github installation guide if this is not working)
+
+<CodeContainer fileName="terminal">
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+```
+
+</CodeContainer>
+
+Now relaunch the terminal and let's install node.js. I am installing node version 18.17. You can install other version if you wish
+
+<CodeContainer fileName="terminal">
+
+```bash
+nvm install 18.17
+```
+
+</CodeContainer>
+
+Now check if node and npm is installed or not by running the following commands.
+
+<CodeContainer fileName="terminal">
+
+```bash
+node -v
+
+npm -v
+```
+
+</CodeContainer>
+
+Now check if you have git installed. In most cases it would be by default, if it's not installed then install it via **sudo apt-get install git**.
+
+Now we will pull the code from github. It is a public repo. In future I will add a guide on how to get code from private repo.
+
+Make sure you're in home/username directory. Check it by running **pwd** command. For me its /home/jks
+
+Now clone the repo in **todosapp** folder (you can name it whatever you want)  via git clone repo_url.
+
+<CodeContainer fileName="terminal">
+
+```bash
+git clone https://github.com/ksjitendra18/nodejs-host-vps-guide.git todosapp
+```
+
+</CodeContainer>
+
+You will have the todosapp folder. Navigate into that folder and install the packages first.
+
+<CodeContainer fileName="/home/jks/todosapp">
+
+```bash
+npm i
+```
+
+</CodeContainer>
+
+Now the packages are installed we need to provide the environment variable for the mongo db uri. There are two ways I could think of for handling environment variables. Either export it via CLI or create a file over there.
+
+I am creating a env file. Make sure you are in the project folder
+
+<CodeContainer fileName="/home/jks/todosapp">
+
+```bash
+touch .env
+```
+
+</CodeContainer>
+
+Now we will input the variables. I am going to use vim.
+
+<CodeContainer fileName="/home/jks/todosapp">
+
+```bash
+vim .env
+```
+
+</CodeContainer>
+
+Then press I to get into Insert mode.
+
+Then add the mongodb uri. In my case it is DB_URL="uri".
+
+To exist press Espace key and write :wq It will save the file and you will exit the file.
+
+Now let's try to run the app
+
+<CodeContainer fileName="terminal /home/jks/todosapp">
+
+```bash
+npm run build 
+
+npm run start
+```
+
+</CodeContainer>
+
+Now visit you application in your browser via going to ip_address:3000
+
+In my case it is 146.90.XX.XX:3000
+
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/initial-op.png" alt="Output"/>
+
+## Step 3: Installing pm2
+
+We will use pm2 for managing the node processes. It is useful for monitoring and also it restarts the app if it crashes. You can read more about it. We will not use extensibly though.
+
+Stop the above process. And then install pm2
+
+<CodeContainer fileName="terminal /home/jks/todosapp">
+
+```bash
+npm i pm2 -g
+#or 
+sudo npm install pm2 -g
+```
+
+</CodeContainer>
+
+Let's start the node.js via pm2
+<CodeContainer fileName="terminal /home/jks/todosapp">
+
+```bash
+pm2 start ./dist/index.js
+
+#optionally you can provide the name (useful so do it).
+pm2 start ./dist/index.js --name=todosapp
+```
+
+</CodeContainer>
+
+Then you will get the following ouput (I didn't run with name flag so its index.)
+
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/pm2-output.png" alt="pm2 output" />
+
+Now try visiting again and you get the output.
+
+Now let's setup reverse proxy to easily proxy our request from domain.
+
+## Step 3: Installing and configuring nginx
+
+Install nginx first
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo apt install nginx
+```
+
+</CodeContainer>
+
+Now go to your ip address (remove the port). You will see the default nginx welcome screen.
+
+Let's configure nginx. Go to etc folder then nginx then sites-available and let's change the default file
+
+<CodeContainer fileName="terminal">
+
+```bash
+cd /etc/nginx/sites-available/
+```
+
+</CodeContainer>
+Open the file via sudo command because we will perform write operation
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo vim default
+```
+
+</CodeContainer>
+
+We have to make the changes to this portion. This is the code before change
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/edit-nginx.png" alt="default file before changing" />
+
+Now edit and add the following code. We are basically routing the request on / to be proxied to app running on port 3000.
+
+<CodeContainer fileName="/etc/nginx/sites-available/default">
+
+```bash
+ server_name domain.com www.domain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+```
+
+</CodeContainer>
+
+This is what my configuration looks like
+
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/setup-nginx.png" alt="image of above config" />
+
+Test if the configuration is valid or not and reload the nginx.
+
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/test-reload.png" alt="test and reload" />
+
+Now visit the website with IP address without any port number. Now let's setup domain
+
+## Step 4: Setup Domain
+
+For setting up domain, it's very easy. Just add 2 **A** records pointing to the ip address. I am using cloudflare to manage my domain. Here are the records
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/dns-domain.png" alt="dns setup" />
+
+After the dns is propagated (takes some time) you can visit your website via domain name
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/domain-op.png" alt="dns setup" />
+
+## Step 5: SSL Setup
+
+Now that we have domain setup we can configure ssl certificate.
+
+Perform the following commands
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo apt update
+sudo apt install snapd
+sudo apt remove certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+sudo certbot --nginx -d example -d www.example.com
+```
+
+</CodeContainer>
+
+Then enter your email and then you either opt in or opt for for newletter. Then you will have your ssl address.
+
+The SSL certificate will expire in like 90 days and will be autorenewed.
+
+<CodeContainer>
+
+```bash
+sudo systemctl status snap.certbot.renew.service
+sudo systemctl status snap.certbot.renew.timer
+
+# try a renew
+sudo certbot renew --dry-run
+```
+
+</CodeContainer>
+
+Congratulation you have site deployed with SSL certificate. Now let's quickly test all the CRUD functionality.
+
+Here is the video demonstration
+
+<video controls muted>
+
+<source type="video/mp4" src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/nodejs-ssl-todos-app.mp4"/>
+</video>
+
+## Conclusion
+
+So we have deployed a nodejs express typescript server on the VPS server. I have also configured environment variables and ssl certificate.
+
+I have used this [repo](https://github.com/ksjitendra18/nodejs-host-vps-guide.git) to demonstrate the process. Free free to use it. You will need mongo db atlas db for it to wo
