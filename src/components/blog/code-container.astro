@@ -3,14 +3,14 @@ const { fileName, hasPartialCode } = Astro.props;
 ---
 
 <div class="code-container">
-  <!-- {
+  {
     fileName ? (
       <p class="border-b-2 py-2 px-4 text-white font-medium border-gray-600;">
         {fileName}
       </p>
     ) : null
-  } -->
-
+  }
+  <!-- 
   <div
     class="border-b-2 py-2 px-4 flex items-center justify-between text-white font-medium border-gray-600;"
   >
@@ -18,7 +18,7 @@ const { fileName, hasPartialCode } = Astro.props;
       {fileName ?? null}
     </span>
 
-    <!-- <span class="sr-only">Copy Code</span>
+    <span class="sr-only">Copy Code</span>
     <span class="cursor-pointer copyBtn">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -35,8 +35,8 @@ const { fileName, hasPartialCode } = Astro.props;
           d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
         ></path></svg
       >
-    </span> -->
-  </div>
+    </span>
+  </div> -->
   {hasPartialCode && <p class="px-4 text-white">...rest same no changes</p>}
   <slot />
 </div>

@@ -84,7 +84,7 @@ function Feedback() {
     }
   };
   return (
-    <div class="w-fit lg:w-[600px] mx-auto border-2 px-3  md:px-5 rounded-md md:py-3 my-5">
+    <div class="w-full md:w-fit lg:w-[600px] mx-auto border-2 px-3  md:px-5 rounded-md md:py-3 my-5">
       <h3 class="text-2xl font-bold my-2">Did you find this post helpful?</h3>
       <form onSubmit={handleSubmit}>
         <div class="flex mt-5 mb-3 gap-5 items-center">
@@ -144,7 +144,7 @@ function Feedback() {
       <Show when={formHandler().isSuccess}>
         <div class="md:w-3/4 my-3 px-3 md:px-2 mx-auto">
           <p class="px-2 py-2 mb-5 rounded-md text-white bg-green-600">
-            Form submitted successfully
+            Feedback submitted successfully.
           </p>
         </div>
       </Show>
