@@ -1,0 +1,107 @@
+---
+title: "How to clone private github repo in the Cloud Virtual Machine or Remote Machine"
+publishedDate: 2023-12-14
+updatedDate: 2023-12-14
+description: "Guide on how to clone private github repository in your vm or remote machine."
+ogImage: "https://static.everythingcs.dev/blog/clone-private-repo/github-clone-private-repo-ssh-private-access-token.png"
+featuredImage: "https://static.everythingcs.dev/blog/clone-private-repo/github-clone-private-repo-ssh-private-access-token.png"
+category: ["Express Js", "Nodejs","Nodejs Hosting", "Hosting"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+import CodeContainer from "../../components/blog/code-container.astro";
+
+In this guide we will learn how to fetch or clone private repo in your VM or remote machine. For this guide I am going to use Digital Ocean. [Get free 200$ credits for 2 months](https://m.do.co/c/0437ceebb62f) to try their services.(not sponsored...affiliate link)
+
+There are mainly 3 ways through which you can perform this. I am going to demonstrate the Personal Access Tokens and the SSH approach as it is considered more safe than the email and password approach.
+
+Related Post: [Host Node.js App with SSL on Ubuntu Machine using Nginx](https://everythingcs.dev/blog/host-express-js-server-cloud-vps-ubuntu-nginx-ssl/)
+
+## Requirements
+
+- VM
+- github account and private repo
+
+## Personal Access Token
+
+This is quite easy to setup.
+
+Go to [github developer settings](https://github.com/settings/apps). Then choose the Personal Access Token and then Fine-grained Tokens.
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/gh-dev-setting.png" alt="github developer setting" />
+
+Then tap Generate new token and fill the necessary details.
+
+Give a name so that in future you can recognise it and also expiration date according to you. Now you can select all repo but I personally give access to a particular repo only.
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/repo-access.png" alt="select repo" />
+
+Now after selecting the repo go the permissions tab and select the **Contents** to read only.
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/repo-content.png" alt="choose the read only in content permission" />
+
+Now click on generate token and you will have your token.
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/gh-pat.png" alt="choose the read only in content permission" />
+
+Now copy it and go the vm and move to the directory where you want to clone the repo.
+
+For cloning the private github repo using Personal Access Token
+
+<CodeContainer fileName="terminal">
+
+```bash
+git clone https://<token>@github.com/<username>/<repository_name>.git
+```
+
+</CodeContainer>
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/pat-method.png" alt="choose the read only in content permission" />
+
+## SSH method
+
+Now if you don't want to pass the access token everytime you pull code then you can use this SSH method.
+
+Firstly generate the ssh key. In your vm run the following command in the terminal. I am currently in the home folder(user level).
+
+<CodeContainer fileName="terminal">
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+</CodeContainer>
+
+And tap enter and enter. I am not changing path or anything.
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/ssh-gen.png" alt="generate ssh key" />
+
+After the key is generated we have to copy the content of pulic key and paste into the github.
+
+So navigate into the .ssh folder and copy the content of .pub file. Just do the cat command followed by the filename and copy the output.
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/copy-pub-content.png" alt="copy public key" />
+
+Now go to github settings and in access you will find **SSH/GPG** keys.
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/ssh-keys.png" alt="ssh option in access" />
+
+Go to it and then click on **New SSH key**. Give a identifiable name. And paste the content of the file you copied above. Click on Add Key and your key will be saved.
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/gh-add-new-ssh-key.png" alt="paste the public key content" />
+
+Now you will be able to pull/clone the private repo. Firstly copy the ssh url from the github clone option.
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/git-clone-ssh.png" alt="git clone ssh url" />
+
+Now let's try cloning the repo.
+
+<img src="https://static.everythingcs.dev/blog/clone-private-repo/clone-ssh-method.png" alt="clone" />
+
+## Conclusion
+
+So now we are able to access and clone the private repo in the remote or Virtual Machine. I personally prefer the Personal Access Token so it give more fine grained control over the repo and permissions.
+
+In this guide I used Digital Ocean. [Get free 200$ credits for 2 months](https://m.do.co/c/0437ceebb62f) to try their services.
+
+If you have any query then please reach me out through [EverythingCS discord server](https://discord.gg/W3nubBNeXK). Please fill out the feedback form and tell me how can I improve/
