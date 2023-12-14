@@ -6,7 +6,7 @@ This is the code for my blog [EverythingCS](https://everythingcs.dev)
 - Astro
 - TailwindCSS
 - Markdown (MDX)
-- SolidJS for feedback and contact components
+- SolidJS for feedback and contact form components
 - Cloudflare Pages (Hosting)
 - CDN [BunnyCDN](https://bunny.net?ref=tpyqcsl0tr)
 
