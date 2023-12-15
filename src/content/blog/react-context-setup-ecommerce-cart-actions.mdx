@@ -1,0 +1,441 @@
+---
+title: "How to setup context in React: Build Ecommerce App with all the cart actions"
+publishedDate: 2023-12-15
+updatedDate: 2023-12-15
+description: "Step by step guide on how to setup react context with reducers for the global state management"
+ogImage: "https://static.everythingcs.dev/blog/react-context-141223/react-context-setup-ecommerce-cart-actions.png"
+featuredImage: "https://static.everythingcs.dev/blog/react-context-141223/react-context-setup-ecommerce-cart-actions.png"
+category: ["Reactjs", "Global State Management Reactjs"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+
+import CodeContainer from "../../components/blog/code-container.astro";
+
+React Context is a React feature (API) that allows to pass props to the component without prop drilling. It can be used to manage the gobal state management for React applications.
+
+This is third part of the Exploring [Global State management in React](https://everythingcs.dev/category/global-state-management-reactjs/) Series. In the first part we discussed about the [Redux Toolkit Setup](https://everythingcs.dev/blog/react-ecommerce-cart-actions-global-state-redux-toolkit/) and in second part we discussed about the [Zustand Setup React](https://everythingcs.dev/blog/zustand-setup-react-ecommerce-cart-actions/).
+
+React Context is quite easy to setup. In this guide we will be building the Cart application with the help of react context for state management.We will implement the cart functionalities such as adding item to cart, removing item, increasing quantity, decreasing quantity etc.
+
+<video controls muted>
+  <source
+    src="https://static.everythingcs.dev/blog/react-context-141223/react-context-setup-ecommerce-cart-actions.mp4"
+    type="video/mp4"
+  />
+</video>
+
+## Setup
+
+Here is the [starter code](https://github.com/ksjitendra18/react-context-setup-cart-app/archive/refs/heads/starter-code.zip) for this app. It is a basic React Typescript vite setup with tailwind for styling. Download the zip and then install the packages.
+
+Please refer to this [repo](https://github.com/ksjitendra18/react-context-setup-cart-app.git) for the code for this guide.
+
+## Setup Context
+
+Create a new folder named **context** inside src folder and make a new file inside the context folder named **CartContext.tsx**.
+
+### Create context
+
+We will create the context and takes the initial values and the methods as a parameters.
+<CodeContainer fileName="src/context/CartContext.tsx">
+
+```js
+import { createContext } from "react";
+
+export const CartContext = createContext({ cartItems: [] });
+```
+
+</CodeContainer>
+
+### Create Context Provider
+
+Let's define the Context Provider in the same file
+
+<CodeContainer fileName="src/context/CartContext.tsx">
+
+```tsx
+import { createContext, useState } from "react";
+import CartProduct from "../types/CartProduct";
+
+export const CartContext = createContext({ cartItems: [] as CartProduct[] });
+
+export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+  const [cartItems, setCartItems] = useState<CartProduct[]>([]);
+
+  const value = {
+    cartItems,
+  };
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+};
+```
+
+</CodeContainer>
+
+Now let's wrap the **main.tsx** with the Provider so that the value is available to all the components.
+
+<CodeContainer fileName="src/main.tsx">
+
+```tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.tsx";
+import "@fontsource-variable/inter";
+import "./index.css";
+import { BrowserRouter } from "react-router-dom";
+import { CartProvider } from "./context/CartContext.tsx";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <CartProvider>
+        <App />
+      </CartProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
+```
+
+</CodeContainer>
+
+Now the context is setup let's begin adding actions to perform operations.
+
+## Adding actions
+
+In this section we will add the actions related to cart like adding item to cart, accessing items, increase/decreasing quantity and removing the item from the cart.
+
+### Add item to cart
+
+<CodeContainer fileName="src/context/CartContext.tsx">
+
+```tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { createContext, useState } from "react";
+import CartProduct from "../types/CartProduct";
+import Product from "../types/Product";
+
+export const CartContext = createContext({
+  cartItems: [] as CartProduct[],
+  addItemToCart: (item: Product) => {},
+});
+
+export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+  const [cartItems, setCartItems] = useState<CartProduct[]>([]);
+
+  const addItemToCart = (item: Product) => {
+    const itemExists = cartItems.find((cartItem) => cartItem.id === item.id);
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        itemExists.quantity++;
+      }
+      setCartItems([...cartItems]);
+    } else {
+      setCartItems([...cartItems, { ...item, quantity: 1 }]);
+    }
+  };
+
+  const value = {
+    cartItems,
+    addItemToCart,
+  };
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+};
+```
+
+</CodeContainer>
+
+Through context we will expose the addItemToCart function which takes a individual product as a parameter. Through this we will check if item already exist. If it exists we will simply increase the quantity.
+
+Now let's perform this action. Go the ProductCard component and firstly use the useContext function provided by react and provide the CartContext as a parameter.
+
+Here is high level overview
+
+<CodeContainer>
+
+```tsx
+import { CartContext } from "../context/CartContext";
+
+const { addItemToCart } = useContext(CartContext);
+
+addItemToCart(product);
+
+```
+
+</CodeContainer>
+Here is complete ProductCard code.
+<CodeContainer fileName="src/components/ProductCard.tsx">
+
+```tsx
+import { ShoppingCart } from "lucide-react";
+import React, { useContext } from "react";
+import Product from "../types/Product";
+import toast from "react-hot-toast";
+import { CartContext } from "../context/CartContext";
+
+interface ProductCardProps {
+  product: Product;
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const { addItemToCart } = useContext(CartContext);
+  const onAddToCart = () => {
+    addItemToCart(product);
+    toast.success("Added to cart", {});
+  };
+  return (
+    <div className="flex hover:shadow-lg  transition-all ease-in duration-150 basis-1/4 flex-1  flex-col border-2 border-slate-500 px-3 py-2 rounded-md">
+      <div className="flex flex-col items-center">
+        <img
+          className=" w-[225px] h-[225px] object-contain"
+          src={product.image}
+          alt={product.title}
+        />
+        <div className="my-5">
+          <h3 className="text-center  font-bold">{product.title}</h3>
+          <h3 className="text-center mt-3 font-medium">${product.price}</h3>
+        </div>
+      </div>
+
+      <div className="flex justify-end items-end">
+        <button
+          onClick={onAddToCart}
+          title="Add to Cart"
+          className="bg-orange-500 px-3 py-3 text-white rounded-full"
+        >
+          <ShoppingCart />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ProductCard;
+```
+
+</CodeContainer>
+
+### Accessing cart itens
+
+Accessing is simple. We will use the useContext method as above and access the cartItems and display it.
+
+<CodeContainer hasPartialCode fileName="src/pages/Cart.tsx">
+
+```tsx
+//replace this 
+const cartItems = []
+
+// add this (make sure to import CartContext)
+const { cartItems } = useContext(CartContext);
+```
+
+</CodeContainer>
+Also perform this in Navbar.tsx and OrderValue.tsx components too.
+
+### Increasing and decreasing quantities
+
+<CodeContainer fileName="src/context/CartContext.tsx">
+
+```tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { createContext, useState } from "react";
+import CartProduct from "../types/CartProduct";
+import Product from "../types/Product";
+
+export const CartContext = createContext({
+  cartItems: [] as CartProduct[],
+  addItemToCart: (item: Product) => {},
+  increaseQuantity: (productId: number) => {},
+  decreaseQuantity: (productId: number) => {},
+});
+
+export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+  const [cartItems, setCartItems] = useState<CartProduct[]>([]);
+
+  const addItemToCart = (item: Product) => {
+    const itemExists = cartItems.find((cartItem) => cartItem.id === item.id);
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        itemExists.quantity++;
+      }
+      setCartItems([...cartItems]);
+    } else {
+      setCartItems([...cartItems, { ...item, quantity: 1 }]);
+    }
+  };
+
+  const increaseQuantity = (productId: number) => {
+    const itemExists = cartItems.find((cartItem) => cartItem.id === productId);
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        itemExists.quantity++;
+      }
+
+      setCartItems([...cartItems]);
+    }
+  };
+
+  const decreaseQuantity = (productId: number) => {
+    const itemExists = cartItems.find((cartItem) => cartItem.id === productId);
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        if (itemExists.quantity === 1) {
+          const updatedCartItems = cartItems.filter(
+            (item) => item.id !== productId
+          );
+          setCartItems(updatedCartItems);
+        } else {
+          itemExists.quantity--;
+          setCartItems([...cartItems]);
+        }
+      }
+    }
+  };
+
+  const value = {
+    cartItems,
+    addItemToCart,
+    increaseQuantity,
+    decreaseQuantity,
+  };
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+};
+```
+
+</CodeContainer>
+
+Now perform this action in the CartItemCard component
+
+<CodeContainer hasPartialCode fileName="src/components/CartItemCard.tsx">
+
+```tsx
+const { increaseQuantity, decreaseQuantity } = useContext(CartContext);
+
+const onIncreaseQuantity = (productId: number) => {
+  increaseQuantity(productId);
+};
+
+const onDecreaseQuantity = (productId: number) => {
+  decreaseQuantity(productId);
+};
+```
+
+</CodeContainer>
+
+Now try to do these actions in the cart page. You will see that quantity increase and decrease.
+
+### Removing item from cart
+
+<CodeContainer fileName="src/context/CartContext.tsx">
+
+```tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { createContext, useState } from "react";
+import CartProduct from "../types/CartProduct";
+import Product from "../types/Product";
+
+export const CartContext = createContext({
+  cartItems: [] as CartProduct[],
+  addItemToCart: (item: Product) => {},
+  increaseQuantity: (productId: number) => {},
+  decreaseQuantity: (productId: number) => {},
+  removeItemFromCart: (productId: number) => {},
+});
+
+export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+  const [cartItems, setCartItems] = useState<CartProduct[]>([]);
+
+  const addItemToCart = (item: Product) => {
+    const itemExists = cartItems.find((cartItem) => cartItem.id === item.id);
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        itemExists.quantity++;
+      }
+      setCartItems([...cartItems]);
+    } else {
+      setCartItems([...cartItems, { ...item, quantity: 1 }]);
+    }
+  };
+
+  const increaseQuantity = (productId: number) => {
+    const itemExists = cartItems.find((cartItem) => cartItem.id === productId);
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        itemExists.quantity++;
+      }
+
+      setCartItems([...cartItems]);
+    }
+  };
+
+  const decreaseQuantity = (productId: number) => {
+    const itemExists = cartItems.find((cartItem) => cartItem.id === productId);
+
+    if (itemExists) {
+      if (typeof itemExists.quantity === "number") {
+        if (itemExists.quantity === 1) {
+          const updatedCartItems = cartItems.filter(
+            (item) => item.id !== productId
+          );
+          setCartItems(updatedCartItems);
+        } else {
+          itemExists.quantity--;
+          setCartItems([...cartItems]);
+        }
+      }
+    }
+  };
+
+  const removeItemFromCart = (productId: number) => {
+    const updatedCartItems = cartItems.filter((item) => item.id !== productId);
+    setCartItems(updatedCartItems);
+  };
+
+  const value = {
+    cartItems,
+    addItemToCart,
+    increaseQuantity,
+    decreaseQuantity,
+    removeItemFromCart,
+  };
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+};
+```
+
+</CodeContainer>
+
+Now call this action in CartItemCard component.
+
+<CodeContainer hasPartialCode fileName="src/components/CartItemCard.tsx">
+
+```tsx
+const { increaseQuantity, decreaseQuantity, removeItemFromCart } = useContext(CartContext);
+
+const onIncreaseQuantity = (productId: number) => {
+  increaseQuantity(productId);
+};
+const onDecreaseQuantity = (productId: number) => {
+  decreaseQuantity(productId);
+};
+const onRemoveItem = (productId: number) => {
+  removeItemFromCart(productId);
+};
+```
+
+</CodeContainer>
+
+## Conclusion
+
+So in this post we configured the react context and used react context to manage the global state.
+
+If you are facing any error please [refer this repo for code](https://github.com/ksjitendra18/react-context-setup-cart-app.git). Also free to reach out to me via [EverythingCS discord server](https://discord.gg/W3nubBNeXK).

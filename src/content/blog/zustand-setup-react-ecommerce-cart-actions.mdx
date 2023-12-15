@@ -1,7 +1,7 @@
 ---
 title: "React Zustand Setup: Building Ecommerce App with Cart Actions"
 publishedDate: 2023-11-04
-updatedDate: 2023-11-04
+updatedDate: 2023-12-15
 description: "Build a small ecommerce app with cart functionality to understand the global state management using zustand"
 ogImage: "https://static.everythingcs.dev/blog/zustand-setup-react-ecommerce-cart-actions.png"
 featuredImage: "https://static.everythingcs.dev/blog/zustand-setup-react-ecommerce-cart-actions.png"
@@ -15,9 +15,9 @@ import CodeContainer from "../../components/blog/code-container.astro";
 
 Zustand is a state management library for React applications. Zustand is easy to use as compared to context api or the react redux. So in this article let's explore how to manage global state using zustand in our react.js
 
-This is second part of the Exploring Global State management in React Series. In the first part we discussed about the [Redux Toolkit Setup](https://everythingcs.dev/blog/react-ecommerce-cart-actions-global-state-redux-toolkit).
+This is second part of the Exploring [Global State management in React](https://everythingcs.dev/category/global-state-management-reactjs/) Series. In the first part we discussed about the [Redux Toolkit Setup](https://everythingcs.dev/blog/react-ecommerce-cart-actions-global-state-redux-toolkit/).
 
-In this guide we are going to implement the Ecommerce cart actions functionality like adding item to car, increasing quantity, decreasing quantity and removing item from the cart. Here is the demonstration. We will implement all these functionality and at last we will also look at how to persist data in the local storage.
+In this guide we are going to implement the Ecommerce cart actions functionality like adding item to cart, increasing quantity, decreasing quantity and removing item from the cart. Here is the demonstration. We will implement all these functionality and at last we will also look at how to persist data in the local storage.
 
 <video controls muted>
   <source
@@ -160,7 +160,7 @@ export default useCartStore;
 
 </CodeContainer>
 
-Now let's try to perform this action. We can easily get the action in any components
+Now let's try to perform this action. We can easily get the cart items in any components
 
 <CodeContainer>
 
