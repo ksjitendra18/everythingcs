@@ -12,4 +12,8 @@ export default defineConfig({
   markdown: {
     syntaxHighlight: "prism",
   },
+  redirects: {
+    "/blog/astro-js-google-auth/":
+      "/blog/astro-js-auth-oauth-github-google-auth-guide/",
+  },
 });

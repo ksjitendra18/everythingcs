@@ -1,0 +1,2078 @@
+---
+title: "Google and Github Authentication OAuth2 Setup in Astro.js"
+publishedDate: 2024-01-02
+updatedDate: 2024-01-02
+description: "Step by step guide on how to setup google and github authentication in astro and also persist user and protecting routes."
+ogImage: "https://static.everythingcs.dev/blog/astro-auth-series/google-github-oauth-authentication-astro-js-ssr.png"
+featuredImage: "https://static.everythingcs.dev/blog/astro-auth-series/google-github-oauth-authentication-astro-js-ssr.png"
+category: ["Astro", "Authentication", "OAuth", "Google Auth", "Github Auth" ,"Astro Authentication"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+import CodeContainer from "../../components/blog/code-container.astro";
+
+In this guide we are going to see how to setup oauth authentication using google and github provider in Astro js without any external library.
+
+We will make use of Astro SSR, API routes and database session strategy to implement authentication and also persist it. Also we will make use of middlewares to protect the pages and API routes. We are going to use DrizzleORM to handle db schema and queries,
+
+Here is live demonstration of what we are going to build.
+
+<video class="mb-2" controls muted>
+<source src="https://static.everythingcs.dev/blog/astro-auth-series/astro-oauth-google-github-authentication.mp4"/>
+</video>
+
+This post is part 1 in the series of exploring auth in astro framework. In second part we will implement the email password based authentication and in third part we will implement the passwordless magic email based authentication. In the final part we will implement the 2-Factor authentication.
+
+Also in the future I will also implement authentication through firebase. I will update these links once those blog posts are ready. Although I already have [react firebase authentication guide](https://everythingcs.dev/blog/react-firebase-authentication/).
+
+## What are we going to achieve?
+
+So let's understand and clear the expectation first that after following this what you will be able to achieve.
+
+- Implement github auth with state
+- Implement google auth with state and code challenge
+- Persist user login for 14 days using database session
+- Protect pages
+- Protect routes
+- Implement state parameter that is used to prevent CSRF and XSRF attacks.
+- Implement PCKE which is currently (supported by google)
+
+## Requirements
+
+- Google Account
+- Github Account
+- Turso Database or any other database
+
+## Setting up
+
+Download the starter code from the repo(oauth starter branch). [Direct download](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/archive/refs/heads/oauth-starter.zip) or you can clone the oauth-starter branch.
+
+Unzip in your desired folders and run npm i to install the packages. You can start the server by running npm run dev.
+
+## Modeling and setting up DB
+
+Let's model database first. Let's add the drizzle orm and write the table schema. We are going to use turso db and some part are turso specific. Please refer to docs if you're using any other database. Not much things should change.
+
+### Installing Drizzle ORM
+
+Let's install the drizzle orm, libsql package and a package for uuid. I am going to use cuid2 for all the ids and session tokens.
+
+<CodeContainer fileName="terminal">
+
+```bash
+
+npm i drizzle-orm @libsql/client @paralleldrive/cuid2
+npm i -D drizzle-kit
+```
+
+</CodeContainer>
+
+### Setting up Turso
+
+Now create a turso db. You can do it via terminal. Make sure you're logged in
+<CodeContainer fileName="terminal">
+
+```bash
+turso db create astro-auth-v1
+
+# get the db url and store it in .env
+turso db show astro-auth-v1
+
+# get the db token and store it in .env
+turso db tokens create astro-auth-v1
+```
+
+</CodeContainer>
+
+Make sure to store these values in the .env file.
+
+### DB Schema
+
+Let's write the schema for the application.
+
+There are primarily 4 tables(in next part of auth series more tables will be added)
+
+- **users**: contains information about user like email, name, username, profile photo.
+- **oauth_tokens**: contains refresh token, access token and strategy field
+- **session**: contains session token and expiry time
+- **login_logs**: contains user login info like device name, browser etc
+
+<br/>
+Let's write this schema file. Create a db folder inside the src folder and create a schema.ts file.
+
+<CodeContainer fileName="src/db/schema.ts">
+
+```js
+import { createId } from "@paralleldrive/cuid2";
+import { relations, sql } from "drizzle-orm";
+import {
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
+
+export const users = sqliteTable("users", {
+  id: text("id")
+    .$default(() => createId())
+    .primaryKey(),
+  fullName: text("full_name"),
+  userName: text("user_name").unique(),
+  email: text("email").notNull().unique(),
+  profilePhoto: text("profile_photo"),
+  emailVerified: integer("email_verified", { mode: "boolean" })
+    .default(false)
+    .notNull(),
+  isBlocked: integer("is_blocked", { mode: "boolean" }).default(false),
+  isDeleted: integer("is_deleted", { mode: "boolean" }).default(false),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const usersRelations = relations(users, ({ many, one }) => ({
+  oauthTokens: many(oauthTokens),
+  sessions: many(sessions),
+  loginLogs: many(loginLogs),
+}));
+
+export const oauthTokens = sqliteTable(
+  "oauth_tokens",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    strategy: text("strategy", { enum: ["google", "github"] }).notNull(),
+    accessToken: text("access_token").notNull(),
+    refreshToken: text("refresh_token").notNull(),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => {
+    return {
+      pk: primaryKey({ columns: [table.userId, table.strategy] }),
+    };
+  }
+);
+
+export const oauthTokenRelations = relations(oauthTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [oauthTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+export const sessions = sqliteTable("sessions", {
+  id: text("id")
+    .$default(() => createId())
+    .primaryKey(),
+  userId: text("userId").references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: integer("expires_at").notNull(),
+});
+
+export const sessionRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+  loginLog: one(loginLogs),
+}));
+
+export const loginLogs = sqliteTable("login_logs", {
+  id: text("id")
+    .$default(() => createId())
+    .primaryKey(),
+  sessionId: text("session_id").references(() => sessions.id, {
+    onDelete: "set null",
+  }),
+  userId: text("user_id").references(() => users.id, {
+    onDelete: "cascade",
+  }),
+
+  browser: text("browser").notNull(),
+  device: text("device").notNull(),
+  os: text("os").notNull(),
+  ip: text("ip").notNull(),
+  loggedInAt: text("logged_in_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const loginLogsRelations = relations(loginLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [loginLogs.userId],
+    references: [users.id],
+  }),
+  session: one(sessions, {
+    fields: [loginLogs.sessionId],
+    references: [sessions.id],
+  }),
+}));
+```
+
+</CodeContainer>
+
+### Pushing changes to turso
+
+To push the schema to the turso database we are going to use drizzle kit that we installed above.
+
+Create a drizzle.config.ts file in the root of the current folder.
+
+<CodeContainer fileName="drizzle.config.ts">
+
+```ts
+import type { Config } from "drizzle-kit";
+
+export default {
+  schema: "./src/db/schema.ts",
+  out: "./src/db/migrations",
+  dbCredentials: {
+    url: process.env.DB_URL!,
+    authToken: process.env.DB_TOKEN!,
+  },
+
+  driver: "turso",
+} satisfies Config;
+```
+
+</CodeContainer>
+
+Now run the following command
+
+<CodeContainer fileName="terminal">
+
+```bash
+npx drizzle-kit push:sqlite
+```
+
+</CodeContainer>
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-series/db-push.png" loading="lazy" alt="db push output" />
+
+Now that the schema is pushed to turso let setup the db
+
+### Setting up db
+
+Create a file index.ts in the db folder and initialize the database. We are going to use this later in the API section.
+
+<CodeContainer>
+
+```ts
+import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
+import * as schema from "./schema";
+
+const client = createClient({
+  url: import.meta.env.DB_URL,
+  authToken: import.meta.env.DB_AUTH_TOKEN,
+});
+
+export const db = drizzle(client, { schema });
+```
+
+</CodeContainer>
+
+## Google Auth
+
+Let's setup google auth and later we will setup github auth.
+
+For google auth we need client id and client secret from google console.
+
+### Getting client and secret keys
+
+Before starting let's get the client and secret keys from google.
+
+#### Create New Project
+
+Go to developer console and create a new project. If you already have it go to next step.
+
+You can create a new project by going to this link [https:\/\/console.cloud.google.com/projectcreate](https://console.cloud.google.com/projectcreate).
+
+Now name the project as you wish. I am naming Astro Auth here and hit on create.
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/create-project.png" alt="Create Project"/>
+
+After the project is created choose the newly created project. (If you have multiple project you will be still have previous project selected so you will have to choose the newly created project.)
+
+You can check which project is selected by seeing in the navbar.
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/project-home.png" alt="Project home"/>
+
+### Setting up OAuth screen
+
+Let setup the OAuth and finally get the credentials. Go to APIs and Services and select OAuth Consent screen.
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/oauth-screen.png" alt="oauth screen"/>
+
+Select External and and hit create
+
+Now input your app information. Add a name, User Support Email and Developer Contact Infomation. Also optionally you can add logo. Other fields are not required for this project.
+
+Go to save and continue and move ahead. Now in scopes step check the email, profile and openid scope.
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/google-auth-set-scopes.png" alt="google auth set scopes for email, profile and openid" />
+
+You need not to input or change any other fields for now. Just save and continue Go back to dashboard.
+
+Now go to Credentials tabs and tap on Create Credentials and then new OAuth client id
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/create-oauth-client.png" alt="oauth screen"/>
+
+Now do the following setting
+
+**Application Type**: Web application
+
+**Name**: Any Name like Astro Dev
+
+**Authorised Javascript origins**: http:\/\/localhost:4321
+
+**Authorised redirect URIs**: http:\/\/localhost:4321\/api\/auth\/callback\/google
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/oauth-client-setup.png" alt="oauth screen"/>
+
+Now tap create and you will get client id and client secret.
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-291123/oauth-output.png" alt="credentials"/>
+
+Store these credentials in the env file and in their respective fields.
+
+Note: Do not share these credentials. Also make sure that these credentials are stored in env file and env file is in gitignore.
+
+### Setup API Route
+
+Now let's setup API route. create a folder name api in the pages folder and inside api folder create a new folder named auth and inside auth create a file names google.ts
+
+<CodeContainer fileName="src/pages/api/auth/google.ts">
+
+```ts
+import type { APIContext } from "astro";
+import { init, createId } from "@paralleldrive/cuid2";
+import { createHash } from "node:crypto";
+import queryString from "query-string";
+
+export async function GET({ cookies }: APIContext) {
+  const generateId = init({ length: 40 });
+
+  const googleOauthState = createId();
+
+  cookies.set("google_oauth_state", googleOauthState, {
+    path: "/",
+  });
+
+  const googleCodeChallenge = generateId();
+  const codeChallenge = createHash("sha256")
+    .update(googleCodeChallenge)
+    .digest("base64url");
+
+  cookies.set("google_code_challenge", googleCodeChallenge, {
+    path: "/",
+  });
+
+  const authorizationUrl = queryString.stringifyUrl({
+    url: "https://accounts.google.com/o/oauth2/v2/auth",
+    query: {
+      access_type: "offline",
+      scope: "openid email profile",
+      prompt: "consent",
+      response_type: "code",
+      client_id: import.meta.env.GOOGLE_AUTH_CLIENT,
+      redirect_uri: import.meta.env.GOOGLE_AUTH_CALLBACK_URL,
+      state: googleOauthState,
+      code_challenge: codeChallenge,
+      code_challenge_method: "S256",
+    },
+  });
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: authorizationUrl,
+    },
+  });
+}
+```
+
+</CodeContainer>
+
+Let's understand from top. Firstly we are generating googleOauthState and then storing it in the cookies as the session. This state is recommended for protecting against XSRF and CSRF attacks.
+
+Then we are generating codeChallenge. This is for the implementation of PKCE for google oauth. Learn more about PKCE.
+
+Now we will generate a redirect url with the values mentioned above and redirect the user to the authorization page. Once user select the account and you will be redirected to the url that you have mentioned as callback.
+
+In that callback uri you will there are multiple params. One useful param is the code params that we will use to exchange code for access token with the authorization server.
+
+Here is example URL after redirect from google
+
+<CodeContainer>
+
+```html
+http://localhost:4321/api/auth/callback/google?code=4%2F0AfJohXmLi0on8p8v8TtQhiIHc65OUQW5sXGz0of6QD4dmG020qJnppplrJuaDUjItmwRaog&state=...scope=email+profile+openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&authuser=0&prompt=consent
+```
+
+</CodeContainer>
+
+### Setting up callback API route
+
+Let's write the callback api route. Create a folder named callback inside the api/auth folder. Now create a file named google.ts.
+
+The first step is to access the code and state from the url. Also we will get the stored state and code verifier from the cookies value.
+
+<CodeContainer fileName="src/pages/api/auth/callback/google.ts">
+
+```ts
+import type { APIContext } from "astro";
+
+export async function GET({ request, url }: APIContext) {
+  const code = new URL(request.url).searchParams?.get("code");
+  const state = new URL(request.url).searchParams?.get("state");
+  const storedState = cookies.get("google_oauth_state")?.value;
+  const codeVerifier = cookies.get("google_code_challenge")?.value;
+
+  if (storedState !== state || !codeVerifier || !code) {
+    cookies.delete("google_oauth_state", { path: "/" });
+    cookies.delete("google_code_challenge", { path: "/" });
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/login?error=Server+Error",
+      },
+    });
+  }
+}
+```
+
+</CodeContainer>
+
+We will check if the stored state in the cookie matches with the state received the authorization server.
+
+If the state doesn't matches we will redirect the user to the login page with error and also we will delete the cookie if it exists.
+
+The second step is to make request to the exchange the code and the verfier for the access and the refresh token
+
+<CodeContainer fileName="src/pages/api/auth/callback/google.ts">
+
+```ts
+const tokenUrl = "https://www.googleapis.com/oauth2/v4/token";
+
+const formData = new URLSearchParams();
+formData.append("grant_type", "authorization_code");
+formData.append("client_id", import.meta.env.GOOGLE_AUTH_CLIENT);
+formData.append("client_secret", import.meta.env.GOOGLE_AUTH_SECRET);
+formData.append("redirect_uri", import.meta.env.GOOGLE_AUTH_CALLBACK_URL);
+formData.append("code", code);
+formData.append("code_verifier", codeVerifier);
+
+const fetchToken = await fetch(tokenUrl, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/x-www-form-urlencoded",
+  },
+  body: formData,
+});
+
+const fetchTokenRes = await fetchToken.json();
+
+console.log("fetch token res ", fetchToken.status, fetchTokenRes);
+```
+
+</CodeContainer>
+
+You will get response something like this
+
+<CodeContainer fileName="src/pages/api/auth/callback/google.ts">
+
+```js
+{
+  access_token: '...',
+  expires_in: 3599,
+  refresh_token: '...',
+  scope: '...,
+  token_type: 'Bearer',
+  id_token: '...'     
+}
+
+```
+
+</CodeContainer>
+
+The response contains the access token which we can use to get the user details like name and email. Access token has lifetime of 1 hours as mentioned in the expires_in. So authrization server also gives the refresh token.
+
+So let's make a request to the user info server to get the user details.
+
+<CodeContainer fileName="src/pages/api/auth/callback/google.ts">
+
+```ts
+const fetchUser = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+  headers: { Authorization: `Bearer ${fetchTokenRes.access_token}` },
+});
+const fetchUserRes = await fetchUser.json();
+
+console.log("fetchUserRes", fetchUser.status, fetchUserRes);
+
+```
+
+</CodeContainer>
+
+Here is the reponse of the user request
+
+<CodeContainer>
+
+```js
+{
+  id: '100129009625454424803',
+  email: 'jitendra...@gmail.com',
+  verified_email: true,
+  name: 'Jitendra',
+  given_name: 'Jitendra',
+  picture: 'https://lh3.googleusercontent.com/a/ACg8ocKK11M0zzFw-ABsvQED4bLlCML0PBGczagoAWZQdtpp=s96-c',
+  locale: 'en-GB'
+}
+```
+
+</CodeContainer>
+
+<div class="bg-yellow-500 px-3 rounded-md my-2 py-1">
+<p class="p-0 m-0" style={{"margin-block-end": "0px"}} >**Note:** Don't worry about error handling in the below final code I will handle it</p>
+</div>
+
+Now we have all the data let's save the data and create session for the user. Note that this route will be same for new user or already exisiting user.
+
+First we will check if user exists or not.
+
+If user exists then
+
+check if the user have google oauth strategy.
+
+<CodeContainer fileName="src/pages/api/auth/callback/google.ts">
+
+```ts
+const userExists = await db.query.users.findFirst({
+  where: eq(users.email, fetchUserRes.email),
+  with: {
+    oauthTokens: {
+      where: eq(oauthTokens.strategy, "google"),
+    },
+  },
+});
+
+console.log("userExists", userExists);
+```
+
+</CodeContainer>
+
+The response with be undefined if their is no user. And if the user exists and user
+
+So let's add a simple check and create new user, then create oauth token, create session, create log for the user and then redirect the user with the session token as the cookie to the user.
+
+<CodeContainer fileName="src/pages/api/auth/callback/google.ts">
+
+```ts
+const expiresAt = new Date();
+// 14 days
+expiresAt.setDate(expiresAt.getDate() + 14);
+
+const parser = Bowser.getParser(request.headers.get("user-agent")!);
+
+if (!userExists) {
+  const newUser = await db
+    .insert(users)
+    .values({
+      email: fetchUserRes.email,
+      profilePhoto: fetchUserRes.picture,
+      fullName: fetchUserRes.name,
+      emailVerified: true,
+      userName: fetchUserRes.email.split("@")[0],
+    })
+    .returning({ id: users.id });
+
+  // add tokens
+  await db.insert(oauthTokens).values({
+    userId: newUser[0].id,
+    strategy: "google",
+    accessToken: fetchTokenRes.access_token,
+    refreshToken: fetchTokenRes.refresh_token,
+  });
+
+  // create session
+  const newSession = await db
+    .insert(sessions)
+    .values({
+      userId: newUser[0].id,
+      expiresAt: expiresAt.getTime(),
+    })
+    .returning({ id: sessions.id });
+
+  // log
+  await db.insert(loginLogs).values({
+    userId: newUser[0].id,
+    sessionId: newSession[0].id,
+    ip: request.headers.get("x-real-ip") ?? "dev",
+    os: `${parser.getOSName()} ${parser.getOSVersion()}`,
+    browser: `${parser.getBrowserName()}  ${parser.getBrowserVersion()}`,
+    device: parser.getPlatformType(),
+  });
+
+  cookies.delete("google_oauth_state", { path: "/" });
+  cookies.delete("google_code_challenge", { path: "/" });
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: "/profile",
+      "Set-Cookie": `app_auth_token=${
+        newSession[0].id
+      }; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
+        import.meta.env.PROD
+      }`,
+    },
+  });
+}
+```
+
+</CodeContainer>
+
+Now if the user exists already, we will check if user have that oauth strategy.
+
+If user have that strategy then we will update the tokens with new token and create session and login and redirect the user to home page with session cookie.
+
+If user doesn't have that strategy then we will add the entry to the oauth tokens table create session, logs and redirect the user to homepage with session cookie
+
+<CodeContainer fileName="src/pages/api/auth/callback/google.ts">
+
+```ts
+if(!userExists){
+  ...
+} else{
+  if(userExists.oauthTokens.length > 0){
+    // update oauth tokens
+    // create session
+    // create logs
+    // send session id to user
+  } else{
+    // create oauth token
+    // create session
+    // create logs
+    // send session id to user
+  }
+}
+
+```
+
+</CodeContainer>
+
+As you can see there is lot of repetions so let's extract the part containining the repeating code.
+
+Let's refactor it. Create a lib folder in the src folder and inside lib folder create auth.ts which will contains all utilities and functions for the auth related functionality.
+
+<CodeContainer fileName="src/lib/auth.ts">
+
+```ts
+import { and, eq } from "drizzle-orm";
+import { db } from "../db/index";
+import { loginLogs, oauthTokens, sessions, users } from "../db/schema";
+import Bowser from "bowser";
+
+type NewUserArgs = {
+  email: string;
+  userName: string;
+  fullName: string;
+  profilePhoto: string;
+};
+
+type UserExistArgs = {
+  email: string;
+  strategy: "google" | "github";
+};
+
+type NewSessionArgs = {
+  userId: string;
+};
+
+type NewLogsArgs = {
+  userAgent: string | null;
+  userId: string;
+  sessionId: string;
+  ip: string;
+};
+
+type TokenArgs = {
+  userId: string;
+  strategy: "github" | "google";
+  refreshToken: string;
+  accessToken: string;
+};
+
+const expiresAt = new Date();
+expiresAt.setDate(expiresAt.getDate() + 14);
+
+export async function throwError() {
+  throw new Error("wtf");
+}
+
+export const createUser = async ({
+  email,
+  fullName,
+  profilePhoto,
+  userName,
+}: NewUserArgs) => {
+  try {
+    const newUser = await db
+      .insert(users)
+      .values({
+        email,
+        profilePhoto,
+        fullName,
+        emailVerified: true,
+        userName,
+      })
+      .returning({ id: users.id });
+
+    return { userId: newUser[0].id };
+  } catch (error) {
+    throw new Error("Error while creating user");
+  }
+};
+
+export const checkUserExists = async ({ email, strategy }: UserExistArgs) => {
+  const userExists = await db.query.users.findFirst({
+    where: eq(users.email, email),
+    with: {
+      oauthTokens: {
+        where: eq(oauthTokens.strategy, strategy),
+      },
+    },
+  });
+
+  return userExists;
+};
+
+export const createSession = async ({ userId }: NewSessionArgs) => {
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+  try {
+    const newSession = await db
+      .insert(sessions)
+      .values({
+        userId,
+        expiresAt: expiresAt.getTime(),
+      })
+      .returning({ id: sessions.id });
+
+    return { sessionId: newSession[0].id, expiresAt };
+  } catch (error) {
+    throw new Error("Failed to create session");
+  }
+};
+
+export const saveOauthToken = async ({
+  accessToken,
+  refreshToken,
+  strategy,
+  userId,
+}: TokenArgs) => {
+  try {
+    await db.insert(oauthTokens).values({
+      userId,
+      strategy: "google",
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    throw new Error("Error while creating token");
+  }
+};
+
+export const updateOauthToken = async ({
+  accessToken,
+  refreshToken,
+  strategy,
+  userId,
+}: TokenArgs) => {
+  try {
+    await db
+      .update(oauthTokens)
+      .set({
+        accessToken,
+        refreshToken,
+      })
+      .where(
+        and(eq(oauthTokens.userId, userId), eq(oauthTokens.strategy, strategy))
+      );
+  } catch (error) {
+    throw new Error("Error while creating token");
+  }
+};
+
+export const createLoginLog = async ({
+  userAgent,
+  userId,
+  sessionId,
+  ip,
+}: NewLogsArgs) => {
+  if (!userAgent) {
+    throw new Error("Internal Error");
+  }
+  const parser = Bowser.getParser(userAgent);
+
+  try {
+    await db.insert(loginLogs).values({
+      userId,
+      sessionId,
+      ip,
+      os: `${parser.getOSName()} ${parser.getOSVersion()}`,
+      browser: `${parser.getBrowserName()}  ${parser.getBrowserVersion()}`,
+      device: parser.getPlatformType(),
+    });
+  } catch (error) {
+    throw new Error("Failed to create logs");
+  }
+};
+```
+
+</CodeContainer>
+
+Here is the final auth/callback/google.ts
+
+<CodeContainer fileName="src/pages/api/auth/callback/google.ts">
+
+```ts
+import type { APIContext } from "astro";
+
+import {
+  checkUserExists,
+  createLoginLog,
+  createSession,
+  createUser,
+  saveOauthToken,
+  updateOauthToken,
+} from "../../../../lib/auth";
+
+export async function GET({ request, cookies }: APIContext) {
+  const code = new URL(request.url).searchParams?.get("code");
+  const state = new URL(request.url).searchParams?.get("state");
+  const storedState = cookies.get("google_oauth_state")?.value;
+  const codeVerifier = cookies.get("google_code_challenge")?.value;
+
+  if (storedState !== state || !codeVerifier || !code) {
+    cookies.delete("google_oauth_state", { path: "/" });
+    cookies.delete("google_code_challenge", { path: "/" });
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/login?error=Server+Error",
+      },
+    });
+  }
+
+  try {
+    const tokenUrl = "https://www.googleapis.com/oauth2/v4/token";
+
+    const formData = new URLSearchParams();
+    formData.append("grant_type", "authorization_code");
+    formData.append("client_id", import.meta.env.GOOGLE_AUTH_CLIENT);
+    formData.append("client_secret", import.meta.env.GOOGLE_AUTH_SECRET);
+    formData.append("redirect_uri", import.meta.env.GOOGLE_AUTH_CALLBACK_URL);
+    formData.append("code", code);
+    formData.append("code_verifier", codeVerifier);
+
+    const fetchToken = await fetch(tokenUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData,
+    });
+
+    const fetchTokenRes = await fetchToken.json();
+
+    const fetchUser = await fetch(
+      "https://www.googleapis.com/oauth2/v2/userinfo",
+      {
+        headers: { Authorization: `Bearer ${fetchTokenRes.access_token}` },
+      }
+    );
+    const fetchUserRes = await fetchUser.json();
+
+    const userExists = await checkUserExists({
+      email: fetchUserRes.email,
+      strategy: "google",
+    });
+
+    if (!userExists) {
+      const { userId } = await createUser({
+        email: fetchUserRes.email,
+        fullName: fetchUserRes.name,
+        profilePhoto: fetchUserRes.picture,
+        userName: fetchUserRes.email.split("@")[0],
+      });
+
+      await saveOauthToken({
+        userId: userId,
+        strategy: "google",
+        accessToken: fetchTokenRes.access_token,
+        refreshToken: fetchTokenRes.refresh_token,
+      });
+
+      const { sessionId, expiresAt } = await createSession({
+        userId: userId,
+      });
+
+      // log
+      await createLoginLog({
+        sessionId,
+        userAgent: request.headers.get("user-agent"),
+        userId: userId,
+        ip: request.headers.get("x-real-ip") ?? "dev",
+      });
+
+      cookies.delete("google_oauth_state", { path: "/" });
+      cookies.delete("google_code_challenge", { path: "/" });
+
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: "/profile",
+          "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
+            import.meta.env.PROD
+          }`,
+        },
+      });
+    } else {
+      if (userExists.oauthTokens.length > 0) {
+        // oauth strategy exists
+        // update token
+
+        await updateOauthToken({
+          userId: userExists.id,
+          strategy: "google",
+          accessToken: fetchTokenRes.access_token,
+          refreshToken: fetchTokenRes.refresh_token,
+        });
+      } else {
+        await saveOauthToken({
+          userId: userExists.id,
+          strategy: "google",
+          accessToken: fetchTokenRes.access_token,
+          refreshToken: fetchTokenRes.refresh_token,
+        });
+      }
+
+      const { sessionId, expiresAt } = await createSession({
+        userId: userExists.id,
+      });
+
+      await createLoginLog({
+        sessionId,
+        userAgent: request.headers.get("user-agent"),
+        userId: userExists.id,
+        ip: request.headers.get("x-real-ip") ?? "dev",
+      });
+
+      cookies.delete("google_oauth_state", { path: "/" });
+      cookies.delete("google_code_challenge", { path: "/" });
+
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: "/",
+          "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
+            import.meta.env.PROD
+          }`,
+        },
+      });
+    }
+  } catch (error) {
+    cookies.delete("google_oauth_state", { path: "/" });
+    cookies.delete("google_code_challenge", { path: "/" });
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/login?error=Server+Error",
+      },
+    });
+  }
+}
+```
+
+</CodeContainer>
+
+Finally the google auth part is done. Try to login and for the first time you will redirected to the profile setup page. We will work it with later. Now let's configure github oauth.
+
+<div class="bg-yellow-500 text-white  px-3 py-2 rounded-md">
+We are directly sending session id to the user. This is okay but you can create a different field called token with larger size like 36 or 48 and send that to User.
+
+Additionally instead of sending direct session id you can encode it via jwt and send the jwt. I highly recommend to do this. This will reduce the risk of brute-force guessing the session token.
+</div>
+
+## Github Oauth
+
+In this section we will set github oauth2 in astro js
+
+### Getting client and secret keys
+
+Go to [Developer settings](https://github.com/settings/developers) (Setting -> Developer Setting -> Oauth Apps)
+
+Fill the app name, homepage url and callback URL.
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-series/gh-new-oauth-app.png" loading="lazy" />
+
+Then in the application tab create a new client secret
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-series/new-client-secret.png" loading="lazy" />
+
+You will get client id and client secret. Copy it and add it to your env
+
+<img src="https://static.everythingcs.dev/blog/astro-auth-series/gh-client-secret.png" loading="lazy" />
+
+Now we have client id and client secret let's create the api route for the github oauth.
+
+### Setting up API route
+
+Create a github.ts file inside the api/auth folder. We are creating a new id and saving that id as the cookies and then passing the same id as state.
+
+<CodeContainer>
+
+```ts
+import { createId } from "@paralleldrive/cuid2";
+import type { APIContext } from "astro";
+import queryString from "query-string";
+
+export async function GET({ cookies }: APIContext) {
+  const githubOauthState = createId();
+
+  cookies.set("github_oauth_state", githubOauthState, {
+    path: "/",
+  });
+
+  const authorizationUrl = queryString.stringifyUrl({
+    url: "https://github.com/login/oauth/authorize",
+    query: {
+      scope: "user:email",
+      response_type: "code",
+      client_id: import.meta.env.GITHUB_AUTH_CLIENT,
+      redirect_uri: import.meta.env.GITHUB_AUTH_CALLBACK_URL,
+      state: githubOauthState,
+    },
+  });
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: authorizationUrl,
+    },
+  });
+}
+```
+
+</CodeContainer>
+
+This will redirect the user to the github page. After the user authorizes then user will be redirected to the callback url page.
+
+### Setting up callback API
+
+As in the above google example the github will provide the code and the state value. We will first match the state value. If the value matches then we will continue the operation else redirect the user to the login page.
+
+<CodeContainer fileName="src/pages/api/auth/callback/github.ts">
+
+```ts
+export async function GET({ request, cookies }: APIContext) {
+  const code = new URL(request.url).searchParams?.get("code");
+  const state = new URL(request.url).searchParams?.get("state");
+
+  const storedState = cookies.get("github_oauth_state")?.value;
+
+  if (storedState !== state || !code) {
+    cookies.delete("github_oauth_state", { path: "/" });
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/login?error=Server+Error",
+      },
+    });
+  }
+}
+```
+
+</CodeContainer>
+
+Now let's exchange the code for the access_token
+
+<CodeContainer fileName="src/pages/api/auth/callback/github.ts">
+
+```ts
+const tokenUrl = queryString.stringifyUrl({
+  url: "https://github.com/login/oauth/access_token",
+  query: {
+    client_id: import.meta.env.GITHUB_AUTH_CLIENT,
+    client_secret: import.meta.env.GITHUB_AUTH_SECRET,
+    code: code,
+    scope: "user:email",
+  },
+});
+
+const fetchToken = await fetch(tokenUrl, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    accept: "application/json",
+  },
+});
+
+const fetchTokenRes = await fetchToken.json();
+
+console.log("fetch", fetchToken.status, fetchTokenRes);
+```
+
+</CodeContainer>
+
+You will get the token from github. Here is the response
+
+<CodeContainer>
+
+```json
+{
+  access_token: 'gho_7Cknu6...',
+  token_type: 'bearer',
+  scope: 'user:email'
+}
+```
+
+</CodeContainer>
+
+Then we will use this token to access user info and their email. Please note that if the user has his email as null then we will have to make a separate request to another endpoint to get their email.
+
+Please note github doesn't provide refresh_token so we will store this only as both access and refresh token.
+
+<CodeContainer fileName="src/pages/api/auth/callback/github.ts">
+
+```ts
+const fetchUser = await fetch("https://api.github.com/user", {
+  headers: {
+    accept: "application/json",
+    Authorization: `Bearer ${fetchTokenRes.access_token}`,
+  },
+});
+
+const fetchUserRes = await fetchUser.json();
+
+const fetchEmail = await fetch("https://api.github.com/user/emails", {
+  headers: {
+    accept: "application/json",
+    Authorization: `Bearer ${fetchTokenRes.access_token}`,
+  },
+});
+
+const fetchEmailRes = await fetchEmail.json();
+```
+
+</CodeContainer>
+
+We will get the user data and email as an array if user will have multiple emails. Add this little utility to get user email. Also add the type to response.
+
+<CodeContainer>
+
+```ts
+
+type EmailRes = (
+  | {
+      email: string;
+      primary: boolean;
+      verified: boolean;
+      visibility: null;
+    }
+  | {
+      email: string;
+      primary: boolean;
+      verified: boolean;
+      visibility: string;
+    }
+)[];
+
+const fetchEmailRes: EmailRes = await fetchEmail.json();
+
+const userEmail = () => {
+  let primaryVerified = fetchEmailRes.find(
+    (email) => email.verified && email.primary
+  );
+  let verified = fetchEmailRes.find((email) => email.verified);
+  let primary = fetchEmailRes.find((email) => email.primary);
+
+  if (primaryVerified) {
+    return primaryVerified.email;
+  } else if (verified) {
+    return verified.email;
+  } else if (primary) {
+    return primary.email;
+  } else {
+    return fetchEmailRes[0].email;
+  }
+};
+```
+
+</CodeContainer >
+
+Now we have all the data let's create session and save the token just like above. I won't repeat those steps agains. We will make use of that utility functions.
+
+Here is complete api/auth/callback/github.ts
+
+<CodeContainer fileName="src/pages/api/auth/callback/github.ts">
+
+```ts
+import type { APIContext } from "astro";
+
+import {
+  checkUserExists,
+  createLoginLog,
+  createSession,
+  createUser,
+  saveOauthToken,
+  updateOauthToken,
+} from "../../../../lib/auth";
+
+type EmailRes = (
+  | {
+      email: string;
+      primary: boolean;
+      verified: boolean;
+      visibility: null;
+    }
+  | {
+      email: string;
+      primary: boolean;
+      verified: boolean;
+      visibility: string;
+    }
+)[];
+
+import queryString from "query-string";
+
+export async function GET({ request, cookies }: APIContext) {
+  const code = new URL(request.url).searchParams?.get("code");
+  const state = new URL(request.url).searchParams?.get("state");
+
+  const storedState = cookies.get("github_oauth_state")?.value;
+
+  if (storedState !== state || !code) {
+    cookies.delete("github_oauth_state", { path: "/" });
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/login?error=Server+Error",
+      },
+    });
+  }
+
+  try {
+    const tokenUrl = queryString.stringifyUrl({
+      url: "https://github.com/login/oauth/access_token",
+      query: {
+        client_id: import.meta.env.GITHUB_AUTH_CLIENT,
+        client_secret: import.meta.env.GITHUB_AUTH_SECRET,
+        code: code,
+        scope: "user:email",
+      },
+    });
+
+    const fetchToken = await fetch(tokenUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        accept: "application/json",
+      },
+    });
+
+    const fetchTokenRes = await fetchToken.json();
+
+    const fetchUser = await fetch("https://api.github.com/user", {
+      headers: {
+        accept: "application/json",
+        Authorization: `Bearer ${fetchTokenRes.access_token}`,
+      },
+    });
+
+    const fetchUserRes = await fetchUser.json();
+
+    const fetchEmail = await fetch("https://api.github.com/user/emails", {
+      headers: {
+        accept: "application/json",
+        Authorization: `Bearer ${fetchTokenRes.access_token}`,
+      },
+    });
+
+    const fetchEmailRes: EmailRes = await fetchEmail.json();
+
+    const userEmail = () => {
+      let primaryVerified = fetchEmailRes.find(
+        (email) => email.verified && email.primary
+      );
+      let verified = fetchEmailRes.find((email) => email.verified);
+      let primary = fetchEmailRes.find((email) => email.primary);
+
+      if (primaryVerified) {
+        return primaryVerified.email;
+      } else if (verified) {
+        return verified.email;
+      } else if (primary) {
+        return primary.email;
+      } else {
+        return fetchEmailRes[0].email;
+      }
+    };
+
+    const userExists = await checkUserExists({
+      email: userEmail(),
+      strategy: "github",
+    });
+
+  
+    if (!userExists) {
+      const { userId } = await createUser({
+        email: userEmail(),
+        fullName: fetchUserRes.name,
+        profilePhoto: fetchUserRes.avatar_url,
+        userName: fetchUserRes.login,
+      });
+
+      await saveOauthToken({
+        userId: userId,
+        strategy: "github",
+        accessToken: fetchTokenRes.access_token,
+        refreshToken: fetchTokenRes.access_token,
+      });
+
+      const { sessionId, expiresAt } = await createSession({
+        userId: userId,
+      });
+
+      // log
+      await createLoginLog({
+        sessionId,
+        userAgent: request.headers.get("user-agent"),
+        userId: userId,
+        ip: request.headers.get("x-real-ip") ?? "dev",
+      });
+
+      cookies.delete("github_oauth_state", { path: "/" });
+
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: "/profile",
+          "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
+            import.meta.env.PROD
+          }`,
+        },
+      });
+    } else {
+      if (userExists.oauthTokens.length > 0) {
+        // oauth strategy exists
+        // update token
+
+        await updateOauthToken({
+          userId: userExists.id,
+          strategy: "github",
+          accessToken: fetchTokenRes.access_token,
+          refreshToken: fetchTokenRes.access_token,
+        });
+      } else {
+        await saveOauthToken({
+          userId: userExists.id,
+          strategy: "github",
+          accessToken: fetchTokenRes.access_token,
+          refreshToken: fetchTokenRes.access_token,
+        });
+      }
+    }
+
+    const { sessionId, expiresAt } = await createSession({
+      userId: userExists.id,
+    });
+
+    await createLoginLog({
+      sessionId,
+      userAgent: request.headers.get("user-agent"),
+      userId: userExists.id,
+      ip: request.headers.get("x-real-ip") ?? "dev",
+    });
+
+    cookies.delete("github_oauth_state", { path: "/" });
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/",
+        "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
+          import.meta.env.PROD
+        }`,
+      },
+    });
+  } catch (error) {
+    console.log("error in github signup", error);
+    cookies.delete("github_oauth_state", { path: "/" });
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/login?error=Server+Error",
+      },
+    });
+  }
+}
+
+
+```
+
+</CodeContainer >
+
+Now that user is logged in let's see how to create profile for the user after the user is signed up for the first time
+
+## Creating profile
+
+Go to profile.astro page. We will first fetch the current user info. In the signup process we prefilled some of the fields. We will let user change now like name and username.
+
+### Fetching current user
+
+Let's fetch the current user details from the cookie.
+
+<CodeContainer fileName="pages/profile.astro">
+
+```astro
+---
+import { sessions } from "../db/schema";
+import { db } from "../db";
+
+const authToken = Astro.cookies.get("app_auth_token")?.value;
+
+if (!authToken) {
+  return Astro.redirect("/login");
+}
+
+const userInfo = await db.query.sessions.findFirst({
+  where: and(
+    eq(sessions.id, authToken),
+    gte(sessions.expiresAt, new Date().getTime())
+  ),
+  with: {
+    user: true,
+  },
+});
+
+console.log("auth", userInfo);
+---
+```
+
+</CodeContainer>
+
+You will get the user data associated with the session. Now let's prefill the values to the form and add a new endpoint called profile to update the user info.
+
+Create a new api route. In the api folder create a new file profile.ts
+
+<CodeContainer fileName="api/profile.ts">
+
+```ts
+import type { APIContext } from "astro";
+import { and, eq, gte } from "drizzle-orm";
+import { db } from "../../db";
+import { sessions, users } from "../../db/schema";
+
+export async function POST({ request, cookies }: APIContext) {
+  const requestBody = await request.formData();
+
+  const fullName = requestBody.get("fullName");
+  const userName = requestBody.get("userName");
+  try {
+    const authToken = cookies.get("app_auth_token")?.value;
+
+    if (!authToken) {
+      return Response.json(
+        { error: "authentication_error", message: "Log in" },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const userInfo = await db.query.sessions.findFirst({
+      where: and(
+        eq(sessions.id, authToken),
+        gte(sessions.expiresAt, new Date().getTime())
+      ),
+      with: {
+        user: true,
+      },
+    });
+
+    if (!userInfo) {
+      return Response.json(
+        { error: "authorization_error", message: "Log in" },
+        {
+          status: 403,
+        }
+      );
+    }
+    await db
+      .update(users)
+      .set({
+        fullName: fullName as string,
+        userName: userName as string,
+      })
+      .where(eq(users.id, userInfo.id));
+
+    return Response.json(
+      { success: true, message: "Profile Updated Sucessfully" },
+      {
+        status: 200,
+      }
+    );
+  } catch (error) {
+    console.log("error while creating profile", error);
+
+    return Response.json(
+      {
+        error: "server_error",
+        message: "Internal server error. Try again later",
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+</CodeContainer>
+
+And here is the profile page
+
+<CodeContainer fileName="pages/profile.astro">
+
+```astro
+---
+import { eq, and, gte } from "drizzle-orm";
+import MainLayout from "../layout/main-layout.astro";
+import { sessions } from "../db/schema";
+import { db } from "../db";
+
+const authToken = Astro.cookies.get("app_auth_token")?.value;
+
+if (!authToken) {
+  return Astro.redirect("/login");
+}
+
+const userInfo = await db.query.sessions.findFirst({
+  where: and(
+    eq(sessions.id, authToken),
+    gte(sessions.expiresAt, new Date().getTime())
+  ),
+  with: {
+    user: true,
+  },
+});
+
+console.log("auth", userInfo);
+---
+
+<MainLayout title="Profile" description="Profile">
+  <div class="flex mt-14 items-center justify-center flex-col">
+    <h1 class="text-3xl font-bold mb-5">Profile</h1>
+
+    <form
+      id="profile-form"
+      class="w-full max-w-2xl"
+      action="/api/profile"
+      method="post"
+    >
+      <label class="block mt-5 text-gray-600" for="email">Email</label>
+      <input
+        type="text"
+        class="border-2 border-slate-400 rounded-md px-2 py-3 w-full"
+        name="email"
+        placeholder="Email"
+        value={userInfo?.user?.email}
+        id="email"
+        readonly
+      />
+      <label class="block mt-5 text-gray-600" for="fullName">Your Name</label>
+      <input
+        type="text"
+        class="border-2 border-slate-400 rounded-md px-2 py-3 w-full"
+        name="fullName"
+        placeholder="Your Full Name"
+        value={userInfo?.user?.fullName}
+        id="fullName"
+      />
+      <label class="block mt-5 text-gray-600" for="userName">User Name</label>
+      <input
+        type="text"
+        class="border-2 border-slate-400 rounded-md px-2 py-3 w-full"
+        name="userName"
+        id="userName"
+        value={userInfo?.user?.userName}
+        placeholder="username"
+      />
+
+      <div class="flex justify-end my-5">
+        <button class="bg-blue-600 px-6 py-2 rounded-md text-white">Save</button
+        >
+      </div>
+    </form>
+  </div>
+</MainLayout>
+
+<script>
+  const profileForm = document.getElementById("profile-form");
+
+  profileForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const name = formData.get("fullName") as string;
+
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      body: formData,
+    });
+
+    const resData = await res.json();
+
+    const formUpdateStatus = document.createElement("div");
+
+    formUpdateStatus.className =
+      "status px-3 my-5 text-center w-fit rounded-md py-2 flex items-center justify-center text-white";
+
+    if (res.status === 200) {
+      window.location.href = "/";
+    }
+  });
+</script>
+```
+
+</CodeContainer>
+
+### Accounts page
+
+In the accounts page we will display the user email, their connected accounts and also their login logs.
+
+<CodeContainer fileName="src/pages/account.astro">
+
+```astro
+---
+import { eq, desc } from "drizzle-orm";
+
+import { db } from "../db";
+import MainLayout from "../layout/main-layout.astro";
+import { loginLogs, sessions } from "../db/schema";
+
+const sessionToken = Astro.cookies.get("app_auth_token")?.value;
+
+if (!sessionToken) {
+  return Astro.redirect("/");
+}
+const userInfo = await db.query.sessions.findFirst({
+  where: eq(sessions.id, sessionToken),
+  with: {
+    user: {
+      with: {
+        oauthTokens: {
+          columns: {
+            strategy: true,
+          },
+        },
+        loginLogs: {
+          orderBy: desc(loginLogs.loggedInAt),
+        },
+      },
+    },
+  },
+});
+
+const logs = userInfo?.user?.loginLogs.sort((a, b) =>
+  a.sessionId === sessionToken ? -1 : 1
+);
+
+function capitalizeFirstWord(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+---
+
+<MainLayout title="Account Page" description="Account Page">
+  <h1 class="my-10 text-3xl font-bold text-center">Manage Account</h1>
+
+  <div class="flex flex-col gap-3 md:flex-row items-center">
+    <h2 class="text-xl my-3 font-semibold">Email:</h2>
+    <input
+      type="text"
+      class="border-2 border-slate-400 rounded-md px-2 py-1 w-fit"
+      name="email"
+      placeholder="Email"
+      value={userInfo?.user?.email}
+      id="email"
+      readonly
+    />
+  </div>
+
+  <a
+    href="/profile"
+    class="border-2 border-fuchsia-600 mt-5 block w-fit rounded-full px-5 py-2"
+    >Edit Profile</a
+  >
+
+  <div class="my-5">
+    <h2 class="text-xl my-3 font-semibold">Connected Accounts</h2>
+
+    <div class="flex gap-5 flex-wrap items-center">
+      {
+        userInfo?.user?.oauthTokens.map((provider) => (
+          <div class="flex border-2 w-fit border-slate-600 items-center gap-4 rounded-full px-5 py-2">
+            {provider.strategy === "github" ? (
+              <img width="30px" src="/github-mark.svg" />
+            ) : (
+              <img width="30px" src="/google.svg" />
+            )}
+            {capitalizeFirstWord(provider.strategy)}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="my-5">
+    <h2 class="text-xl my-3 font-semibold">Log in logs</h2>
+
+    <div class="flex flex-col gap-5">
+      {
+        logs?.map((log) => (
+          <div class="flex flex-col md:flex-row justify-between items-center bg-slate-100 shadow-md rounded-md px-3 py-2">
+            <div class="flex flex-wrap justify-center items-center gap-2">
+              {sessionToken === log.sessionId && (
+                <div class="bg-fuchsia-600 rounded-full text-white px-2 py-1 text-sm ">
+                  This Device
+                </div>
+              )}
+              {capitalizeFirstWord(log.os)}
+              {capitalizeFirstWord(log.device)}
+              {capitalizeFirstWord(log.browser)}
+            </div>
+            <div class="flex">
+              Logged in at:
+              {new Intl.DateTimeFormat("en-US").format(
+                new Date(log.loggedInAt!)
+              )}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</MainLayout>
+```
+
+</CodeContainer>
+
+## Astro Middleware
+
+Now let's make use of middleware so that we can get the auth status and also protect the routes.
+
+### Getting auth status
+
+Middleware will run for every request that user makes. So it makes it suitable for checking authentication and authorization. Let's define middleware for checking user authentication.
+
+Create a middleware.ts in src folder
+
+<CodeContainer fileName="src/middleware.ts">
+
+```ts
+import { defineMiddleware } from "astro/middleware";
+import getUser from "./lib/getUser";
+
+export const onRequest = defineMiddleware(async (context, next) => {
+  const userInfo = await getUser(context.cookies.get("app_auth_token")?.value);
+  console.log("user info", userInfo);
+
+  return next();
+});
+```
+
+</CodeContainer>
+
+Now let's define the get user function. Create a file named getUser in the lib folder under src.
+
+<CodeContainer fileName="src/lib/getUser.ts">
+
+```ts
+import { and, eq, gte } from "drizzle-orm";
+import { db } from "../db";
+import { sessions } from "../db/schema";
+
+async function getUser(authToken: string | undefined) {
+  if (!authToken) return null;
+
+  const userInfo = await db.query.sessions.findFirst({
+    where: and(
+      eq(sessions.id, authToken),
+      gte(sessions.expiresAt, new Date().getTime())
+    ),
+    columns: {
+      id: true,
+    },
+    with: {
+      user: {
+        columns: {
+          id: true,
+          fullName: true,
+          userName: true,
+        },
+      },
+    },
+  });
+
+  if (!userInfo) {
+    return null;
+  }
+
+  if (!userInfo.user) {
+    return null;
+  }
+  return userInfo;
+}
+
+export default getUser;
+```
+
+</CodeContainer>
+
+This will give the user details like we are accessing user id, name and username.
+
+Now we will store the userId in the astro context locals and it can be accessed anywhere be it api routes or astro page.
+
+Let's add the type first. Edit the env.d.ts file in the src directory
+
+<CodeContainer fileName="env.d.ts">
+
+```ts
+/// <reference types="astro/client" />
+declare namespace App {
+  interface Locals {
+    userId: string | undefined;
+  }
+}
+```
+
+</CodeContainer>
+
+Then in the middleware store it.
+
+<CodeContainer fileName="src/middleware.ts">
+
+```ts
+import { defineMiddleware } from "astro/middleware";
+import getUser from "./lib/getUser";
+
+export const onRequest = defineMiddleware(async (context, next) => {
+  const userInfo = await getUser(context.cookies.get("app_auth_token")?.value);
+
+  context.locals.userId = userInfo?.user?.id;
+
+  return next();
+});
+```
+
+</CodeContainer>
+
+Now you can use it show conditional links in navbar, protect routes etc. Like here is the example. I want to display user profile link, dashboard link and logout link.
+
+<CodeContainer fileName="src/components/navbar.astro">
+
+```astro
+---
+const userIsLoggedIn = !!Astro.locals.userId;
+---
+
+<header class="px-12 py-5 flex justify-between">
+  <a href="/" class="text-2xl font-bold">Astro Auth</a>
+  <nav>
+    <ul class="flex gap-5 items-center">
+      <li>
+        <a href="/">Home</a>
+      </li>
+      {
+        userIsLoggedIn ? (
+          <>
+            <li>
+              <a href="/dashboard">Dashboard</a>
+            </li>
+            <li>
+              <a href="/account">My Account</a>
+            </li>
+            <li>
+              <a href="/dashboard">Logout</a>
+            </li>
+          </>
+        ) : (
+          <li>
+            <a href="/login">Login</a>
+          </li>
+        )
+      }
+    </ul>
+  </nav>
+</header>
+```
+
+</CodeContainer>
+
+Now you will see that for logged in user other links will be displayed.
+
+In the same way you can do for homepage too.
+
+<CodeContainer>
+
+```astro
+---
+import MainLayout from "../layout/main-layout.astro";
+
+const userIsLoggedIn = !!Astro.locals.userId;
+---
+
+<MainLayout title="Astro Auth" description="Auth in Astro">
+  <div class="flex h-[400px] items-center justify-center flex-col">
+    <h1 class="text-3xl font-bold">Exploring auth in Astro</h1>
+
+    {
+      userIsLoggedIn ? (
+        <a
+          href="/dashboard"
+          class="px-7 py-3 text-white rounded-md my-5 bg-blue-600 hover:scale-95 transition-all ease-in-out duration-75"
+        >
+          Dashboard
+        </a>
+      ) : (
+        <a
+          href="/login"
+          class="px-7 py-3 text-white rounded-md my-5 bg-blue-600 hover:scale-95 transition-all ease-in-out duration-75"
+        >
+          Login
+        </a>
+      )
+    }
+  </div>
+</MainLayout>
+```
+
+</CodeContainer>
+
+## Protecting pages and API routes
+
+Protecting pages and API routes can be done is per route basis or directly in the middleware file. Let's have a look at both the approaches.
+
+### Protecting pages per route basis
+
+<CodeContainer fileName="src/pages/dashboard.astro">
+
+```astro
+---
+import MainLayout from "../layout/main-layout.astro";
+
+const userIsLoggedIn = !!Astro.locals.userId;
+
+if (!userIsLoggedIn) {
+  return Astro.redirect("/login");
+}
+---
+
+<MainLayout title="Dashboard" description="dashboard page">
+  <h1 class="my-10 text-center">This is protected</h1>
+</MainLayout>
+```
+
+</CodeContainer>
+
+### Protecting route via middleware
+
+<CodeContainer fileName="src/middleware.ts">
+
+```ts
+import { defineMiddleware } from "astro/middleware";
+import getUser from "./lib/getUser";
+
+export const onRequest = defineMiddleware(async (context, next) => {
+  const userInfo = await getUser(context.cookies.get("app_auth_token")?.value);
+
+  context.locals.userId = userInfo?.user?.id;
+
+  if (
+    context.url.pathname.includes("dashboard") ||
+    context.url.pathname.includes("/account")
+  ) {
+    if (!userInfo) {
+      return context.redirect("/login");
+    }
+  }
+
+  if (context.url.pathname.includes("login")) {
+    if (userInfo?.user) {
+      return context.redirect("/");
+    }
+  }
+
+  return next();
+});
+```
+
+</CodeContainer>
+
+## Logout
+
+To perform the logout we will first delete the session, then clear the cookies from the browser.
+
+Create a new api route named logout in the api/auth folder.
+
+<CodeContainer fileName="src/pages/api/auth/logout.ts">
+
+```ts
+import type { APIContext } from "astro";
+import { db } from "../../../db";
+import { sessions } from "../../../db/schema";
+import { eq } from "drizzle-orm";
+
+export async function GET({ cookies }: APIContext) {
+  const sessionId = cookies.get("app_auth_token")?.value;
+  if (!sessionId) {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/",
+      },
+    });
+  }
+  await db.delete(sessions).where(eq(sessions.id, sessionId));
+
+  cookies.delete("app_auth_token",{path:"/"});
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: "/",
+    },
+  });
+}
+```
+
+</CodeContainer>
+
+Now in the nav change the anchor link to /api/auth/logout
+
+<CodeContainer hasPartialCode fileName="src/components/navbar.ts">
+
+```astro
+<li>
+  <a href="/api/auth/logout">Logout</a>
+</li>
+
+```
+
+</CodeContainer>
+
+## Conclusion
+
+So in this post we implement OAuth authentication via GitHub and Google provider in Astro.js. In the upcoming post we will extend this project and will add credential based authentication in Astro.js.
+
+Here is the [repo](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials) for the project. Raise any issue if you find any.  Also free to reach out to me via [EverythingCS discord server](https://discord.gg/W3nubBNeXK).
