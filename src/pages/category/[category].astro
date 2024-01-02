@@ -23,7 +23,6 @@ export async function getStaticPaths() {
           b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
       );
 
-    console.log("category", category, slugify(category));
     return {
       params: { category: slugify(category) },
       props: { posts: filteredPosts },
@@ -138,6 +137,18 @@ const categoryMapper: Record<string, Category> = {
     title: "Posts realted to Authentication",
     description: "Browse all the post related to Authentication",
   },
+  "google-auth": {
+    title: "Posts realted to Google Authentication",
+    description: "Browse all the post related to Google Authentication",
+  },
+  oauth: {
+    title: "Posts realted to Oauth Authentication",
+    description: "Browse all the post related to Oauth Authentication",
+  },
+  "github-auth": {
+    title: "Posts realted to Github Authentication",
+    description: "Browse all the post related to Github Authentication",
+  },
   "astro-authentication": {
     title: "Posts realted to Astro Authentication",
     description: "Browse all the post related to Astro Authentication",
@@ -154,7 +165,7 @@ const categoryMapper: Record<string, Category> = {
     title: "Posts realted to cloud",
     description: "Browse all the post related to cloud",
   },
-  "hosting": {
+  hosting: {
     title: "Posts realted to hosting",
     description: "Browse all the post related to hosting",
   },
@@ -185,7 +196,7 @@ const categoryMapper: Record<string, Category> = {
             title={post.data.title}
             description={post.data.description}
             slug={post.slug}
-            updatedDate={post.data.updatedDate}
+            publishedDate={post.data.publishedDate}
           />
         ))
       }

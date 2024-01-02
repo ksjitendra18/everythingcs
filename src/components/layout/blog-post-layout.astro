@@ -86,7 +86,9 @@ const formattedUpdatedDate = `${
         <NewPostHeader {title} {publishedDate} {updatedDate} />
         <slot />
       </section>
-      <Feedback client:visible />
+      
+      {import.meta.env.prod && <Feedback client:visible /> }
+      <!-- <Feedback client:visible /> -->
     </main>
 
     {

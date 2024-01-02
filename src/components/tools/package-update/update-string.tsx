@@ -33,7 +33,6 @@ export default function UpdateString() {
     setDisplayPkgString(true);
 
     setPkgString(packageNames.join(" "));
-    console.log("pack", pkgString());
   }
 
   const PACKAGE_MANAGER = ["npm install", "yarn add", "pnpm install"];

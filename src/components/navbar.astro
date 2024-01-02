@@ -2,16 +2,18 @@
 import ThemeToggle from "./theme-toggle.astro";
 ---
 
-<header class="relative h-[80px] bg-primaryColour dark:bg-[#1f2023] text-white">
+<header
+  class="relative border-b-2 border-surfaceColour/80 dark:border-0 h-[80px]"
+>
   <div
     class="h-full max-w-7xl mx-auto flex justify-between items-center py-2 px-3"
   >
     <a href="/" class="font-bold text-2xl px-3 md:px-0"> EverythingCS</a>
     <nav
-      class="mainNav z-30 hidden md:flex absolute md:static left-0 top-14 md:top-0 items-center w-full md:w-auto justify-center bg-primaryColour dark:bg-[#1f2023]"
+      class="mainNav z-30 hidden md:flex absolute md:static left-0 top-14 md:top-0 items-center w-full md:w-auto justify-center bg-[#1f2023] md:bg-transparent text-white md:text-black dark:md:text-white"
     >
       <ul
-        class={`flex flex-col md:flex-row text-[20px] py-5 md:py-3 justify-center  items-center gap-5 `}
+        class="flex flex-col md:flex-row text-[20px] py-5 md:py-3 justify-center items-center gap-5"
       >
         <li>
           <a href="/">Home</a>
@@ -35,9 +37,11 @@ import ThemeToggle from "./theme-toggle.astro";
       </ul>
     </nav>
     <div class={`px-3 hamburger  block md:hidden mt-1 cursor-pointer`}>
-      <span class="bar block w-[30px] h-[4px] bg-white"></span>
-      <span class="bar block w-[30px] mt-1 h-[4px] bg-white"></span>
-      <span class="bar block w-[30px] mt-1 h-[4px] bg-white"></span>
+      <span class="bar block w-[30px] h-[4px] bg-black dark:bg-white"></span>
+      <span class="bar block w-[30px] mt-1 h-[4px] bg-black dark:bg-white"
+      ></span>
+      <span class="bar block w-[30px] mt-1 h-[4px] bg-black dark:bg-white"
+      ></span>
     </div>
   </div>
 </header>

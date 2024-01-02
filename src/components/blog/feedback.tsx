@@ -84,7 +84,7 @@ function Feedback() {
     }
   };
   return (
-    <div class="w-full md:w-fit lg:w-[600px] mx-auto border-2 px-3  md:px-5 rounded-md md:py-3 my-5">
+    <div class="w-full md:w-fit lg:w-[600px] mx-auto border-2 border-slate-600 dark:border-slate-200 px-3  md:px-5 rounded-md md:py-3 my-5">
       <h3 class="text-2xl font-bold my-2">Did you find this post helpful?</h3>
       <form onSubmit={handleSubmit}>
         <div class="flex mt-5 mb-3 gap-5 items-center">
