@@ -87,7 +87,7 @@ const formattedUpdatedDate = `${
         <slot />
       </section>
       
-      {import.meta.env.prod && <Feedback client:visible /> }
+      {import.meta.env.PROD && <Feedback client:visible /> }
       <!-- <Feedback client:visible /> -->
     </main>
 
