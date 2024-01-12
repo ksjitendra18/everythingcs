@@ -1,6 +1,6 @@
 import { For, Show, createSignal, onMount, createEffect } from "solid-js";
 
-function Feedback() {
+function Feedback({ slug }: { slug: string }) {
   const [selectedValue, setSelectedValue] = createSignal<number | null>(null);
 
   onMount(() => {
@@ -31,6 +31,7 @@ function Feedback() {
           body: JSON.stringify({
             rating,
             message,
+            slug,
             cfTurnstileRes,
           }),
         }

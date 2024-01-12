@@ -36,6 +36,8 @@ const formattedPublishedDate = `${
 const formattedUpdatedDate = `${
   new Date(updatedDate).toISOString().split("T")[0]
 }:T16:52:29+00:00`;
+
+const slug = Astro.url.pathname.split("/")[2];
 ---
 
 <!doctype html>
@@ -87,7 +89,7 @@ const formattedUpdatedDate = `${
         <slot />
       </section>
       
-      {import.meta.env.PROD && <Feedback client:visible /> }
+      {import.meta.env.PROD && <Feedback slug={slug} client:visible /> }
       <!-- <Feedback client:visible /> -->
     </main>
 
