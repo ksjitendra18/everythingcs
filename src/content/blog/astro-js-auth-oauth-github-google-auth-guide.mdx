@@ -1,7 +1,7 @@
 ---
 title: "Google and Github Authentication OAuth2 Setup in Astro.js"
 publishedDate: 2024-01-02
-updatedDate: 2024-01-02
+updatedDate: 2024-02-06
 description: "Step by step guide on how to setup google and github authentication in astro and also persist user and protecting routes."
 ogImage: "https://static.everythingcs.dev/blog/astro-auth-series/google-github-oauth-authentication-astro-js-ssr.png"
 featuredImage: "https://static.everythingcs.dev/blog/astro-auth-series/google-github-oauth-authentication-astro-js-ssr.png"
@@ -711,6 +711,7 @@ export const createUser = async ({
   fullName,
   profilePhoto,
   userName,
+  emailVerified
 }: NewUserArgs) => {
   try {
     const newUser = await db
@@ -719,7 +720,7 @@ export const createUser = async ({
         email,
         profilePhoto,
         fullName,
-        emailVerified: true,
+        emailVerified,
         userName,
       })
       .returning({ id: users.id });
@@ -902,6 +903,7 @@ export async function GET({ request, cookies }: APIContext) {
         fullName: fetchUserRes.name,
         profilePhoto: fetchUserRes.picture,
         userName: fetchUserRes.email.split("@")[0],
+        emailVerified: true,
       });
 
       await saveOauthToken({
@@ -1331,6 +1333,7 @@ export async function GET({ request, cookies }: APIContext) {
         fullName: fetchUserRes.name,
         profilePhoto: fetchUserRes.avatar_url,
         userName: fetchUserRes.login,
+        emailVerified: true,
       });
 
       await saveOauthToken({
