@@ -21,6 +21,11 @@ label[data-input-required]::after {
   word-wrap: break-word;
 }
 
+.post-content li {
+  list-style-type: disc;
+  margin-left: 2rem;
+}
+
 .post-content h2 {
   @apply font-semibold text-3xl my-5;
 }

@@ -1,7 +1,7 @@
 ---
 title: "Google and Github Authentication OAuth2 Setup in Astro.js"
 publishedDate: 2024-01-02
-updatedDate: 2024-02-06
+updatedDate: 2024-02-28
 description: "Step by step guide on how to setup google and github authentication in astro and also persist user and protecting routes."
 ogImage: "https://static.everythingcs.dev/blog/astro-auth-series/google-github-oauth-authentication-astro-js-ssr.png"
 featuredImage: "https://static.everythingcs.dev/blog/astro-auth-series/google-github-oauth-authentication-astro-js-ssr.png"
@@ -12,9 +12,9 @@ draft: false
 ---
 import CodeContainer from "../../components/blog/code-container.astro";
 
-In this guide we are going to see how to setup oauth authentication using google and github provider in Astro js without any external library.
+In this guide we are going to see how to setup OAuth authentication using google and github provider in Astro js without any external library.
 
-We will make use of Astro SSR, API routes and database session strategy to implement authentication and also persist it. Also we will make use of middlewares to protect the pages and API routes. We are going to use DrizzleORM to handle db schema and queries,
+We will make use of Astro SSR, API routes and database session strategy to implement authentication and also persist it. Also we will make use of middlewares to protect the pages and API routes. We are going to use Drizzle ORM to handle db schema, migration and queries.
 
 Here is live demonstration of what we are going to build.
 
@@ -22,7 +22,11 @@ Here is live demonstration of what we are going to build.
 <source src="https://static.everythingcs.dev/blog/astro-auth-series/astro-oauth-google-github-authentication.mp4"/>
 </video>
 
-This post is part 1 in the series of exploring auth in astro framework. In second part we will implement the email password based authentication and in third part we will implement the passwordless magic email based authentication. In the final part we will implement the 2-Factor authentication.
+This post is part 1 in the series of exploring auth in astro framework. In second part we will implement the [email password based authentication](https://everythingcs.dev/blog/astro-js-email-password-credential-authentication/) and in third part we will implement the passwordless magic email based authentication. In the final part we will implement the 2-Factor authentication.
+
+Here is the [repo for the astro authentication series](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials). The repo contains the code for additional strategies also so you might feel that their is more code than discussed in this blog post.
+
+For this blog post the 2 branch of interest is [oauth-starter](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/tree/oauth-starter) and [oauth-final](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/tree/oauth-final). After completing this guide your code will be similar to [oauth-final](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/tree/oauth-final). Please refer to [oauth-final](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/tree/oauth-final) for all the code related to this blog post.
 
 Also in the future I will also implement authentication through firebase. I will update these links once those blog posts are ready. Although I already have [react firebase authentication guide](https://everythingcs.dev/blog/react-firebase-authentication/).
 
@@ -36,7 +40,7 @@ So let's understand and clear the expectation first that after following this wh
 - Protect pages
 - Protect routes
 - Implement state parameter that is used to prevent CSRF and XSRF attacks.
-- Implement PCKE which is currently (supported by google)
+- Implement PCKE which is currently supported by google (github doesn't support)
 
 ## Requirements
 
@@ -46,7 +50,7 @@ So let's understand and clear the expectation first that after following this wh
 
 ## Setting up
 
-Download the starter code from the repo(oauth starter branch). [Direct download](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/archive/refs/heads/oauth-starter.zip) or you can clone the oauth-starter branch.
+Download the starter code from the repo(oauth starter branch). [Direct download](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/archive/refs/heads/oauth-starter.zip) or you can clone the [oauth-starter branch](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/tree/oauth-starter).
 
 Unzip in your desired folders and run npm i to install the packages. You can start the server by running npm run dev.
 
@@ -62,7 +66,7 @@ Let's install the drizzle orm, libsql package and a package for uuid. I am going
 
 ```bash
 
-npm i drizzle-orm @libsql/client @paralleldrive/cuid2
+npm i drizzle-orm @libsql/client @paralleldrive/cuid2 nanoid
 npm i -D drizzle-kit
 ```
 
@@ -113,6 +117,13 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
+import { customAlphabet } from "nanoid";
+
+const createSessionId = customAlphabet(
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_-",
+  48
+);
+
 export const users = sqliteTable("users", {
   id: text("id")
     .$default(() => createId())
@@ -162,7 +173,7 @@ export const oauthTokenRelations = relations(oauthTokens, ({ one }) => ({
 
 export const sessions = sqliteTable("sessions", {
   id: text("id")
-    .$default(() => createId())
+    .$default(() => createSessionId())
     .primaryKey(),
   userId: text("userId").references(() => users.id, { onDelete: "cascade" }),
   expiresAt: integer("expires_at").notNull(),
@@ -1652,7 +1663,7 @@ console.log("auth", userInfo);
 
 ### Accounts page
 
-In the accounts page we will display the user email, their connected accounts and also their login logs.
+In the accounts page we will display the user email, their connected accounts and also their login logs. Through the logs the user can revoke the sessions.
 
 <CodeContainer fileName="src/pages/account.astro">
 
@@ -1718,24 +1729,26 @@ function capitalizeFirstWord(text: string) {
     >Edit Profile</a
   >
 
-  <div class="my-5">
-    <h2 class="text-xl my-3 font-semibold">Connected Accounts</h2>
+  {
+    userInfo?.user?.oauthTokens && userInfo?.user?.oauthTokens.length > 0 && (
+      <div class="my-5">
+        <h2 class="text-xl my-3 font-semibold">Connected Accounts</h2>
 
-    <div class="flex gap-5 flex-wrap items-center">
-      {
-        userInfo?.user?.oauthTokens.map((provider) => (
-          <div class="flex border-2 w-fit border-slate-600 items-center gap-4 rounded-full px-5 py-2">
-            {provider.strategy === "github" ? (
-              <img width="30px" src="/github-mark.svg" />
-            ) : (
-              <img width="30px" src="/google.svg" />
-            )}
-            {capitalizeFirstWord(provider.strategy)}
-          </div>
-        ))
-      }
-    </div>
-  </div>
+        <div class="flex gap-5 flex-wrap items-center">
+          {userInfo?.user?.oauthTokens.map((provider) => (
+            <div class="flex border-2 w-fit border-slate-600 items-center gap-4 rounded-full px-5 py-2">
+              {provider.strategy === "github" ? (
+                <img width="30px" src="/github-mark.svg" />
+              ) : (
+                <img width="30px" src="/google.svg" />
+              )}
+              {capitalizeFirstWord(provider.strategy)}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   <div class="my-5">
     <h2 class="text-xl my-3 font-semibold">Log in logs</h2>
@@ -1743,8 +1756,8 @@ function capitalizeFirstWord(text: string) {
     <div class="flex flex-col gap-5">
       {
         logs?.map((log) => (
-          <div class="flex flex-col md:flex-row justify-between items-center bg-slate-100 shadow-md rounded-md px-3 py-2">
-            <div class="flex flex-wrap justify-center items-center gap-2">
+          <div class="flex flex-col lg:flex-row justify-between items-center bg-slate-100 shadow-md rounded-md px-3 py-2">
+            <div class="flex text-center flex-wrap justify-center items-center gap-2">
               {sessionToken === log.sessionId && (
                 <div class="bg-fuchsia-600 rounded-full text-white px-2 py-1 text-sm ">
                   This Device
@@ -1754,10 +1767,21 @@ function capitalizeFirstWord(text: string) {
               {capitalizeFirstWord(log.device)}
               {capitalizeFirstWord(log.browser)}
             </div>
-            <div class="flex">
-              Logged in at:
-              {new Intl.DateTimeFormat("en-US").format(
-                new Date(log.loggedInAt!)
+            <div class="flex md:gap-5 gap-3 w-full lg:w-auto mt-2 flex-col md:flex-row flex-wrap">
+              <div>IP: {log.ip}</div>
+              <div>
+                Logged in at:
+                {new Intl.DateTimeFormat("en-US").format(
+                  new Date(log.loggedInAt!)
+                )}
+              </div>
+              {sessionToken !== log.sessionId && (
+                <button
+                  data-sid={log.sessionId}
+                  class="revoke-access text-red-500"
+                >
+                  Revoke Access
+                </button>
               )}
             </div>
           </div>
@@ -1766,9 +1790,47 @@ function capitalizeFirstWord(text: string) {
     </div>
   </div>
 </MainLayout>
+
+<script>
+  const revokeAccessBtns = document.querySelectorAll(".revoke-access");
+
+  revokeAccessBtns.forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      await fetch("/api/auth/revoke-access", {
+        method: "POST",
+        body: JSON.stringify({ sessionId: btn.getAttribute("data-sid") }),
+      });
+      window.location.reload();
+    });
+  });
+</script>
 ```
 
 </CodeContainer>
+
+<CodeContainer>
+
+```ts
+import type { APIContext } from "astro";
+import { db } from "../../../db";
+import { sessions } from "../../../db/schema";
+import { eq } from "drizzle-orm";
+
+export async function POST({ request }: APIContext) {
+  const { sessionId }: { sessionId: string } = await request.json();
+
+  try {
+    await db.delete(sessions).where(eq(sessions.id, sessionId));
+    return Response.json({ success: true });
+  } catch (error) {
+    return Response.json({ success: false }, { status: 500 });
+  }
+}
+```
+
+</CodeContainer>
+
+### Revoke session API route
 
 ## Astro Middleware
 
