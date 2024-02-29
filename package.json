@@ -11,22 +11,22 @@
   },
   "dependencies": {
     "@astrojs/mdx": "^2.1.1",
-    "@astrojs/rss": "^4.0.4",
-    "@astrojs/sitemap": "^3.0.5",
+    "@astrojs/rss": "^4.0.5",
+    "@astrojs/sitemap": "^3.1.1",
     "@astrojs/solid-js": "^4.0.1",
     "@astrojs/tailwind": "^5.1.0",
     "@fontsource-variable/inter": "^5.0.16",
-    "astro": "^4.3.2",
+    "astro": "^4.4.6",
     "astro-robots-txt": "^1.0.0",
-    "flowbite": "^2.2.1",
-    "nanoid": "^5.0.5",
-    "preact": "^10.19.3",
-    "rollup": "^4.9.6",
-    "solid-js": "^1.8.14",
+    "flowbite": "^2.3.0",
+    "nanoid": "^5.0.6",
+    "preact": "^10.19.6",
+    "rollup": "^4.12.0",
+    "solid-js": "^1.8.15",
     "tailwindcss": "^3.4.1"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
-    "vite": "^5.0.12"
+    "vite": "^5.1.4"
   }
 }
