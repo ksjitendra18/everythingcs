@@ -22,7 +22,7 @@ Here is live demonstration of what we are going to build.
 <source src="https://static.everythingcs.dev/blog/astro-auth-series/astro-oauth-google-github-authentication.mp4"/>
 </video>
 
-This post is part 1 in the series of exploring auth in astro framework. In second part we will implement the [email password based authentication](https://everythingcs.dev/blog/astro-js-email-password-credential-authentication/) and in third part we will implement the passwordless magic email based authentication. In the final part we will implement the 2-Factor authentication.
+This post is part 1 in the series of exploring auth in astro framework. In second part we will implement the [email password based authentication](https://everythingcs.dev/blog/astro-js-email-password-credential-authentication/) and in third part we will implement the passwordless magic email based authentication. In the final part we will implement the Multi-Factor authentication.
 
 Here is the [repo for the astro authentication series](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials). The repo contains the code for additional strategies also so you might feel that their is more code than discussed in this blog post.
 
@@ -1506,7 +1506,7 @@ export async function POST({ request, cookies }: APIContext) {
       );
     }
 
-    const userInfo = await db.query.sessions.findFirst({
+    const sessionInfo = await db.query.sessions.findFirst({
       where: and(
         eq(sessions.id, authToken),
         gte(sessions.expiresAt, new Date().getTime())
@@ -1516,7 +1516,7 @@ export async function POST({ request, cookies }: APIContext) {
       },
     });
 
-    if (!userInfo) {
+    if (!sessionInfo || !sessionInfo.user) {
       return Response.json(
         { error: "authorization_error", message: "Log in" },
         {
@@ -1530,7 +1530,7 @@ export async function POST({ request, cookies }: APIContext) {
         fullName: fullName as string,
         userName: userName as string,
       })
-      .where(eq(users.id, userInfo.id));
+      .where(eq(users.id, userInfo.user.id));
 
     return Response.json(
       { success: true, message: "Profile Updated Sucessfully" },

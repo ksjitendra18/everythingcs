@@ -5,7 +5,7 @@ import PageLayout from "../../components/layout/page-layout.astro";
 <PageLayout title="Tools | Everything" description="List of all the tools">
   <h1 class="text-center text-2xl md:text-3xl font-bold mt-10">Tools</h1>
 
-  <div class="flex mt-10">
+  <div class="flex flex-col md:flex-row flex-wrap gap-5 mt-10">
     <a
       href="/tools/package-update"
       class="hover:border-gray-500 hover:border-4 transition-all duration-75 ease-out card flex w-[400px] flex-col px-3 py-2 rounded-md border-2 border-gray-500"
@@ -17,7 +17,7 @@ import PageLayout from "../../components/layout/page-layout.astro";
         />
 
         <img
-          class="rounded-md border-2 border-gray-500"
+          class="rounded-md border-2 border-gray-200"
           src="https://static.everythingcs.dev/blog/1692097807511-229557896.png"
           alt="Image demonstrating the tool working"
         />
@@ -30,6 +30,32 @@ import PageLayout from "../../components/layout/page-layout.astro";
 
         <p class="text-center">
           Paste your npm outdated output and get latest update string.
+        </p>
+      </div>
+    </a>
+    <a
+      href="/tools/copy-env"
+      class="hover:border-gray-500 hover:border-4 transition-all duration-75 ease-out card flex w-[400px] flex-col px-3 py-2 rounded-md border-2 border-gray-500"
+    >
+      <picture>
+        <source
+          type="image/webp"
+          src="https://static.everythingcs.dev/tools/get-env-string.webp"
+        />
+
+        <img
+          class="rounded-md border-2 border-gray-200"
+          src="https://static.everythingcs.dev/tools/get-env-string.png"
+          alt="Image demonstrating the tool working"
+        />
+      </picture>
+
+      <div>
+        <h2 class="text-xl font-medium text-center my-3">Copy Env</h2>
+
+        <p class="text-center">
+          Paste your env output and get in form of key value pair and also env
+          string for AWS Amplify.
         </p>
       </div>
     </a>

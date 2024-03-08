@@ -1,0 +1,11 @@
+---
+import PageLayout from "../../../components/layout/page-layout.astro";
+import CopyEnv from "../../../components/tools/copy-env/copy-env";
+---
+
+<PageLayout
+  title="Get Env String | Everything"
+  description="Paste your env output and get in form of key value pair and also env string for AWS Amplify."
+>
+  <CopyEnv client:load />
+</PageLayout>

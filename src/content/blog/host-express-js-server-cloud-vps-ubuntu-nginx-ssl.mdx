@@ -225,7 +225,7 @@ sudo apt install nginx
 
 </CodeContainer>
 
-Now go to your ip address (remove the port). You will see the default nginx welcome screen.
+Now go to your ip address (without the port). You will see the default nginx welcome screen.
 
 Let's configure nginx. Go to etc folder then nginx then sites-available and let's change the default file
 
@@ -298,6 +298,7 @@ Perform the following commands
 sudo apt update
 sudo apt install snapd
 sudo apt remove certbot
+sudo apt install certbot python3-certbot-nginx
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 sudo certbot --nginx -d example -d www.example.com
 ```
