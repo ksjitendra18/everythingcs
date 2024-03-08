@@ -1,0 +1,105 @@
+---
+import MainLayout from "../../../components/layout/page-layout.astro";
+---
+
+<MainLayout
+  title="Copy Env | EverythingCS"
+  description="Paste your env output and get in form of key value pair and also env string for AWS Amplify"
+>
+  <h2 class="text-3xl my-5 font-semibold text-center">Copy Env</h2>
+  <div class="px-3 md:w-1/2 mx-auto text-center">
+    <p>
+      Paste your env output and get in form of key value pair and also env
+      string for AWS Amplify.
+    </p>
+
+    <!-- <p class="my-1 w-1/2 mx-auto text-center"> -->
+    <p class="my-1">
+      No need to manually write the env name and value. Just copy and paste.
+      (Client side only. Code <a
+        class="underline"
+        href="https://github.com/ksjitendra18/everythingcs/tree/main/src/components/tools/env-copy"
+      >
+        open source</a
+      >
+      )
+    </p>
+  </div>
+
+  <div class="flex items-center justify-center w-full rounded-full">
+    <a
+      href="/tools/copy-env/env-string"
+      class="px-6 mt-4 py-2 bg-[#1d4ed8] text-white rounded-md"
+      >Try Now &rarr;</a
+    >
+  </div>
+
+  <div
+    class="flex flex-col md:flex-row my-10 gap-5 justify-between items-center"
+  >
+    <div class="left px-3 py-2 flex-1 rounded-md">
+      <h2 class="text-xl font-bold">Step: 1</h2>
+
+      <p class="text-xl">Copy all you env variables</p>
+
+      <a
+        href="/tools/copy-env/env-string"
+        class="mt-5 block underline font-semibold">Try Now &rarr;</a
+      >
+    </div>
+
+    <div class="right flex-1 px-3 py-2">
+      <picture>
+        <source
+          type="image/webp"
+          src="https://static.everythingcs.dev/tools/env-string.webp"
+        />
+
+        <img
+          class="rounded-md border-2 border-gray-500"
+          src="https://static.everythingcs.dev/tools/env-string.png"
+          alt="Image demonstrating the tool working"
+        />
+      </picture>
+    </div>
+  </div>
+
+  <div
+    class="flex flex-col-reverse md:flex-row my-10 gap-5 md:justify-between md:items-center"
+  >
+    <div class="right flex-1 px-3 py-2">
+      <picture>
+        <source
+          type="image/webp"
+          src="https://static.everythingcs.dev/tools/get-env-string.webp"
+        />
+
+        <img
+          class="rounded-md border-2 border-gray-500"
+          src="https://static.everythingcs.dev/tools/get-env-string.png"
+          alt="Image demonstrating the tool working"
+        />
+      </picture>
+    </div>
+
+    <div class="left px-3 py-2 flex-1 rounded-md">
+      <h2 class="text-xl font-bold">Step: 2</h2>
+
+      <p class="text-xl">Generate and get string</p>
+      <a
+        href="/tools/copy-env/env-string"
+        class="mt-5 block underline font-medium">Try Now &rarr;</a
+      >
+    </div>
+  </div>
+
+  <div class="my-5">
+    <p class="text-center">
+      Made by <a href="https://twitter.com/ksjitendra18">Jitendra.</a>
+      Code at <a
+        href="https://github.com/ksjitendra18/everythingcs/tree/main/src/components/tools/copy-env"
+        >Github</a
+      >
+    </p>
+  </div>
+</MainLayout>
