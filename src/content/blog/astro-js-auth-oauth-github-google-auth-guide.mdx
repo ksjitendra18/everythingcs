@@ -623,15 +623,17 @@ if (!userExists) {
   cookies.delete("google_oauth_state", { path: "/" });
   cookies.delete("google_code_challenge", { path: "/" });
 
+  cookies.set("2fa_auth", faSess, {
+  path: "/",
+  httpOnly: true,
+  sameSite: "lax",
+  secure: import.meta.env.PROD,
+  });
+
   return new Response(null, {
     status: 302,
     headers: {
       Location: "/profile",
-      "Set-Cookie": `app_auth_token=${
-        newSession[0].id
-      }; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
-        import.meta.env.PROD
-      }`,
     },
   });
 }
@@ -939,13 +941,17 @@ export async function GET({ request, cookies }: APIContext) {
       cookies.delete("google_oauth_state", { path: "/" });
       cookies.delete("google_code_challenge", { path: "/" });
 
+      cookies.set("2fa_auth", faSess, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: import.meta.env.PROD,
+      });
+
       return new Response(null, {
         status: 302,
         headers: {
           Location: "/profile",
-          "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
-            import.meta.env.PROD
-          }`,
         },
       });
     } else {
@@ -982,13 +988,18 @@ export async function GET({ request, cookies }: APIContext) {
       cookies.delete("google_oauth_state", { path: "/" });
       cookies.delete("google_code_challenge", { path: "/" });
 
+      cookies.set("2fa_auth", faSess, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: import.meta.env.PROD,
+      });
+
+
       return new Response(null, {
         status: 302,
         headers: {
           Location: "/",
-          "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
-            import.meta.env.PROD
-          }`,
         },
       });
     }
@@ -1368,13 +1379,18 @@ export async function GET({ request, cookies }: APIContext) {
 
       cookies.delete("github_oauth_state", { path: "/" });
 
+      cookies.set("2fa_auth", faSess, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: import.meta.env.PROD,
+      });
+
+
       return new Response(null, {
         status: 302,
         headers: {
           Location: "/profile",
-          "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
-            import.meta.env.PROD
-          }`,
         },
       });
     } else {
@@ -1411,13 +1427,18 @@ export async function GET({ request, cookies }: APIContext) {
 
     cookies.delete("github_oauth_state", { path: "/" });
 
+    cookies.set("2fa_auth", faSess, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: import.meta.env.PROD,
+    });
+
+
     return new Response(null, {
       status: 302,
       headers: {
         Location: "/",
-        "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
-          import.meta.env.PROD
-        }`,
       },
     });
   } catch (error) {
