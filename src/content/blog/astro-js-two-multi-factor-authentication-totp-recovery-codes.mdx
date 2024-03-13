@@ -1,0 +1,1238 @@
+---
+title: "Two-Factor Authentication and Recovery Code Setup in Astro.js"
+publishedDate: 2024-03-13
+updatedDate: 2024-03-13
+description: "Step by step guide on how to setup Two-Factor/ Multifactor authentication along with the recovery codes in Astro.js"
+ogImage: "https://static.everythingcs.dev/blog/astro-auth-series/astro-js-two-factor-auth-recovery-codes.png"
+featuredImage: "https://static.everythingcs.dev/blog/astro-auth-series/astro-js-two-factor-auth-recovery-codes.png"
+category: ["Astro", "Authentication", "Astro Authentication"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+
+import CodeContainer from "../../components/blog/code-container.astro";
+
+In the guide we are going to implement and add the Two-Factor Authentication to Astro.js along with the recovery codes.
+
+Here is the video demonstration of what we are going to achieve:
+
+<video class="mb-2" controls muted>
+<source src="https://static.everythingcs.dev/blog/astro-auth-series/astro-js-two-factor-authentication-recovery-codes.mp4"/>
+</video>
+
+This is the 4th and final part of the 4 part series [exploring Authentication in Astro.js](https://everythingcs.dev/category/astro-authentication/).
+
+In the first part I implemented [Google and Github Oauth](https://everythingcs.dev/blog/astro-js-auth-oauth-github-google-auth-guide/), in second part I implemented [Email password based credentials authentication](https://everythingcs.dev/blog/astro-js-email-password-credential-authentication/) and in the third part I implement [magic link based auth](https://everythingcs.dev/blog/astro-js-passwordless-magic-link-authentication/).
+
+In this guide we will implement the 2 two auth via TOTP based apps along with recovery codes if the user loses access to the TOTP app.
+
+## What are we going to achieve?
+
+So let's understand and clear the expectation first that after following this what you will be able to achieve.
+
+- Set up Two Factor Auth
+- Set up Recovery Code
+- Verify user via two factor auth
+
+## Setup
+
+Download the [starter code](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/archive/refs/heads/two-factor-starter.zip). You can also [clone the repo](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/) and select the [two-factor-starter](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/tree/two-factor-starter) branch. It does contain the github, google, email and passwordless auth already setup with components and utility functions.
+
+Download it and extract it and npm install command to install. Also make sure to set up DB, create an account on Resend and Upstash
+
+Please note that I am continuing with what was left in previous post so in this post I am not setting up DB and all.
+
+So let's start
+
+## Schema Changes
+
+Let's start with changing the schema. We need to add changes to incorporate the recovery codes and also two factor secret code.
+
+Firstly add 2 columns in the user tables regarding the twoFactor auth. 2 columns are twoFactorEnabled and the twoFactorSecret
+
+<CodeContainer hasPartialCode fileName="src/db/schema.ts">
+
+```ts
+
+export const users = sqliteTable("users", {
+  id: text("id")
+    .$default(() => createId())
+    .primaryKey(),
+  fullName: text("full_name"),
+  userName: text("user_name").unique(),
+  email: text("email").notNull().unique(),
+  profilePhoto: text("profile_photo"),
+  emailVerified: integer("email_verified", { mode: "boolean" })
+    .default(false)
+    .notNull(),
+  twoFactorEnabled: integer("two_factor_enabled", { mode: "boolean" })
+    .default(false)
+    .notNull(),
+  twoFactorSecret: text("two_factor_secret"),
+  isBlocked: integer("is_blocked", { mode: "boolean" }).default(false),
+  isDeleted: integer("is_deleted", { mode: "boolean" }).default(false),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const usersRelations = relations(users, ({ many, one }) => ({
+  oauthTokens: many(oauthTokens),
+  sessions: many(sessions),
+  loginLogs: many(loginLogs),
+  passwords: one(passwords),
+  recoveryCodes: many(recoveryCodes),
+}));
+
+
+export const recoveryCodes = sqliteTable("recovery_codes", {
+  id: text("id")
+    .$defaultFn(() => createId())
+    .primaryKey(),
+  userId: text("user_id").references(() => users.id, {
+    onDelete: "cascade",
+  }),
+  code: text("code").notNull(),
+  isUsed: integer("is_used", { mode: "boolean" }).default(false),
+});
+
+export const recoveryCodesRelations = relations(recoveryCodes, ({ one }) => ({
+  user: one(users, {
+    fields: [recoveryCodes.userId],
+    references: [users.id],
+  }),
+}));
+
+```
+
+</CodeContainer>
+
+## Setting up 2 factor auth
+
+We will provide user with the option to set up two factor auth. For it you can go to the account page and there you will see that the 2 factor auth is currently not set. To set it we will display the qr code to the user along with the secret code if required. Then the user will input the code generated by the app then we will verify it
+
+Let's install the required library first
+
+<CodeContainer fileName="terminal">
+
+```bash
+pnpm i otplib qrcode
+
+pnpm i -D @types/qrcode
+```
+
+</CodeContainer>
+
+Now let's define the route
+<CodeContainer fileName="src/pages/two-factor.astro">
+
+```astro
+---
+import MainLayout from "../layout/main-layout.astro";
+import TwoFactorForm from "../components/two-factor-form";
+import { authenticator } from "otplib";
+import qrcode from "qrcode";
+import { db } from "../db";
+import { eq } from "drizzle-orm";
+import { users } from "../db/schema";
+import { recoveryCodes } from "../db/schema";
+
+const userId = Astro.locals?.userId;
+
+if (!userId) {
+  return Astro.redirect("/login");
+}
+
+const existingUser = await db.query.users.findFirst({
+  where: eq(users.id, userId),
+  with: {
+    recoveryCodes: {
+      where: eq(recoveryCodes.isUsed, false),
+      columns: {
+        code: true,
+      },
+    },
+  },
+});
+
+if (!existingUser) {
+  return Astro.redirect("/login");
+}
+
+const secret = authenticator.generateSecret(20);
+
+const otpAuthUrl = authenticator.keyuri(
+  existingUser.email,
+  "Astro Auth",
+  secret
+);
+
+const imageUrl = await qrcode.toDataURL(otpAuthUrl);
+---
+
+<MainLayout title="Two Factor Setup" description="Two Factor Setup">
+  <h1 class="my-10 text-3xl font-bold text-center">Two Factor Setup</h1>
+
+  {
+    existingUser.twoFactorEnabled && (
+      <div class="flex items-center justify-center">
+        <p class="bg-emerald-700 text-white rounded-md px-2 py-1">
+          You have Two Factor enabled. You can reconfigure it by submitting the
+          form.
+        </p>
+      </div>
+    )
+  }
+
+  <TwoFactorForm
+    qrCode={imageUrl}
+    secretCode={secret}
+    codes={existingUser.recoveryCodes.map((code) => code.code)}
+    client:load
+  />
+</MainLayout>
+```
+
+</CodeContainer>
+
+So now the user scans the qr code or input the secret code then the user get the 6 digit code in their app. User will have to input the code in the form to verify.
+
+For the verification process:
+
+- API send the entered code along with the secret
+- Validate the code using the **authenticator.verify** function
+- If verification fails means either the code is wrong or code is expired. Send the response and return
+- If verification successfull then:
+  <span class="ml-2 block">Update the user. set **twoFactorEnabled: true** and set the **twoFactorSecret**  </span>
+  <span class="ml-2 block"> return with success </span>
+
+### API Route
+
+<CodeContainer fileName="src/pages/api/auth/set-two-factor.ts">
+
+```ts
+import type { APIContext } from "astro";
+import { and, eq, gte } from "drizzle-orm";
+import { authenticator } from "otplib";
+import { db } from "../../../db";
+import { recoveryCodes, sessions, users } from "../../../db/schema";
+
+export async function POST({ request, cookies }: APIContext) {
+
+  try {
+    const { secretCode, enteredCode } = await request.json();
+
+    if (
+      !secretCode ||
+      !enteredCode ||
+      enteredCode.length != 6 ||
+      secretCode.length != 32
+    ) {
+      return Response.json(
+        {
+          error: "validation_error",
+        },
+        { status: 400 }
+      );
+    }
+
+    const authToken = cookies.get("app_auth_token")?.value;
+
+    if (!authToken) {
+      return Response.json(
+        { error: "authentication_error", message: "Log in" },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const sessionInfo = await db.query.sessions.findFirst({
+      where: and(
+        eq(sessions.id, authToken),
+        gte(sessions.expiresAt, new Date().getTime())
+      ),
+      with: {
+        user: true,
+      },
+    });
+
+    if (!sessionInfo || !sessionInfo.user) {
+      return Response.json(
+        { error: "authorization_error", message: "Log in" },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const isValidToken = authenticator.verify({
+      token: enteredCode,
+      secret: secretCode,
+    });
+
+    const userId = sessionInfo.user.id;
+
+    if (isValidToken) {
+      await db
+        .update(users)
+        .set({
+          twoFactorEnabled: true,
+          twoFactorSecret: secretCode,
+        })
+        .where(eq(users.id, userId));
+
+      return Response.json({
+        success: true,
+      });
+    } else {
+      return Response.json(
+        {
+          error: "verification_error",
+          message:
+            "Error while verifying two factor code. Enter new code and try again. If error persists then remove the account from app and also refresh this page.",
+        },
+        { status: 400 }
+      );
+    }
+  } catch (err) {
+    console.log("Error while verifying two factor", err);
+    return Response.json(
+      {
+        error: "server_error",
+        message: "Internal server Error. Please try again later",
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+</CodeContainer>
+
+Open the authenticator app(google or microsoft) and scan the qr code. Then enter the code and tap on verify. Two factor will be enabled for the user.
+
+<p class="bg-red-600 text-white px-3 py-2 rounded-md">Don't worry about the message displayed server error. It is due to not sending the recovery codes that why it is displayed there. Recovery code logic will be added in the later section.</p>
+
+Now we have to check if the two factor is enabled at every login process and redirect the user to verify the two factor befor creating the session.
+
+Let's modify the log in processes.
+
+## Modify log in processes
+
+The main change in every login process is to
+
+- First check if user exists or not (in case of oauth)
+- If user exist check if user has enabled 2 factor auth or not
+- If user has enabled 2 factor auth then
+  <span class="ml-2">store the userId in redis db with a random key with expiration of 2 hour</span>
+  <span class="ml-2">store the key in the user cookies as a session cookie</span>
+  <span class="ml-2">redirect the user to verify-two-factor page</span>
+  
+Here is the code of above process
+
+<CodeContainer>
+
+```ts
+if (userExists.twoFactorEnabled) {
+  const faSess = await create2FASession(userExists.id);
+
+  cookies.set("2fa_auth", faSess, {
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: import.meta.env.PROD,
+  });
+
+  return Response.json(
+    { message: "2FA required", redirect: "/verify-two-factor" },
+    {
+      status: 302,
+      headers: {
+        Location: "/two-factor",
+      },
+    }
+  );
+}
+```
+
+</CodeContainer>
+
+### create2FASession utility function
+
+Let's add this function in the lib/auth.ts
+
+<CodeContainer fileName="src/auth/lib.ts">
+
+```ts
+export const create2FASession = async (userId: string) => {
+  const id = generateVerificationId();
+  await redis.set(`2fa_auth:${id}`, userId, { ex: 7200 });
+  return id;
+};
+```
+
+</CodeContainer>
+
+Now we have to make changes in the following files
+
+- callback/github.ts
+- callback/google.ts
+- login.ts
+- pages/magic-link/[verificationId].astro
+
+### Github and Google Oauth
+
+Here is the partial code.
+
+<a class="block my-2" href="https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/blob/main/src/pages/api/auth/callback/github.ts" target="__blank"> View full code for github </a>
+
+<a class="block mt-2 mb-4" href="https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/blob/main/src/pages/api/auth/callback/google.ts" target="__blank"> View full code for google </a>
+
+<CodeContainer>
+
+```ts
+...
+
+if(!userExists){
+  ...
+} else{
+  if(...){
+    ...
+  } else{
+    ...
+  }
+
+  cookies.delete("...", { path: "/" });
+
+  if (userExists.twoFactorEnabled) {
+    const faSess = await create2FASession(userExists.id);
+
+    cookies.set("2fa_auth", faSess, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: import.meta.env.PROD,
+    });
+
+    return Response.json(
+      { message: "2FA required", redirect: "/verify-two-factor" },
+       {
+        status: 302,
+          headers: {
+            Location: "/verify-two-factor",
+          },
+        }
+      );
+    }
+
+  const { sessionId, expiresAt } = ...
+}
+
+```
+
+</CodeContainer>
+
+As the process is exactly same I am not pasting the code again. Do it for all the above mentioned files. Refer to the links posted below to match or if you find any difficulty
+
+### login.ts
+
+<a class="block mt-2 mb-4" href="https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/blob/main/src/pages/api/auth/login.ts" target="__blank"> View full code for login.ts </a>
+
+### Magic Link
+
+<a class="block mt-2 mb-4" href="https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/blob/main/src/pages/magic-link/[verificationId].astro" target="__blank"> View full code for pages/magic-link/[verificationId].astro </a>
+
+Now if user has set up 2 factor auth and wants to log in and user will be redirected to the
+verify-two-factor page. Let's define the page and the api route.
+
+## Verify two factor
+
+Let's define the page first. In the verify two factor page firstly check if cookies exist or not. If cookies exists then it is valid or not . If it is not valid then redirect the user to the login page.
+
+If cookie value is valid then display the form.
+
+<CodeContainer fileName="src/pages/verify-two-factor.astro">
+
+```astro
+---
+import MainLayout from "../layout/main-layout.astro";
+import TwoFactorVerifyForm from "../components/two-factor-verify-form";
+import redis from "../lib/redis";
+const twoFaSess = Astro.cookies.get("2fa_auth")?.value;
+
+if (!twoFaSess) {
+  return Astro.redirect("/login");
+}
+
+const userId = await redis.get(`2fa_auth:${twoFaSess}`);
+
+if (!userId) {
+  return Astro.redirect("/login");
+}
+---
+
+<MainLayout
+  title="Two Factor Authentication"
+  description="Two Factor Authentication"
+>
+  <TwoFactorVerifyForm client:load />
+</MainLayout>
+```
+
+</CodeContainer>
+
+The two factor verify form calls the /verify-two-factor api. Let's define the api route.
+
+We will first get the user entered code then the userId value from redis. Then we will match the code by using the secret stored in the users table.
+
+If the code matches then we will create the sessions, login logs and set the cookie just like we did in previous post.
+
+<CodeContainer>
+
+```ts
+import type { APIContext } from "astro";
+import { sessions, users } from "../../../db/schema";
+import { db } from "../../../db";
+import { and, eq, gte } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import { authenticator } from "otplib";
+import redis from "../../../lib/redis";
+import { createLoginLog, createSession } from "../../../lib/auth";
+
+export async function POST({ request, cookies }: APIContext) {
+  try {
+    const { enteredCode } = await request.json();
+
+    if (!enteredCode || enteredCode.length != 6) {
+      return Response.json(
+        {
+          error: "validation_error",
+          message: "Enter a valid 6 digit code",
+        },
+        { status: 400 }
+      );
+    }
+
+    const authToken = cookies.get("2fa_auth")?.value;
+
+    if (!authToken) {
+      return Response.json(
+        { error: "authentication_error", message: "Log in" },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const userId = await redis.get(`2fa_auth:${authToken}`);
+
+    if (!userId) {
+      return Response.json(
+        { error: "authentication_error", message: "Log in" },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const userExists = await db.query.users.findFirst({
+      where: and(eq(users.id, userId as string)),
+    });
+
+    if (!userExists) {
+      return Response.json(
+        { error: "authorization_error", message: "Log in" },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const isValidToken = authenticator.verify({
+      token: enteredCode,
+      secret: userExists.twoFactorSecret!,
+    });
+
+    if (isValidToken) {
+      const { sessionId, expiresAt } = await createSession({
+        userId: userExists.id,
+      });
+
+      await createLoginLog({
+        sessionId,
+        userAgent: request.headers.get("user-agent"),
+        userId: userExists.id,
+        ip: request.headers.get("x-real-ip") ?? "dev",
+      });
+
+      cookies.delete("2fa_auth", { path: "/" });
+
+      cookies.set("app_auth_token", sessionId, {
+        path: "/",
+        httpOnly: true,
+        expires: expiresAt,
+        secure: import.meta.env.PROD,
+        sameSite: "lax",
+      });
+
+      await redis.del(`2fa_auth:${authToken}`);
+
+      return Response.json(
+        { message: "Logged In Successfully", redirect: "/dashboard" },
+        {
+          status: 200,
+        }
+      );
+    } else {
+      return Response.json(
+        {
+          error: "verification_error",
+          message:
+            "Error while verifying multi factor code. Enter new code and try again.",
+        },
+        { status: 400 }
+      );
+    }
+  } catch (err) {
+    console.log("Error while verifying multi factor", err);
+    return Response.json(
+      {
+        error: "server_error",
+        message: "Internal server Error. Please try again later",
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+</CodeContainer>
+
+Now user will be able to verify via the authenticator app. Suppose user loses access to the app then they can use the recovery codes to access.
+
+Let's works towards the recovery code functionality.
+
+## Recovery Code
+
+Let's begin by generating the recovery codes. I will generate them at the same place I am setting up the two factor auth.
+
+### Generating recovery codes
+
+Here's the partial code of what we need to do.
+<CodeContainer fileName="src/pages/api/set-two-factor">
+
+```ts
+const generateId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 4);
+
+const exisitingCode = await db.query.recoveryCodes.findMany({
+  where: and(eq(recoveryCodes.userId, userId), eq(recoveryCodes.isUsed, false)),
+  columns: { code: true },
+});
+
+let codes: string[] = [];
+
+if (exisitingCode.length > 0) {
+  exisitingCode.forEach((code) => {
+    codes.push(code.code);
+  });
+}
+
+if (exisitingCode.length <= 0) {
+  for (let i = 0; i < 6; i++) {
+    const code = `${generateId()}-${generateId()}-${generateId()}`;
+    codes.push(code);
+  }
+  await db.insert(recoveryCodes).values([
+    { userId, code: codes[0] },
+    { userId, code: codes[1] },
+    { userId, code: codes[2] },
+    { userId, code: codes[3] },
+    { userId, code: codes[4] },
+    { userId, code: codes[5] },
+  ]);
+}
+```
+
+</CodeContainer>
+
+Here is the complete final code .
+
+<CodeContainer fileName="src/pages/api/set-two-factor">
+
+```ts
+import type { APIContext } from "astro";
+import { and, eq, gte } from "drizzle-orm";
+import { customAlphabet } from "nanoid";
+import { authenticator } from "otplib";
+import { db } from "../../../db";
+import { recoveryCodes, sessions, users } from "../../../db/schema";
+
+export async function POST({ request, cookies }: APIContext) {
+  const generateId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 4);
+
+  try {
+    const { secretCode, enteredCode } = await request.json();
+
+    if (
+      !secretCode ||
+      !enteredCode ||
+      enteredCode.length != 6 ||
+      secretCode.length != 16
+    ) {
+      return Response.json(
+        {
+          error: "validation_error",
+        },
+        { status: 400 }
+      );
+    }
+
+    const authToken = cookies.get("app_auth_token")?.value;
+
+    if (!authToken) {
+      return Response.json(
+        { error: "authentication_error", message: "Log in" },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const sessionInfo = await db.query.sessions.findFirst({
+      where: and(
+        eq(sessions.id, authToken),
+        gte(sessions.expiresAt, new Date().getTime())
+      ),
+      with: {
+        user: true,
+      },
+    });
+
+    if (!sessionInfo || !sessionInfo.user) {
+      return Response.json(
+        { error: "authorization_error", message: "Log in" },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const isValidToken = authenticator.verify({
+      token: enteredCode,
+      secret: secretCode,
+    });
+
+    const userId = sessionInfo.user.id;
+
+    if (isValidToken) {
+      await db
+        .update(users)
+        .set({
+          twoFactorEnabled: true,
+          twoFactorSecret: secretCode,
+        })
+        .where(eq(users.id, userId));
+
+      const exisitingCode = await db.query.recoveryCodes.findMany({
+        where: and(
+          eq(recoveryCodes.userId, userId),
+          eq(recoveryCodes.isUsed, false)
+        ),
+        columns: { code: true },
+      });
+
+      let codes: string[] = [];
+
+      if (exisitingCode.length > 0) {
+        exisitingCode.forEach((code) => {
+          codes.push(code.code);
+        });
+      }
+
+      if (exisitingCode.length <= 0) {
+        for (let i = 0; i < 6; i++) {
+          const code = `${generateId()}-${generateId()}-${generateId()}`;
+          codes.push(code);
+        }
+        await db.insert(recoveryCodes).values([
+          { userId, code: codes[0] },
+          { userId, code: codes[1] },
+          { userId, code: codes[2] },
+          { userId, code: codes[3] },
+          { userId, code: codes[4] },
+          { userId, code: codes[5] },
+        ]);
+      }
+
+      return Response.json({
+        success: true,
+        data: {
+          codes,
+        },
+      });
+    } else {
+      return Response.json(
+        {
+          error: "verification_error",
+          message:
+            "Error while verifying two factor code. Enter new code and try again. If error persists then remove the account from app and also refresh this page.",
+        },
+        { status: 400 }
+      );
+    }
+  } catch (err) {
+    console.log("Error while verifying two factor", err);
+    return Response.json(
+      {
+        error: "server_error",
+        message: "Internal server Error. Please try again later",
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+</CodeContainer>
+
+Now if you again go to the two-factor route and set up again then you will see the recovery codes.
+
+<img src="https://staticecs.b-cdn.net/blog/astro-auth-series/display-recovery-codes.png" alt="display recovery codes" loading="lazy" />
+
+### Downloading recovery codes
+
+Let's add the functionality for downloading recovery codes to user device.
+
+<CodeContainer fileName="src/pages/api/download-recovery-codes.ts">
+
+```ts
+import type { APIContext } from "astro";
+import { and, eq, gte } from "drizzle-orm";
+import { db } from "../../../db";
+import { recoveryCodes, sessions } from "../../../db/schema";
+
+export async function GET({ cookies }: APIContext) {
+  try {
+    const authToken = cookies.get("app_auth_token")?.value;
+
+    if (!authToken) {
+      return Response.json(
+        { error: "authentication_error", message: "Log in" },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const sessionInfo = await db.query.sessions.findFirst({
+      where: and(
+        eq(sessions.id, authToken),
+        gte(sessions.expiresAt, new Date().getTime())
+      ),
+      with: {
+        user: true,
+      },
+    });
+
+    if (!sessionInfo || !sessionInfo.user) {
+      return Response.json(
+        { error: "authorization_error", message: "Log in" },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const exisitingCode = await db.query.recoveryCodes.findMany({
+      where: and(
+        eq(recoveryCodes.userId, sessionInfo.user.id),
+        eq(recoveryCodes.isUsed, false)
+      ),
+    });
+
+    if (exisitingCode.length < 1) {
+      return Response.json(
+        {
+          error: "not_found",
+          message: "No codes exists for the user.",
+        },
+        { status: 404 }
+      );
+    }
+
+    let codes: string[] = [];
+
+    if (exisitingCode.length > 0) {
+      exisitingCode.forEach((code) => {
+        codes.push(code.code);
+      });
+    }
+
+    return new Response(codes.join("\n"), {
+      headers: {
+        "Content-Disposition": "attachment; filename=astro-auth-codes.txt",
+        "Content-Type": "text/plain",
+      },
+    });
+  } catch (error) {
+    console.log("error while downloading", error);
+    return Response.json(
+      {
+        error: "server_error",
+        message: "Error while downloading code",
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+</CodeContainer>
+
+### Viewing Recovery codes
+
+Add a new page named recovery-codes in the pages folder and add the following code.
+
+<CodeContainer fileName="src/pages/recovery-codes.astro">
+
+```astro
+---
+import { eq } from "drizzle-orm";
+import { db } from "../db";
+import { recoveryCodes, users } from "../db/schema";
+import MainLayout from "../layout/main-layout.astro";
+
+const userId = Astro.locals?.userId;
+
+if (!userId) {
+  return Astro.redirect("/login");
+}
+
+const existingUser = await db.query.users.findFirst({
+  where: eq(users.id, userId),
+  with: {
+    recoveryCodes: {
+      where: eq(recoveryCodes.isUsed, false),
+      columns: {
+        code: true,
+      },
+    },
+  },
+});
+
+if (!existingUser) {
+  return Astro.redirect("/login");
+}
+---
+
+<MainLayout title="Recovery Code" description="Recovery Code">
+  <h1 class="my-10 text-3xl font-bold text-center">Recovery Code</h1>
+
+  {
+    existingUser.recoveryCodes.length === 0 && (
+      <div class="flex flex-col items-center justify-center">
+        <p class="mt-5 mb-3 text-center">
+          Enable Two Factor Auth to Set up Recovery Codes
+        </p>
+
+        <a href="/account" class="bg-blue-600 px-4 py-2 text-white rounded-md">
+          Go to Account Page
+        </a>
+      </div>
+    )
+  }
+
+  <div class="w-full max-w-xl mx-auto flex flex-col">
+    <div class="flex items-center gap-3">
+      <h3 class="my-5 text-xl font-bold">Exisiting Codes</h3>
+      <a
+        href="/api/auth/download-recovery-codes"
+        class="bg-blue-700 text-white rounded-md px-3 py-1"
+      >
+        Download Code
+      </a>
+      <button
+        id="rotate-code"
+        class="bg-red-700 text-white rounded-md px-3 py-1"
+      >
+        Rotate Code
+      </button>
+    </div>
+    {existingUser.recoveryCodes.map((code) => <p>{code.code}</p>)}
+  </div>
+</MainLayout>
+
+<script>
+  const rotateCodeBtn = document.getElementById("rotate-code");
+  const handleRotateCode = async () => {
+    await fetch("/api/auth/rotate-recovery-codes", {
+      method: "POST",
+    });
+
+    window.location.reload();
+  };
+  rotateCodeBtn?.addEventListener("click", handleRotateCode);
+</script>
+```
+
+</CodeContainer>
+
+We will provide user with the functionality to generate the new recovery codes and discard the old ones.
+
+### Refreshing Recovery Codes
+
+Let's define the API route to regenerate the recovery codes and delete the previous ones.
+
+<CodeContainer fileName="src/pages/api/auth/rotate-recovery-codes.ts">
+
+```ts
+import type { APIContext } from "astro";
+import { and, eq, gte } from "drizzle-orm";
+import { customAlphabet } from "nanoid";
+import { db } from "../../../db";
+import { recoveryCodes, sessions } from "../../../db/schema";
+
+export async function POST({ cookies }: APIContext) {
+  const generateId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 4);
+  try {
+    const authToken = cookies.get("app_auth_token")?.value;
+
+    if (!authToken) {
+      return Response.json(
+        { error: "authentication_error", message: "Log in" },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const sessionInfo = await db.query.sessions.findFirst({
+      where: and(
+        eq(sessions.id, authToken),
+        gte(sessions.expiresAt, new Date().getTime())
+      ),
+      with: {
+        user: true,
+      },
+    });
+
+    if (!sessionInfo || !sessionInfo.user) {
+      return Response.json(
+        { error: "authorization_error", message: "Log in" },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const userId = sessionInfo.user.id;
+
+    await db.delete(recoveryCodes).where(eq(recoveryCodes.userId, userId));
+
+    let codes: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const code = `${generateId()}-${generateId()}-${generateId()}`;
+      codes.push(code);
+    }
+    await db.insert(recoveryCodes).values([
+      { userId, code: codes[0] },
+      { userId, code: codes[1] },
+      { userId, code: codes[2] },
+      { userId, code: codes[3] },
+      { userId, code: codes[4] },
+      { userId, code: codes[5] },
+    ]);
+
+    return Response.json({
+      success: true,
+      data: {
+        codes,
+      },
+    });
+  } catch (err) {
+    console.log("Error while rotating recovery codes", err);
+    return Response.json(
+      {
+        error: "server_error",
+        message: "Internal server Error. Please try again later",
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+</CodeContainer>
+
+## Verifying recovery code
+
+Verify the recovery code and set isUsed as true.
+
+Let's add a page for it.
+
+<CodeContainer fileName="src/pages/verify-recovery-code.astro">
+
+```astro
+---
+import MainLayout from "../layout/main-layout.astro";
+import RecoveryCodeVerifyForm from "../components/recovery-code-verify-form";
+import redis from "../lib/redis";
+
+const twoFaSess = Astro.cookies.get("2fa_auth")?.value;
+
+if (!twoFaSess) {
+  return Astro.redirect("/login");
+}
+
+const userId = await redis.get(`2fa_auth:${twoFaSess}`);
+
+if (!userId) {
+  return Astro.redirect("/login");
+}
+---
+
+<MainLayout
+  title="Recovery Code Verification"
+  description="Recovery Code Verification"
+>
+  <RecoveryCodeVerifyForm client:load />
+</MainLayout>
+```
+
+</CodeContainer>
+
+<CodeContainer fileName="src/pages/api/auth/verify-recovery-code.ts">
+
+```ts
+import type { APIContext } from "astro";
+import { and, eq } from "drizzle-orm";
+import { db } from "../../../db";
+import { recoveryCodes, users } from "../../../db/schema";
+import { createLoginLog, createSession } from "../../../lib/auth";
+import redis from "../../../lib/redis";
+
+export async function POST({ request, cookies }: APIContext) {
+  try {
+    const { enteredCode } = await request.json();
+
+    if (!enteredCode || enteredCode.length != 14) {
+      return Response.json(
+        {
+          error: "validation_error",
+          message: "Enter a valid code",
+        },
+        { status: 400 }
+      );
+    }
+
+    const authToken = cookies.get("2fa_auth")?.value;
+
+    if (!authToken) {
+      return Response.json(
+        { error: "authentication_error", message: "Log in" },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const userId = await redis.get(`2fa_auth:${authToken}`);
+
+    if (!userId) {
+      return Response.json(
+        { error: "authentication_error", message: "Log in" },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const userExists = await db.query.users.findFirst({
+      where: and(eq(users.id, userId as string)),
+      with: {
+        recoveryCodes: {
+          where: eq(recoveryCodes.isUsed, false),
+        },
+      },
+    });
+
+    if (!userExists) {
+      return Response.json(
+        { error: "authorization_error", message: "Log in" },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const codes = userExists.recoveryCodes.map((code) => code.code);
+
+    const isValidCode = codes.some((code) => code === enteredCode);
+
+    if (isValidCode) {
+      await db
+        .update(recoveryCodes)
+        .set({
+          isUsed: true,
+        })
+        .where(eq(recoveryCodes.code, enteredCode));
+      const { sessionId, expiresAt } = await createSession({
+        userId: userExists.id,
+      });
+
+      await createLoginLog({
+        sessionId,
+        userAgent: request.headers.get("user-agent"),
+        userId: userExists.id,
+        ip: request.headers.get("x-real-ip") ?? "dev",
+      });
+
+      cookies.delete("2fa_auth", { path: "/" });
+
+      cookies.set("app_auth_token", sessionId, {
+        path: "/",
+        httpOnly: true,
+        expires: expiresAt,
+        secure: import.meta.env.PROD,
+        sameSite: "lax",
+      });
+
+      await redis.del(`2fa_auth:${authToken}`);
+
+      return Response.json(
+        { message: "Logged In Successfully", redirect: "/dashboard" },
+        {
+          status: 200,
+        }
+      );
+    } else {
+      return Response.json(
+        {
+          error: "verification_error",
+          message: "Error while verifying recovery code. Try another one.",
+        },
+        { status: 400 }
+      );
+    }
+  } catch (err) {
+    console.log("Error while verifying recovery code", err);
+    return Response.json(
+      {
+        error: "server_error",
+        message: "Internal server Error. Please try again later",
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+
+</CodeContainer>
+
+So we verify the code provided by the user and if it is valid, create the session and create the logs and redirect the user to dashboard page.
+
+## Conclusion
+
+The code can be found in [repo](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials) under the [two-factor-final](https://github.com/ksjitendra18/astro-js-auth-oauth-passwordless-credentials/tree/two-factor-final) branch.
+
+This marks the end of Astro Authentication Series. [Join us on discord]((https://discord.gg/W3nubBNeXK)) if you have any query whatsoever. You can raise an issue if you find any here or on the discord channel.
