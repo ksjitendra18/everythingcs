@@ -1,7 +1,7 @@
 ---
 title: "How to host Node.js Express server on VPS/Cloud Ubuntu Nginx with SSL Certificate"
 publishedDate: 2023-12-06
-updatedDate: 2023-12-14
+updatedDate: 2024-03-24
 description: "Host Node.js typescript express server on vps machine running ubuntu and use nginx as a proxy and configure SSL certificate "
 ogImage: "https://static.everythingcs.dev/blog/nodejs-hosting-vm/host-nodejs-server-vps-ssl-certificate.png"
 featuredImage: "https://static.everythingcs.dev/blog/nodejs-hosting-vm/host-nodejs-server-vps-ssl-certificate.png"
@@ -12,7 +12,7 @@ draft: false
 ---
 import CodeContainer from "../../components/blog/code-container.astro";
 
-In this post we are going to see step by step how to host a typescript nodejs express server on a cloud or a vps machine running ubunutu. We will use nginx as a proxy.
+In this post we are going to see step by step how to host a typescript nodejs express server on a cloud or a vps machine running ubunutu. We will use Nginx as a proxy.
 
 I am going to [use this repo](https://github.com/ksjitendra18/nodejs-host-vps-guide.git) which uses mongodb (atlas) for database so we will also learn about how to get SSL certificate and setup custom domain.
 
@@ -69,7 +69,7 @@ Now login with the newly created user.
 
 After logging in update the packages using sudo apt update.
 
-## Step2: Installing nodejs
+## Step 2: Installing nodejs
 
 I am going to use nvm to install and manage node version. Alternatively you can use nodesource.
 
@@ -83,12 +83,16 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 
 </CodeContainer>
 
-Now relaunch the terminal and let's install node.js. I am installing node version 18.17. You can install other version if you wish
+Copy and paste the export statement provided at last or alternatively relaunch the terminal and let's install node.js. I am installing node version 18.17. You can install other version if you wish
 
 <CodeContainer fileName="terminal">
 
 ```bash
 nvm install 18.17
+
+# or for installing lts
+
+nvm install --lts
 ```
 
 </CodeContainer>
@@ -177,6 +181,36 @@ In my case it is 146.90.XX.XX:3000
 
 <img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/initial-op.png" alt="Output"/>
 
+### Managing Firewall
+
+If the webapp is not accessible then there must be some firewall issue. Let's manage the firewall using ufw.
+
+To check the status of the firewall run
+
+<CodeContainer fileName="terminal ">
+
+```bash
+sudo ufw status
+```
+
+</CodeContainer>
+
+In digitalocean it is currently disabled. So let's setup the firewall and enable the SSH connection and 3000 port
+
+<CodeContainer fileName="terminal ">
+
+```bash
+sudo ufw enable OpenSSH
+
+sudo ufw enable 3000
+
+sudo ufw enable
+```
+
+</CodeContainer>
+
+Now the firewall is enabled and only 2 ports are opened.
+
 ## Step 3: Installing pm2
 
 We will use pm2 for managing the node processes. It is useful for monitoring and also it restarts the app if it crashes. You can read more about it. We will not use extensibly though.
@@ -205,15 +239,41 @@ pm2 start ./dist/index.js --name=todosapp
 
 </CodeContainer>
 
-Then you will get the following ouput (I didn't run with name flag so its index.)
+Then you will get the following ouput
 
-<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/pm2-output.png" alt="pm2 output" />
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/pm2-start.png" alt="pm2 output" />
 
-Now try visiting again and you get the output.
+Now try visiting again in your browser.
+
+To setup pm2 so that it restart after the system is rebooted run the following commands.
+
+<CodeContainer fileName="terminal">
+
+```bash
+pm2 startup
+```
+
+</CodeContainer>
+
+After running this command you will get some commands. Copy and paste those commands
+
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/pm2-startup.png" alt="pm2  startup command output" />
+
+After the successfull execution of above commands run the following command
+
+<CodeContainer fileName="terminal">
+
+```bash
+pm2 save
+```
+
+</CodeContainer>
+
+Now whenever your system is rebooted the app will automatically start.
 
 Now let's setup reverse proxy to easily proxy our request from domain.
 
-## Step 3: Installing and configuring nginx
+## Step 4: Installing and configuring nginx
 
 Install nginx first
 
@@ -227,7 +287,7 @@ sudo apt install nginx
 
 Now go to your ip address (without the port). You will see the default nginx welcome screen.
 
-Let's configure nginx. Go to etc folder then nginx then sites-available and let's change the default file
+Let's configure nginx. Go to etc folder then nginx then sites-available and let's add the new file. The convention is to use the domain name. You can use whatever you like
 
 <CodeContainer fileName="terminal">
 
@@ -236,24 +296,23 @@ cd /etc/nginx/sites-available/
 ```
 
 </CodeContainer>
-Open the file via sudo command because we will perform write operation
 
+Open the file via sudo command because we will perform write operation
+(replace the domain name with your domain)
 <CodeContainer fileName="terminal">
 
 ```bash
-sudo vim default
+sudo nano domain_name
 ```
 
 </CodeContainer>
 
-We have to make the changes to this portion. This is the code before change
-<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/edit-nginx.png" alt="default file before changing" />
+Now  add the following code. We are basically routing the request on / to be proxied to app running on port 3000.
 
-Now edit and add the following code. We are basically routing the request on / to be proxied to app running on port 3000.
-
-<CodeContainer fileName="/etc/nginx/sites-available/default">
+<CodeContainer fileName="/etc/nginx/sites-available/todos.pp.ua">
 
 ```bash
+server {
  server_name domain.com www.domain.com;
 
     location / {
@@ -264,29 +323,48 @@ Now edit and add the following code. We are basically routing the request on / t
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
     }
+}    
 ```
 
 </CodeContainer>
 
+For nano editor. After pasting. CTRL + S to save and CTRL + X to exit.
+
 This is what my configuration looks like
 
-<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/setup-nginx.png" alt="image of above config" />
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/nginx-config-file.png" alt="image of above config" />
 
-Test if the configuration is valid or not and reload the nginx.
+Now create a link between sites enabled and this file (change the domain_name to the value you chose above)
 
-<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/test-reload.png" alt="test and reload" />
+<CodeContainer fileName="terminal">
 
-Now visit the website with IP address without any port number. Now let's setup domain
+```bash
+sudo ln -s /etc/nginx/sites-available/domain_name /etc/nginx/sites-enabled/
+```
 
-## Step 4: Setup Domain
+</CodeContainer>
 
-For setting up domain, it's very easy. Just add 2 **A** records pointing to the ip address. I am using cloudflare to manage my domain. Here are the records
+Test if the configuration is valid or not and restart nginx.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo nginx -t
+
+sudo systemctl restart nginx
+```
+
+</CodeContainer>
+
+## Step 5: Setup Domain
+
+For setting up domain, it's very easy. Just add 2 **A** records pointing to the ip address. I am using cloudflare to manage my domain. For security purposes keep the status as Proxied(orange cloud). Here are the records
 <img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/dns-domain.png" alt="dns setup" />
 
 After the dns is propagated (takes some time) you can visit your website via domain name
 <img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/domain-op.png" alt="dns setup" />
 
-## Step 5: SSL Setup
+## Step 6: SSL Setup
 
 Now that we have domain setup we can configure ssl certificate.
 
@@ -295,35 +373,44 @@ Perform the following commands
 <CodeContainer fileName="terminal">
 
 ```bash
-sudo apt update
-sudo apt install snapd
-sudo apt remove certbot
 sudo apt install certbot python3-certbot-nginx
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
-sudo certbot --nginx -d example -d www.example.com
+sudo certbot --nginx -d example.com -d www.example.com
 ```
 
 </CodeContainer>
 
-Then enter your email and then you either opt in or opt for for newletter. Then you will have your ssl address.
+Then enter your email and then you either opt in or opt for for newletter. Then you will have your ssl certificate.
+
+<img src="https://static.everythingcs.dev/blog/nodejs-hosting-vm/ssl-cert-setup.png" alt="dns setup" />
 
 The SSL certificate will expire in like 90 days and will be autorenewed.
 
 <CodeContainer>
 
 ```bash
-sudo systemctl status snap.certbot.renew.service
-sudo systemctl status snap.certbot.renew.timer
-
 # try a renew
 sudo certbot renew --dry-run
 ```
 
 </CodeContainer>
 
-Congratulation you have site deployed with SSL certificate. Now let's quickly test all the CRUD functionality.
+Congratulation you have site deployed with SSL certificate. If you are using Cloudflare for DNS management then make sure to select the full option in the SSL option.
 
-Here is the video demonstration
+### Adjusting firewall
+
+Let's disable the direct port access and enable only HTTPS access
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo ufw delete allow 3000
+
+sudo ufw allow 'Nginx HTTPS'
+```
+
+</CodeContainer>
+
+Now let's quickly test all the CRUD functionality. Here is the video demonstration
 
 <video controls muted>
 
