@@ -200,16 +200,16 @@ In digitalocean it is currently disabled. So let's setup the firewall and enable
 <CodeContainer fileName="terminal ">
 
 ```bash
-sudo ufw enable OpenSSH
+sudo ufw allow OpenSSH
 
-sudo ufw enable 3000
+sudo ufw allow 3000
 
 sudo ufw enable
 ```
 
 </CodeContainer>
 
-Now the firewall is enabled and only 2 ports are opened.
+Now the firewall is enabled and only 2 ports are opened. We will modify this at the end.
 
 ## Step 3: Installing pm2
 
