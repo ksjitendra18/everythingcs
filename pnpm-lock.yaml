@@ -36,8 +36,8 @@ dependencies:
     specifier: ^5.0.6
     version: 5.0.6
   preact:
-    specifier: ^10.19.6
-    version: 10.19.6
+    specifier: ^10.20.1
+    version: 10.20.1
   rollup:
     specifier: ^4.12.0
     version: 4.12.0
@@ -3322,8 +3322,8 @@ packages:
       picocolors: 1.0.0
       source-map-js: 1.0.2
 
-  /preact@10.19.6:
-    resolution: {integrity: sha512-gympg+T2Z1fG1unB8NH29yHJwnEaCH37Z32diPDku316OTnRPeMbiRV9kTrfZpocXjdfnWuFUl/Mj4BHaf6gnw==}
+  /preact@10.20.1:
+    resolution: {integrity: sha512-JIFjgFg9B2qnOoGiYMVBtrcFxHqn+dNXbq76bVmcaHYJFYR4lW67AOcXgAYQQTDYXDOg/kTZrKPNCdRgJ2UJmw==}
     dev: false
 
   /prebuild-install@7.1.1:
