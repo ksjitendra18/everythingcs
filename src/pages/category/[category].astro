@@ -39,41 +39,41 @@ interface Category {
 
 const categoryMapper: Record<string, Category> = {
   javascript: {
-    title: "Posts realted to JavaScript",
+    title: "Posts related to JavaScript",
     description: "Browse all the post related to JavaScript",
   },
   typescript: {
-    title: "Posts realted to TypeScript",
+    title: "Posts related to TypeScript",
     description: "Browse all the post related to TypeScript",
   },
   nextjs: {
-    title: "Posts realted to Next.js",
+    title: "Posts related to Next.js",
     description: "Browse all the post related to next.js",
   },
 
   nuxtjs: {
-    title: "Posts realted to Nuxt.js",
+    title: "Posts related to Nuxt.js",
     description: "Browse all the post related to Nuxt.js",
   },
   sveltekit: {
-    title: "Posts realted to Sveltekit",
+    title: "Posts related to Sveltekit",
     description: "Browse all the post related to Sveltekit",
   },
 
   tailwindcss: {
-    title: "Posts realted to TailwindCSS",
+    title: "Posts related to TailwindCSS",
     description: "Browse all the post related to TailwindCSS",
   },
   reactjs: {
-    title: "Posts realted to React.js",
+    title: "Posts related to React.js",
     description: "Browse all the post related to React.js",
   },
   svelte: {
-    title: "Posts realted to Svelte",
+    title: "Posts related to Svelte",
     description: "Browse all the post related to Svelte",
   },
   astro: {
-    title: "Posts realted to Astro",
+    title: "Posts related to Astro",
     description: "Browse all the post related to Astro",
   },
   eleventy: {
@@ -81,100 +81,100 @@ const categoryMapper: Record<string, Category> = {
     description: "Browse all the post related to Eleventy",
   },
   vuejs: {
-    title: "Posts realted to Vue.js",
+    title: "Posts related to Vue.js",
     description: "Browse all the post related to Vue.js",
   },
   "cloudflare-workers": {
-    title: "Posts realted to Cloudflare Workers",
+    title: "Posts related to Cloudflare Workers",
     description: "Browse all the post related to Cloudflare Workers",
   },
   hono: {
-    title: "Posts realted to Hono",
+    title: "Posts related to Hono",
     description: "Browse all the post related to Hono",
   },
   expressjs: {
-    title: "Posts realted to Express",
+    title: "Posts related to Express",
     description: "Browse all the post related to Express",
   },
   "express-js": {
-    title: "Posts realted to Express",
+    title: "Posts related to Express",
     description: "Browse all the post related to Express",
   },
   nodejs: {
-    title: "Posts realted to Node.js",
+    title: "Posts related to Node.js",
     description: "Browse all the post related to Node.js",
   },
   deno: {
-    title: "Posts realted to Deno",
+    title: "Posts related to Deno",
     description: "Browse all the post related to Deno",
   },
   bun: {
-    title: "Posts realted to Bun",
+    title: "Posts related to Bun",
     description: "Browse all the post related to Bun",
   },
   "drizzle-orm": {
-    title: "Posts realted to DrizzleORM",
+    title: "Posts related to DrizzleORM",
     description: "Browse all the post related to DrizzleORM",
   },
   prisma: {
-    title: "Posts realted to prisma",
+    title: "Posts related to prisma",
     description: "Browse all the post related to prisma",
   },
   orm: {
-    title: "Posts realted to ORM",
+    title: "Posts related to ORM",
     description: "Browse all the post related to ORM",
   },
   firebase: {
-    title: "Posts realted to Firebase",
+    title: "Posts related to Firebase",
     description: "Browse all the post related to Firebase",
   },
   "global-state-management-reactjs": {
-    title: "Posts realted to Global State Management in React",
+    title: "Posts related to Global State Management in React",
     description:
       "Browse all the post related to Global State Management in React",
   },
   authentication: {
-    title: "Posts realted to Authentication",
+    title: "Posts related to Authentication",
     description: "Browse all the post related to Authentication",
   },
   "google-auth": {
-    title: "Posts realted to Google Authentication",
+    title: "Posts related to Google Authentication",
     description: "Browse all the post related to Google Authentication",
   },
   oauth: {
-    title: "Posts realted to Oauth Authentication",
+    title: "Posts related to Oauth Authentication",
     description: "Browse all the post related to Oauth Authentication",
   },
   "github-auth": {
-    title: "Posts realted to Github Authentication",
+    title: "Posts related to Github Authentication",
     description: "Browse all the post related to Github Authentication",
   },
   "astro-authentication": {
-    title: "Posts realted to Astro Authentication",
+    title: "Posts related to Astro Authentication",
     description: "Browse all the post related to Astro Authentication",
   },
   digitalocean: {
-    title: "Posts realted to DigitalOcean",
+    title: "Posts related to DigitalOcean",
     description: "Browse all the post related to DigitalOcean",
   },
   vps: {
-    title: "Posts realted to VPS",
+    title: "Posts related to VPS",
     description: "Browse all the post related to VPS",
   },
   cloud: {
-    title: "Posts realted to cloud",
+    title: "Posts related to cloud",
     description: "Browse all the post related to cloud",
   },
   hosting: {
-    title: "Posts realted to hosting",
+    title: "Posts related to hosting",
     description: "Browse all the post related to hosting",
   },
   "cloud hosting": {
-    title: "Posts realted to cloud hosting",
+    title: "Posts related to cloud hosting",
     description: "Browse all the post related to cloud hosting",
   },
   "nodejs-hosting": {
-    title: "Posts realted to Node.js Hosting",
+    title: "Posts related to Node.js Hosting",
     description: "Browse all the post related to Node.js Hosting",
   },
 };
@@ -189,7 +189,7 @@ const categoryMapper: Record<string, Category> = {
       {categoryMapper[category].title}
     </h2>
 
-    <div class="my-10 flex flex-col gap-5">
+    <div class="my-10 grid grid-cols-1 md:grid-cols-2 gap-5">
       {
         posts.map((post) => (
           <PostCard
