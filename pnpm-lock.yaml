@@ -36,8 +36,8 @@ dependencies:
     specifier: ^5.0.7
     version: 5.0.7
   preact:
-    specifier: ^10.21.0
-    version: 10.21.0
+    specifier: ^10.22.0
+    version: 10.22.0
   rollup:
     specifier: ^4.17.2
     version: 4.17.2
@@ -3595,8 +3595,8 @@ packages:
       picocolors: 1.0.0
       source-map-js: 1.2.0
 
-  /preact@10.21.0:
-    resolution: {integrity: sha512-aQAIxtzWEwH8ou+OovWVSVNlFImL7xUCwJX3YMqA3U8iKCNC34999fFOnWjYNsylgfPgMexpbk7WYOLtKr/mxg==}
+  /preact@10.22.0:
+    resolution: {integrity: sha512-RRurnSjJPj4rp5K6XoP45Ui33ncb7e4H7WiOHVpjbkvqvA3U+N8Z6Qbo0AE6leGYBV66n8EhEaFixvIu3SkxFw==}
     dev: false
 
   /preferred-pm@3.1.3:
