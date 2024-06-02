@@ -429,7 +429,7 @@ The first step is to access the code and state from the url. Also we will get th
 ```ts
 import type { APIContext } from "astro";
 
-export async function GET({ request, url }: APIContext) {
+export async function GET({ request,clientAddress, url }: APIContext) {
   const code = new URL(request.url).searchParams?.get("code");
   const state = new URL(request.url).searchParams?.get("state");
   const storedState = cookies.get("google_oauth_state")?.value;
@@ -540,7 +540,7 @@ Here is the reponse of the user request
 </CodeContainer>
 
 <div class="bg-yellow-500 px-3 rounded-md my-2 py-1">
-<p class="p-0 m-0" style={{"margin-block-end": "0px"}} >**Note:** Don't worry about error handling in the below final code I will handle it</p>
+<p class="p-0 m-0" style={{"margin-block-end": "0px"}}> **Note:** Don't worry about error handling in the below final code I will handle it</p>
 </div>
 
 Now we have all the data let's save the data and create session for the user. Note that this route will be same for new user or already exisiting user.
@@ -614,7 +614,7 @@ if (!userExists) {
   await db.insert(loginLogs).values({
     userId: newUser[0].id,
     sessionId: newSession[0].id,
-    ip: request.headers.get("x-real-ip") ?? "dev",
+    ip: clientAddress ?? "dev",
     os: `${parser.getOSName()} ${parser.getOSVersion()}`,
     browser: `${parser.getBrowserName()}  ${parser.getBrowserVersion()}`,
     device: parser.getPlatformType(),
@@ -859,7 +859,7 @@ import {
   updateOauthToken,
 } from "../../../../lib/auth";
 
-export async function GET({ request, cookies }: APIContext) {
+export async function GET({ request,clientAddress, cookies }: APIContext) {
   const code = new URL(request.url).searchParams?.get("code");
   const state = new URL(request.url).searchParams?.get("state");
   const storedState = cookies.get("google_oauth_state")?.value;
@@ -935,7 +935,7 @@ export async function GET({ request, cookies }: APIContext) {
         sessionId,
         userAgent: request.headers.get("user-agent"),
         userId: userId,
-        ip: request.headers.get("x-real-ip") ?? "dev",
+        ip: clientAddress ?? "dev",
       });
 
       cookies.delete("google_oauth_state", { path: "/" });
@@ -982,7 +982,7 @@ export async function GET({ request, cookies }: APIContext) {
         sessionId,
         userAgent: request.headers.get("user-agent"),
         userId: userExists.id,
-        ip: request.headers.get("x-real-ip") ?? "dev",
+        ip: clientAddress ?? "dev",
       });
 
       cookies.delete("google_oauth_state", { path: "/" });
@@ -1269,7 +1269,7 @@ type EmailRes = (
 
 import queryString from "query-string";
 
-export async function GET({ request, cookies }: APIContext) {
+export async function GET({ request,clientAddress, cookies }: APIContext) {
   const code = new URL(request.url).searchParams?.get("code");
   const state = new URL(request.url).searchParams?.get("state");
 
@@ -1374,7 +1374,7 @@ export async function GET({ request, cookies }: APIContext) {
         sessionId,
         userAgent: request.headers.get("user-agent"),
         userId: userId,
-        ip: request.headers.get("x-real-ip") ?? "dev",
+        ip: clientAddress ?? "dev",
       });
 
       cookies.delete("github_oauth_state", { path: "/" });
@@ -1422,7 +1422,7 @@ export async function GET({ request, cookies }: APIContext) {
       sessionId,
       userAgent: request.headers.get("user-agent"),
       userId: userExists.id,
-      ip: request.headers.get("x-real-ip") ?? "dev",
+      ip: clientAddress ?? "dev",
     });
 
     cookies.delete("github_oauth_state", { path: "/" });
