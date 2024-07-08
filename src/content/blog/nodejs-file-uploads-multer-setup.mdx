@@ -1,0 +1,336 @@
+---
+title: "How to handle File Uploads (images, videos, pdf) using Multer in Express.js Node.js" 
+publishedDate: 2024-07-08
+updatedDate: 2024-07-08
+description: "Step by step guide on how to handle file uploads in express js using multer"
+ogImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
+featuredImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
+category: ["Nodejs", "Drizzle ORM", "ORM"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+import CodeContainer from "../../components/blog/code-container.astro";
+
+In this guide we are going to handle File Uploads like images, videos, pdf in Node.js Express application using multer middleware. Also we will checkout how to get file metadata and filter out file and delete the files.
+
+## Getting Started
+
+Let's set up our nodejs application. I have setup a basic express typescript starter code.
+
+## Download starter code
+
+Clone the starter code branch of the [repo](https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup) or directly [download the zip](https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup/archive/refs/heads/starter-code.zip)
+
+Extract it and install the packages.
+
+For the development mode you can run
+
+<CodeContainer fileName="terminal">
+
+```bash
+pnpm run dev
+```
+
+</CodeContainer>
+
+## Setting up multer
+
+Install the multer package  which can be used for handling `multipart/form-data`
+
+<CodeContainer fileName="terminal">
+
+```bash
+pnpm i multer
+
+pnpm i @types/multer -D
+```
+
+</CodeContainer>
+
+### Multer middleware
+
+Now create a **middlewares** folder in the src folder and create a **multer.ts** file
+
+<CodeContainer fileName="src/middlewares/multer.ts" githubLink="https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup/blob/main/src/index.ts">
+
+```ts
+import multer from "multer";
+import { customAlphabet } from "nanoid";
+import path from "node:path";
+
+const customId = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 8);
+
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    const fileExtension = path.extname(file.originalname);
+    const fileName = `${customId()}${fileExtension}`;
+    cb(null, fileName);
+  },
+});
+
+export const multerMiddleware = multer({ storage });
+```
+
+</CodeContainer>
+
+In this we are setting up multer and using the diskStorage strategy. That means that file will be stored in the disk. Another strategy is to use the memory (RAM) but I think disk is better choice.
+
+In this destination is set to uploads. You can change is as you want. Also for the security purposes I am changing the name of the files. You can choose to store the original name but there are some security risk involved in it.
+
+I am using `nanoid v3` to generate a 8 character random file name.You can choose to increase the length if you are serving more requests. I chose to only use digits and alphabets to generate the filename. The random id hence generated will be url safe.
+
+## Setting up upload POST route
+
+Let's add an upload route to handle file uploads.
+
+To your existing `src/index.ts` add a new route.
+
+<CodeContainer fileName="src/index.ts" githubLink="https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup/blob/main/src/index.ts">
+
+```ts
+app.post("/upload", async (req, res) => {
+  return res.json({ success: true });
+});
+```
+
+</CodeContainer>
+
+Now we have upload route. Let's add the multer middleware define above.
+
+<CodeContainer fileName="src/index.ts" githubLink="https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup/blob/main/src/index.ts">
+
+```ts
+import { multerMiddleware } from "./middlewares/multer";
+
+app.post("/upload", multerMiddleware.single("file"), async (req, res) => {
+  return res.json({ success: true });
+});
+```
+
+</CodeContainer>
+
+### Getting file
+
+Getting the file is very easy. Just access it via `req.file`
+<CodeContainer fileName="src/middlewares/multer.ts" githubLink="https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup/blob/main/src/middlewares/multer.ts">
+
+```ts
+import { multerMiddleware } from "./middlewares/multer";
+
+app.post("/upload", multerMiddleware.single("file"), async (req, res) => {
+  const file = req.file;
+
+  return res.json({ success: true });
+});
+```
+
+</CodeContainer>
+
+Now that we can access the file let's refine the route
+<CodeContainer fileName="src/index.ts" githubLink="https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup/blob/main/src/index.ts">
+
+```ts
+app.post("/upload", multerMiddleware.single("file"), async (req, res) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        error: { code: "no_file", message: "No file uploaded" },
+      });
+    }
+
+    return res.json({
+      data: {
+        filePath: `/uploads/${file.filename}`,
+      },
+      message: "File uploaded successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: { code: "server_error", message: "Internal server error" },
+    });
+  }
+});
+```
+
+</CodeContainer>
+
+### File metadata
+
+We can get various information about the file like size, mimetype, filename, etc.
+<CodeContainer fileName="src/index.ts" githubLink="https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup/blob/main/src/index.ts">
+
+```ts
+const fileName = file.filename;
+const fileSize = file.size;
+const mimetype = file.mimetype;
+console.log("filename", fileName);
+console.log("fileSize", fileSize);
+console.log("mimetype", mimetype);
+```
+
+</CodeContainer>
+
+You can use this info to control the uploads. For example you can only allow images to be uploaded with size less than 10MB. Let's enfore these constraints.
+
+<CodeContainer fileName="src/index.ts" githubLink="https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup/blob/main/src/index.ts">
+
+```ts
+app.post("/upload", multerMiddleware.single("file"), async (req, res) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        error: { code: "no_file", message: "No file uploaded" },
+      });
+    }
+
+    if (mimetype !== "image/jpeg" && mimetype !== "image/png") {
+      return res.status(415).json({
+        error: { code: "invalid_file", message: "Invalid File" },
+      });
+    }
+
+    // 10MB
+    if (fileSize > 10000000) {
+      return res.status(413).json({
+        error: { code: "file_size_limit", message: "File size limit exceeded" },
+      });
+    }
+    return res.json({
+      data: {
+        filePath: `/uploads/${file.filename}`,
+      },
+      message: "File uploaded successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: { code: "server_error", message: "Internal server error" },
+    });
+  }
+});
+```
+
+</CodeContainer>
+
+### Deleting the file
+
+For deleting the file we can use the fs module from node and pass the file path.
+
+<CodeContainer fileName="src/index.ts">
+
+```ts
+fs.unlink(file.path, (err) => {
+  console.error("error while deleting file", err);
+});
+```
+
+</CodeContainer>
+
+## Uploading images to cloudinary
+
+Let's make a new endpoint and implement functionality to upload image to cloudinary.
+
+### Install cloudinary package
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm i cloudinary
+```
+
+</CodeContainer>
+
+Now we need three values from the cloudinary dashboard: cloud name, API key and API secret. Paste these values into the env file.
+
+Let's create a new route and initialize cloudinary
+
+### Upload route
+
+<CodeContainer fileName="index.ts" githubLink="https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup/blob/main/src/index.ts">
+
+```ts
+app.post(
+  "/upload-cloudinary",
+  multerMiddleware.single("file"),
+  async (req, res) => {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({
+          error: { code: "no_file", message: "No file uploaded" },
+        });
+      }
+      const fileSize = file.size;
+      const mimetype = file.mimetype;
+
+      if (mimetype !== "image/jpeg" && mimetype !== "image/png") {
+        fs.unlink(file.path, (err) => {
+          if (err) {
+            console.error("error while deleting file", err);
+          }
+        });
+        return res.status(415).json({
+          error: { code: "invalid_file", message: "Invalid File" },
+        });
+      }
+
+      if (fileSize > 5000000) {
+        fs.unlink(file.path, (err) => {
+          if (err) {
+            console.error("error while deleting file", err);
+          }
+        });
+        return res.status(413).json({
+          error: {
+            code: "file_size_limit",
+            message: "File size limit exceeded",
+          },
+        });
+      }
+
+      const cloudinaryResponse = await cloudinary.uploader.upload(
+        file.path,
+        {},
+        (err) => {
+          if (err) {
+            console.error("error while uploading file", err);
+          }
+        }
+      );
+
+      fs.unlink(file.path, (err) => {
+        if (err) {
+          console.error("error while deleting file", err);
+        }
+      });
+
+      return res.json({
+        data: {
+          url: cloudinaryResponse.secure_url,
+        },
+        message: "File uploaded successfully",
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        error: { code: "server_error", message: "Internal server error" },
+      });
+    }
+  }
+);
+```
+
+</CodeContainer>
+
+## Conclusion
+
+So in this post we implmented the file uploads functionality using Multer in Express.js (Node.js).
+
+For reference please refer to the [repo](https://github.com/ksjitendra18/nodejs-file-uploads-multer-setup). If you are facing any error you can join the [EverythingCS discord server](https://discord.gg/W3nubBNeXK).

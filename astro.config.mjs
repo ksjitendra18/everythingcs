@@ -5,6 +5,8 @@ import sitemap from "@astrojs/sitemap";
 import robotsTxt from "astro-robots-txt";
 import solid from "@astrojs/solid-js";
 
+import cloudflare from "@astrojs/cloudflare";
+
 // https://astro.build/config
 export default defineConfig({
   integrations: [tailwind(), sitemap(), mdx(), robotsTxt(), solid()],
@@ -16,4 +18,11 @@ export default defineConfig({
     "/blog/astro-js-google-auth/":
       "/blog/astro-js-auth-oauth-github-google-auth-guide/",
   },
+  output: "hybrid",
+  adapter: cloudflare({
+    imageService: "passthrough",
+    platformProxy: {
+      enabled: true,
+    },
+  }),
 });
