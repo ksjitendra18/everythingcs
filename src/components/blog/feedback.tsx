@@ -10,12 +10,6 @@ function Feedback({ slug }: { slug: string }) {
     isSuccess: false,
   });
 
-  onMount(() => {
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-    document.head.appendChild(script);
-  });
-
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setIsLoading(true);
@@ -84,6 +78,13 @@ function Feedback({ slug }: { slug: string }) {
       setIsLoading(false);
     }
   };
+
+  onMount(() => {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    document.head.appendChild(script);
+  });
+
   return (
     <div class="w-full md:w-fit lg:w-[600px] mx-auto border-2 border-slate-600 dark:border-slate-200 px-3  md:px-5 rounded-md md:py-3 my-5">
       <h3 class="text-2xl font-bold my-2">Did you find this post helpful?</h3>
