@@ -1,14 +1,19 @@
-import { For, Show, createSignal, onMount, createEffect } from "solid-js";
+import { For, Show, createSignal, onMount } from "solid-js";
 
 function Feedback({ slug }: { slug: string }) {
   const [selectedValue, setSelectedValue] = createSignal<number | null>(null);
-
   const [isLoading, setIsLoading] = createSignal(false);
 
   const [formHandler, setFormHandler] = createSignal({
     isError: false,
     msg: "",
     isSuccess: false,
+  });
+
+  onMount(() => {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    document.head.appendChild(script);
   });
 
   const handleSubmit = async (e: any) => {
@@ -70,7 +75,7 @@ function Feedback({ slug }: { slug: string }) {
         return;
       }
     } catch (error) {
-      setFormHandler((prev) => ({
+      setFormHandler(() => ({
         isSuccess: false,
         isError: false,
         msg: "Please check all the fields and submit again.",
@@ -78,12 +83,6 @@ function Feedback({ slug }: { slug: string }) {
     } finally {
       setIsLoading(false);
     }
-
-    onMount(() => {
-      const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-      document.head.appendChild(script);
-    });
   };
   return (
     <div class="w-full md:w-fit lg:w-[600px] mx-auto border-2 border-slate-600 dark:border-slate-200 px-3  md:px-5 rounded-md md:py-3 my-5">
