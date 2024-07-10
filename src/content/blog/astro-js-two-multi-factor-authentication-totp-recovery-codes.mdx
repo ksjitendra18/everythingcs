@@ -1,7 +1,7 @@
 ---
 title: "Two-Factor Authentication and Recovery Code Setup in Astro.js"
 publishedDate: 2024-03-13
-updatedDate: 2024-03-13
+updatedDate: 2024-07-09
 description: "Step by step guide on how to setup Two-Factor/ Multifactor authentication along with the recovery codes in Astro.js"
 ogImage: "https://static.everythingcs.dev/blog/astro-auth-series/astro-js-two-factor-auth-recovery-codes.png"
 featuredImage: "https://static.everythingcs.dev/blog/astro-auth-series/astro-js-two-factor-auth-recovery-codes.png"
@@ -202,8 +202,74 @@ For the verification process:
 - Validate the code using the **authenticator.verify** function
 - If verification fails means either the code is wrong or code is expired. Send the response and return
 - If verification successfull then:
-  <span class="ml-2 block">Update the user. set **twoFactorEnabled: true** and set the **twoFactorSecret**  </span>
+  <span class="ml-2 block">Update the user. set **twoFactorEnabled: true** and encrypt the twoFactorSecret and  set the **encryptedTwoFactorSecret**  </span>
   <span class="ml-2 block"> return with success </span>
+
+### Encryption and decryption function
+
+Let's define the encryption and decryption function. We are going to use **AES-256-GCM**
+
+Create a new file in **src/lib** directory named **encrypt-decrypt.ts**
+
+<CodeContainer fileName="src/lib/encrypt-decrypt.ts">
+
+```ts
+import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+
+const algorithm = "aes-256-gcm";
+const ivLength = 12;
+const tagLength = 16;
+
+// CURRENTLY THIS IS BEING USED FOR ENCRYPTING RECOVERY CODES, TWO FA SECRET CODES
+// FOR EACH DIFFERENT SECRET IS USED
+export enum EncryptionPurpose {
+  RECOVERY_CODE = "RECOVERY_CODE",
+  TWO_FA_SECRET = "TWO_FA_SECRET",
+}
+
+export function aesEncrypt(plaintext: string, purpose: EncryptionPurpose) {
+  try {
+    const SECRET_KEY = import.meta.env[purpose]!;
+
+    const iv = randomBytes(ivLength);
+    const cipher = createCipheriv(algorithm, SECRET_KEY, iv);
+    const encrypted = Buffer.concat([
+      cipher.update(plaintext, "utf8"),
+      cipher.final(),
+    ]);
+    const tag = cipher.getAuthTag();
+    return Buffer.concat([iv, tag, encrypted]).toString("base64");
+  } catch (error) {
+    console.log("Error while encrypting data", error);
+    throw new Error("Error while encrypting data");
+  }
+}
+
+export function aesDecrypt(ciphertext: string, purpose: EncryptionPurpose) {
+  try {
+    const SECRET_KEY = import.meta.env[purpose];
+
+    if (!SECRET_KEY) {
+      throw new Error("Secret key not found");
+    }
+
+    const buffer = Buffer.from(ciphertext, "base64");
+    const iv = buffer.subarray(0, ivLength);
+    const tag = buffer.subarray(ivLength, ivLength + tagLength);
+
+    const encrypted = buffer.subarray(ivLength + tagLength);
+    const decipher = createDecipheriv(algorithm, SECRET_KEY, iv);
+    decipher.setAuthTag(tag);
+    const decrypted = decipher.update(encrypted) + decipher.final("utf8");
+    return decrypted;
+  } catch (error) {
+    console.log("Error while decrypting data", error);
+    throw new Error("Error while decrypting data");
+  }
+}
+```
+
+</CodeContainer>
 
 ### API Route
 
@@ -214,6 +280,7 @@ import type { APIContext } from "astro";
 import { and, eq, gte } from "drizzle-orm";
 import { authenticator } from "otplib";
 import { db } from "../../../db";
+import { EncryptionPurpose, aesEncrypt } from "../../../lib/encrypt-decrypt";
 import { recoveryCodes, sessions, users } from "../../../db/schema";
 
 export async function POST({ request, cookies }: APIContext) {
@@ -272,12 +339,18 @@ export async function POST({ request, cookies }: APIContext) {
 
     const userId = sessionInfo.user.id;
 
+       // encrypt the secret code
+    const encryptedSecretCode = aesEncrypt(
+      secretCode,
+      EncryptionPurpose.TWO_FA_SECRET
+    );
+
     if (isValidToken) {
       await db
         .update(users)
         .set({
           twoFactorEnabled: true,
-          twoFactorSecret: secretCode,
+          twoFactorSecret: encryptedSecretCode,
         })
         .where(eq(users.id, userId));
 
@@ -498,6 +571,8 @@ import bcrypt from "bcryptjs";
 import { authenticator } from "otplib";
 import redis from "../../../lib/redis";
 import { createLoginLog, createSession } from "../../../lib/auth";
+import { EncryptionPurpose, aesDecrypt } from "../../../lib/encrypt-decrypt";
+
 
 export async function POST({ request,clientAddress, cookies }: APIContext) {
   try {
@@ -567,9 +642,14 @@ export async function POST({ request,clientAddress, cookies }: APIContext) {
       );
     }
 
+    const decryptedSecretCode = aesDecrypt(
+      userExists.twoFactorSecret!,
+      EncryptionPurpose.TWO_FA_SECRET
+    );
+
     const isValidToken = authenticator.verify({
       token: enteredCode,
-      secret: userExists.twoFactorSecret!,
+      secret: decryptedSecretCode,
     });
 
     if (isValidToken) {
@@ -638,7 +718,9 @@ Let's begin by generating the recovery codes. I will generate them at the same p
 ### Generating recovery codes
 
 Here's the partial code of what we need to do.
-<CodeContainer fileName="src/pages/api/set-two-factor">
+We will generate the recovery codes and then encrypt it using above declared function.
+
+<CodeContainer fileName="src/pages/api/set-two-factor.ts" hasPartialCode>
 
 ```ts
 const generateId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 4);
@@ -662,12 +744,12 @@ if (exisitingCode.length <= 0) {
     codes.push(code);
   }
   await db.insert(recoveryCodes).values([
-    { userId, code: codes[0] },
-    { userId, code: codes[1] },
-    { userId, code: codes[2] },
-    { userId, code: codes[3] },
-    { userId, code: codes[4] },
-    { userId, code: codes[5] },
+    { userId, code: aesEncrypt(codes[0], EncryptionPurpose.RECOVERY_CODE) },
+    { userId, code: aesEncrypt(codes[1], EncryptionPurpose.RECOVERY_CODE) },
+    { userId, code: aesEncrypt(codes[2], EncryptionPurpose.RECOVERY_CODE) },
+    { userId, code: aesEncrypt(codes[3], EncryptionPurpose.RECOVERY_CODE) },
+    { userId, code: aesEncrypt(codes[4], EncryptionPurpose.RECOVERY_CODE) },
+    { userId, code: aesEncrypt(codes[5], EncryptionPurpose.RECOVERY_CODE) },
   ]);
 }
 ```
@@ -676,7 +758,7 @@ if (exisitingCode.length <= 0) {
 
 Here is the complete final code .
 
-<CodeContainer fileName="src/pages/api/set-two-factor">
+<CodeContainer fileName="src/pages/api/set-two-factor.ts">
 
 ```ts
 import type { APIContext } from "astro";
@@ -743,43 +825,45 @@ export async function POST({ request, cookies }: APIContext) {
 
     const userId = sessionInfo.user.id;
 
+    // encrypt the secret code
+    const encryptedSecretCode = aesEncrypt(
+      secretCode,
+      EncryptionPurpose.TWO_FA_SECRET
+    );
+
     if (isValidToken) {
       await db
         .update(users)
         .set({
           twoFactorEnabled: true,
-          twoFactorSecret: secretCode,
+          twoFactorSecret: encryptedSecretCode,
         })
         .where(eq(users.id, userId));
 
       const exisitingCode = await db.query.recoveryCodes.findMany({
         where: and(
           eq(recoveryCodes.userId, userId),
-          eq(recoveryCodes.isUsed, false)
         ),
         columns: { code: true },
       });
 
-      let codes: string[] = [];
-
       if (exisitingCode.length > 0) {
-        exisitingCode.forEach((code) => {
-          codes.push(code.code);
-        });
+        await db.delete(recoveryCodes).where(eq(recoveryCodes.userId, userId));
       }
 
+      let codes: string[] = [];
       if (exisitingCode.length <= 0) {
         for (let i = 0; i < 6; i++) {
           const code = `${generateId()}-${generateId()}-${generateId()}`;
-          codes.push(code);
+          codes.push(code.code);
         }
         await db.insert(recoveryCodes).values([
-          { userId, code: codes[0] },
-          { userId, code: codes[1] },
-          { userId, code: codes[2] },
-          { userId, code: codes[3] },
-          { userId, code: codes[4] },
-          { userId, code: codes[5] },
+        { userId, code: aesEncrypt(codes[0], EncryptionPurpose.RECOVERY_CODE) },
+        { userId, code: aesEncrypt(codes[1], EncryptionPurpose.RECOVERY_CODE) },
+        { userId, code: aesEncrypt(codes[2], EncryptionPurpose.RECOVERY_CODE) },
+        { userId, code: aesEncrypt(codes[3], EncryptionPurpose.RECOVERY_CODE) },
+        { userId, code: aesEncrypt(codes[4], EncryptionPurpose.RECOVERY_CODE) },
+        { userId, code: aesEncrypt(codes[5], EncryptionPurpose.RECOVERY_CODE) },
         ]);
       }
 
@@ -829,6 +913,7 @@ import type { APIContext } from "astro";
 import { and, eq, gte } from "drizzle-orm";
 import { db } from "../../../db";
 import { recoveryCodes, sessions } from "../../../db/schema";
+import { EncryptionPurpose, aesDecrypt } from "../../../lib/encrypt-decrypt";
 
 export async function GET({ cookies }: APIContext) {
   try {
@@ -883,7 +968,7 @@ export async function GET({ cookies }: APIContext) {
 
     if (exisitingCode.length > 0) {
       exisitingCode.forEach((code) => {
-        codes.push(code.code);
+        codes.push(aesDecrypt(code.code, EncryptionPurpose.RECOVERY_CODE));
       });
     }
 
@@ -920,7 +1005,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { recoveryCodes, users } from "../db/schema";
 import MainLayout from "../layout/main-layout.astro";
-
+import { EncryptionPurpose, aesDecrypt } from "../../../lib/encrypt-decrypt";
 const userId = Astro.locals?.userId;
 
 if (!userId) {
@@ -977,7 +1062,11 @@ if (!existingUser) {
         Rotate Code
       </button>
     </div>
-    {existingUser.recoveryCodes.map((code) => <p>{code.code}</p>)}
+      {
+      existingUser.recoveryCodes.map((code) => (
+        <p>{aesDecrypt(code.code, EncryptionPurpose.RECOVERY_CODE)}</p>
+      ))
+    }
   </div>
 </MainLayout>
 
@@ -998,7 +1087,7 @@ if (!existingUser) {
 
 We will provide user with the functionality to generate the new recovery codes and discard the old ones.
 
-### Refreshing Recovery Codes
+### Rotate Recovery Codes
 
 Let's define the API route to regenerate the recovery codes and delete the previous ones.
 
@@ -1010,6 +1099,7 @@ import { and, eq, gte } from "drizzle-orm";
 import { customAlphabet } from "nanoid";
 import { db } from "../../../db";
 import { recoveryCodes, sessions } from "../../../db/schema";
+import { EncryptionPurpose, aesEncrypt } from "../../../lib/encrypt-decrypt";
 
 export async function POST({ cookies }: APIContext) {
   const generateId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 4);
@@ -1054,12 +1144,12 @@ export async function POST({ cookies }: APIContext) {
       codes.push(code);
     }
     await db.insert(recoveryCodes).values([
-      { userId, code: codes[0] },
-      { userId, code: codes[1] },
-      { userId, code: codes[2] },
-      { userId, code: codes[3] },
-      { userId, code: codes[4] },
-      { userId, code: codes[5] },
+      { userId, code: aesEncrypt(codes[0], EncryptionPurpose.RECOVERY_CODE) },
+      { userId, code: aesEncrypt(codes[1], EncryptionPurpose.RECOVERY_CODE) },
+      { userId, code: aesEncrypt(codes[2], EncryptionPurpose.RECOVERY_CODE) },
+      { userId, code: aesEncrypt(codes[3], EncryptionPurpose.RECOVERY_CODE) },
+      { userId, code: aesEncrypt(codes[4], EncryptionPurpose.RECOVERY_CODE) },
+      { userId, code: aesEncrypt(codes[5], EncryptionPurpose.RECOVERY_CODE) },
     ]);
 
     return Response.json({
@@ -1120,6 +1210,8 @@ if (!userId) {
 
 </CodeContainer>
 
+So firstly we will check for rate limit and then find all the codes for the user. As the codes are encrypted so we will decrypt it and match with the user provided code. If code is valid then we create the session for the user.
+
 <CodeContainer fileName="src/pages/api/auth/verify-recovery-code.ts">
 
 ```ts
@@ -1129,10 +1221,11 @@ import { db } from "../../../db";
 import { recoveryCodes, users } from "../../../db/schema";
 import { createLoginLog, createSession } from "../../../lib/auth";
 import redis from "../../../lib/redis";
+import { aesDecrypt, EncryptionPurpose } from "../../../lib/encrypt-decrypt";
 
-export async function POST({ request,clientAddress, cookies }: APIContext) {
+export async function POST({ request, clientAddress, cookies }: APIContext) {
   try {
-     const verifyRecoveryCodeAttempt = await redis.get(
+    const verifyRecoveryCodeAttempt = await redis.get(
       `${clientAddress}_recov_code_attempt`
     );
 
@@ -1205,17 +1298,25 @@ export async function POST({ request,clientAddress, cookies }: APIContext) {
       );
     }
 
-    const codes = userExists.recoveryCodes.map((code) => code.code);
+    let isValidCode = false;
+    for (const recoveryCode of userExists.recoveryCodes) {
+      const decryptedCode = aesDecrypt(
+        recoveryCode.code,
+        EncryptionPurpose.RECOVERY_CODE
+      );
 
-    const isValidCode = codes.some((code) => code === enteredCode);
+      if (decryptedCode === enteredCode) {
+        await db
+          .update(recoveryCodes)
+          .set({
+            isUsed: true,
+          })
+          .where(eq(recoveryCodes.id, recoveryCode.id));
+        isValidCode = true;
+      }
+    }
 
     if (isValidCode) {
-      await db
-        .update(recoveryCodes)
-        .set({
-          isUsed: true,
-        })
-        .where(eq(recoveryCodes.code, enteredCode));
       const { sessionId, expiresAt } = await createSession({
         userId: userExists.id,
       });
@@ -1268,8 +1369,6 @@ export async function POST({ request,clientAddress, cookies }: APIContext) {
 ```
 
 </CodeContainer>
-
-So we verify the code provided by the user and if it is valid, create the session and create the logs and redirect the user to dashboard page.
 
 ## Conclusion
 
