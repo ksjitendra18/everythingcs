@@ -1,7 +1,7 @@
 ---
 title: "How to setup Drizzle ORM in Node.js with Typescript and Perform CRUD operation"
 publishedDate: 2023-09-15
-updatedDate: 2023-10-21
+updatedDate: 2024-07-11
 description: "Step by step guide on how to setup and and use drizzle orm in node js with typescript and perform crud operation"
 ogImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
 featuredImage: "https://static.everythingcs.dev/blog/learn-nodejs-drizzle.png"
@@ -23,7 +23,7 @@ In this step by step tutorial we will implement the complete CRUD functionality 
 
 I have used MySQL (locally) as a database to use with drizzle orm. You can use other databases too like PosgreSQL or Sqlite. There would slight change in installation and setup part. So please refer to [documentation](https://orm.drizzle.team). Here is [repo for this project](https://github.com/ksjitendra18/learn-nodejs-drizzle)
 
-## Step 1: Setting up express app.
+## Step 1: Setting up express app
 
 I have basically setup basic node.js app with all the routes and controllers setup. Download the [starter file](https://github.com/ksjitendra18/learn-nodejs-drizzle/archive/refs/heads/starter-code.zip).
 
@@ -79,19 +79,24 @@ Now create a .env file in root folder
 <CodeContainer fileName=".env">
 
 ```bash
-DB_URL="mysql:username@password:3306/drizzlenode"
+DB_URL="mysql://username:password@localhost:3306/drizzlenode"
+
+# WINDOWS
+DB_URL="mysql://username:password@127.0.0.1:3306/drizzlenode"
+
 ```
 
 </CodeContainer>
 
 ## Step 3: Setting up Drizzle ORM
 
-### Step 3.1: Start setting up drizzle ORM by installing ORM and Drizzle Kit.
+### Step 3.1: Start setting up drizzle ORM by installing ORM and Drizzle Kit
 
 <CodeContainer fileName="terminal">
 
 ```bash
-npm install drizzle-orm mysql2 npm install drizzle-kit -D
+npm install drizzle-orm mysql2
+npm install drizzle-kit -D
 ```
 
 </CodeContainer>
@@ -101,6 +106,7 @@ In src directory make a db folder and inside db create a setup.ts file
 Let setup drizzle orm with mysql
 
 <CodeContainer fileName="src/db/setup.ts">
+
 ```ts
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2";
@@ -112,6 +118,7 @@ const connection = mysql.createConnection(process.env.DB_URL);
 
 export const db = drizzle(connection);
 ```
+
 </CodeContainer>
 
 Now lets create schema. It is equivalent to prisma schema. The difference is that in drizzle orm we write schema in typescript syntax.
@@ -119,22 +126,31 @@ Now lets create schema. It is equivalent to prisma schema. The difference is tha
 Create schema.ts in db folder.
 
 <CodeContainer fileName="src/db/schema.ts">
+
 ```ts
-import { mysqlTable, serial, varchar } from "drizzle-orm/mysql-core";
+import { bigint, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
+
 
 export const users = mysqlTable("users", {
-  id: serial("id").primaryKey(),
+  id: bigint("id", { mode: "number", unsigned: true })
+    .autoincrement()
+    .primaryKey(),
   name: varchar("name", { length: 256 }).notNull(),
   email: varchar("email", { length: 256 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
 ```
+
 </CodeContainer>
 
-This is a basic schema. I am creating a table **users** and it will have 3 columns. **id** which will be incremented automatically and it is also a primary key. **name** field which is of type varchar and it cannot be null. Similaryly **email** field is a unique field and also cannot have null values.
+This is a basic schema. I am creating a table **users** and it will have 5 columns. **id** which will be incremented automatically and it is also a primary key. Alternatively you can use serial but it has some issues.
+
+ **name** field which is of type varchar and it cannot be null. **email** field is a unique field and also cannot have null values. **createdAt**  and **updatedAt** field will be populated automatically.
 
 Now let's create a migration and also push the changes to database because until now our database doesn't know about the schema. For this we will use drizzle-kit which we have already installed as a developement dependency.
 
-### Step 3.2: Migration and db push
+### Step 3.2: Migrations
 
 Let start by creating a drizzle config file.
 
@@ -143,24 +159,24 @@ Create drizzle.config.ts in root folder.
 <CodeContainer fileName="drizzle.config.ts">
 
 ```ts
-import type { Config } from "drizzle-kit";
-import dotenv from "dotenv";
+import { defineConfig } from "drizzle-kit";
 
-dotenv.config();
-
-export default {
+if (!process.env.DB_URL) {
+  throw new Error("DB URL is missing");
+}
+export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./src/db/migrations",
   dbCredentials: {
-    connectionString: process.env.DB_URL!,
+    url: process.env.DB_URL,
   },
-  driver: "mysql2",
-} satisfies Config;
+  dialect: "mysql",
+});
 ```
 
 </CodeContainer>
 
-Now let's create 2 scripts in package.json to create migrations and push changes.
+Now let's add 2 scripts in package.json to create generate and migrate changes to the database.
 
 <CodeContainer fileName="package.json">
 
@@ -168,14 +184,14 @@ Now let's create 2 scripts in package.json to create migrations and push changes
 "scripts": {
   "dev": "nodemon src/index.ts",
   "build": "tsc",
-  "db:generate": "drizzle-kit generate:mysql",
-  "db:push": "drizzle-kit push:mysql"
+  "db:generate": "drizzle-kit generate",
+  "db:migrate": "drizzle-kit migrate",
 },
 ```
 
 </CodeContainer>
 
-Now run generate command which will generate the migrations in our db folder.
+Now run generate command which will generate the migrations in our db folder. It will map the typescript schema into SQL declaration.
 
 <CodeContainer fileName="terminal">
 
@@ -189,16 +205,16 @@ Output:
 
 <img
   alt="db push command output"
-  src="https://static.everythingcs.dev/blog/db-generate-output.png"
+  src="https://static.everythingcs.dev/blog/nodejs-drizzle-orm-110724/drizzleorm-generate.png"
   loading="lazy"
 />
 
-Now run push command. It will create the table according to the schema.
+Now let's run the migrate command to
 
 <CodeContainer fileName="terminal">
 
 ```js
-npm run db:push
+npm run db:migrate
 ```
 
  </CodeContainer>
@@ -207,7 +223,7 @@ Output:
 
 <img
   alt="db push command output"
-  src="https://static.everythingcs.dev/blog/push-command-output-6518.png"
+  src="https://static.everythingcs.dev/blog/nodejs-drizzle-orm-110724/drizzleorm-migrate.png"
   loading="lazy"
 />
 
@@ -246,30 +262,31 @@ import { db } from "../../db/setup";
 const createUser = async (req: Request, res: Response) => {
   const { name, email }: { name: string; email: string } = req.body;
 
-  if (!name) {
+  // basic validation
+  if (!name || typeof name !== "string" || name.trim().length === 0) {
     return res
       .status(400)
-      .json({ success: false, data: null, message: "Name is required" });
+      .json({ error: "validation_error", message: "Name is required" });
   }
-
-  if (!email) {
-    return res
-      .status(400)
-      .json({ success: false, data: null, message: "Email is required" });
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || typeof email !== "string" || !emailRegex.test(email.trim())) {
+    return res.status(400).json({
+      error: "validation_error",
+      message: "Email is missing or invalid",
+    });
   }
 
   try {
-    await db.insert(users).values({ name: name, email: email });
+    await db.insert(users).values({ name: name.trim(), email: email.trim() });
 
     return res.status(201).json({
-      success: true,
-      data: { name, email },
-      message: "Added Successfully",
+      message: "User added successfully",
     });
   } catch (error) {
+    console.log("Error while creating user", error);
     return res
       .status(500)
-      .json({ success: false, data: null, message: "Unable to add" });
+      .json({ error: "server_error", message: "Unable to add" });
   }
 };
 
@@ -278,7 +295,7 @@ export default createUser;
 
 </CodeContainer>
 
-Send request to from your frontend or postman and pass 2 values name and email. POST REQUEST TO (http://localhost:5000/users)
+Send request from your frontend or postman and pass 2 values name and email. POST REQUEST TO http:/\/localhost:5000/users
 
 Output:
 
@@ -320,11 +337,13 @@ import { users } from "../../db/schema";
 const getUsers = async (req: Request, res: Response) => {
   try {
     const allUsers = await db.select().from(users);
-    return res.status(200).json({ success: true, data: allUsers });
+
+    return res.status(200).json({ length: allUsers.length, data: allUsers });
   } catch (error) {
+    console.log("Error while getting users", error);
     return res
       .status(500)
-      .json({ success: false, data: null, message: "Unable to get users" });
+      .json({ error: "server_error", message: "Internal Server Error" });
   }
 };
 
@@ -333,7 +352,7 @@ export default getUsers;
 
 </CodeContainer>
 
-Send request to from your frontend or postman. GET request to (http://localhost:5000/users)
+Send GET request to http:/\/localhost:5000/users
 
 Output:
 
@@ -371,17 +390,28 @@ import { eq } from "drizzle-orm";
 
 const getUser = async (req: Request, res: Response) => {
   const { userId } = req.params;
+
+  if (!userId) {
+    return res
+      .status(400)
+      .json({ error: "missing_parameter", message: "userId is required" });
+  }
   try {
     const userById = await db
       .select()
       .from(users)
       .where(eq(users.id, Number(userId)));
 
-    return res.status(200).json({ success: true, data: userById });
+    if (userById.length < 1) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({ data: userById });
   } catch (error) {
+    console.log("Error while fetching user", error);
     return res
       .status(500)
-      .json({ success: false, data: null, message: "Unable to get users" });
+      .json({ error: "server_error", message: "Internal Server Error" });
   }
 };
 
@@ -390,7 +420,7 @@ export default getUser;
 
 </CodeContainer>
 
-Send request to from your frontend or postman. GET request to (http://localhost:5000/users/{id})
+Send  GET request to http:/\/localhost:5000/users/\{id\}
 
 Output:
 
@@ -438,23 +468,40 @@ const updateUser = async (req: Request, res: Response) => {
         .status(400)
         .json({ success: false, message: "Please provide field to update" });
     }
+    if ((name && typeof name !== "string") || name.trim().length === 0) {
+      return res
+        .status(400)
+        .json({ error: "validation_error", message: "Name is required" });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (
+      (email && typeof email !== "string") ||
+      email.trim().length === 0 ||
+      !emailRegex.test(email.trim())
+    ) {
+      return res
+        .status(400)
+        .json({ error: "validation_error", message: "Email is required" });
+    }
+
     const updateData: { name?: string; email?: string } = {};
 
     if (name) {
-      updateData.name = name;
+      updateData.name = name.trim();
     }
     if (email) {
-      updateData.email = email;
+      updateData.email = email.trim();
     }
     await db
       .update(users)
       .set(updateData)
       .where(eq(users.id, Number(userId)));
-    return res
-      .status(200)
-      .json({ success: true, message: "Updated Successfully" });
+    return res.status(200).json({ message: "User updated successfully" });
   } catch (error) {
-    return res.status(500).json({ success: true, message: "Cannot Update" });
+    console.log("Error while updating user", error);
+    return res
+      .status(500)
+      .json({ error: "server_error", message: "Internal Server Error" });
   }
 };
 
@@ -463,7 +510,7 @@ export default updateUser;
 
 </CodeContainer>
 
-Send request to from your frontend or postman. PATCH request to (http://localhost:5000/users/{id})
+Send  PATCH request to http:/\/localhost:5000/users/\{id\}
 
 Output:
 
@@ -499,13 +546,20 @@ import { eq } from "drizzle-orm";
 const deleteUser = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
+  if (!userId) {
+    return res
+      .status(400)
+      .json({ error: "missing_parameter", message: "userId is required" });
+  }
+
   try {
     await db.delete(users).where(eq(users.id, Number(userId)));
-    return res
-      .status(200)
-      .json({ success: true, message: "Delete Successfully" });
+    return res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    return res.status(500).json({ success: true, message: "Cannot Delete" });
+    console.log("Error while deleting user", error);
+    return res
+      .status(500)
+      .json({ error: "server_error", message: "Internal Server Error" });
   }
 };
 
@@ -514,7 +568,9 @@ export default deleteUser;
 
 </CodeContainer>
 
-Send request to from your frontend or postman. DELETE request to (http://localhost:5000/users/{id})
+<p>
+Send DELETE request to http:/\/localhost:5000/users/\{id\}
+</p>
 
 Output:
 
