@@ -300,7 +300,7 @@ Send request from your frontend or postman and pass 2 values name and email. POS
 Output:
 
 <img
-  src="https://static.everythingcs.dev/blog/create-user-output-1948.png"
+  src="https://static.everythingcs.dev/blog/nodejs-drizzle-orm-110724/create-operation.png"
   loading="lazy"
   alt="Create user output"
 />
@@ -357,7 +357,7 @@ Send GET request to http:/\/localhost:5000/users
 Output:
 
 <img
-  src="https://static.everythingcs.dev/blog/get-users-output-1900.png"
+  src="https://static.everythingcs.dev/blog/nodejs-drizzle-orm-110724/get-all-users.png"
   loading="lazy"
   alt="Create user output"
 />
@@ -406,7 +406,7 @@ const getUser = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.status(200).json({ data: userById });
+    return res.status(200).json({ data: userById[0] });
   } catch (error) {
     console.log("Error while fetching user", error);
     return res
@@ -425,9 +425,9 @@ Send  GET request to http:/\/localhost:5000/users/\{id\}
 Output:
 
 <img
-  src="https://static.everythingcs.dev/blog/get-user-output-8889.png"
+   src="https://static.everythingcs.dev/blog/nodejs-drizzle-orm-110724/get-user-by-id.png"
   loading="lazy"
-  alt="Create user output"
+  alt="User by ID"
 />
 
 ### Step 4.3 Update Operation
@@ -468,7 +468,7 @@ const updateUser = async (req: Request, res: Response) => {
         .status(400)
         .json({ success: false, message: "Please provide field to update" });
     }
-    if ((name && typeof name !== "string") || name.trim().length === 0) {
+    if ((name && typeof name !== "string") || name?.trim().length === 0) {
       return res
         .status(400)
         .json({ error: "validation_error", message: "Name is required" });
@@ -515,7 +515,7 @@ Send  PATCH request to http:/\/localhost:5000/users/\{id\}
 Output:
 
 <img
-  src="https://static.everythingcs.dev/blog/update-user-output-2356.png"
+  src="https://static.everythingcs.dev/blog/nodejs-drizzle-orm-110724/update-user.png"
   loading="lazy"
   alt="Update user output"
 />
@@ -575,7 +575,7 @@ Send DELETE request to http:/\/localhost:5000/users/\{id\}
 Output:
 
 <img
-  src="https://static.everythingcs.dev/blog/delete-user-output-1628.png"
+  src="https://static.everythingcs.dev/blog/nodejs-drizzle-orm-110724/delete-user.png"
   loading="lazy"
   alt="Delete user output"
 />
