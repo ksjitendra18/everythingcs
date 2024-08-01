@@ -19,7 +19,7 @@
     "@fontsource-variable/inter": "^5.0.19",
     "astro": "^4.11.5",
     "astro-robots-txt": "^1.0.0",
-    "drizzle-orm": "^0.31.4",
+    "drizzle-orm": "^0.32.1",
     "flowbite": "^2.4.1",
     "lucide-astro": "^0.395.0",
     "nanoid": "^5.0.7",
