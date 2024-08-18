@@ -5,7 +5,7 @@ updatedDate: 2024-03-24
 description: "Host Node.js typescript express server on vps machine running ubuntu and use nginx as a proxy and configure SSL certificate "
 ogImage: "https://static.everythingcs.dev/blog/nodejs-hosting-vm/host-nodejs-server-vps-ssl-certificate.png"
 featuredImage: "https://static.everythingcs.dev/blog/nodejs-hosting-vm/host-nodejs-server-vps-ssl-certificate.png"
-category: ["Express Js", "Nodejs","Nodejs Hosting", "Hosting"]
+category: ["Express Js", "Nodejs","Nodejs Hosting", "Hosting", "Self Hosting"]
 author: "Jitendra"
 isFeatured: true
 draft: false
@@ -204,6 +204,8 @@ sudo ufw allow OpenSSH
 
 sudo ufw allow 3000
 
+sudo ufw allow 80 # required for ssl
+
 sudo ufw enable
 ```
 
@@ -367,6 +369,15 @@ After the dns is propagated (takes some time) you can visit your website via dom
 ## Step 6: SSL Setup
 
 Now that we have domain setup we can configure ssl certificate.
+Before this make sure you have port 80 open on your firewall. If not then add it.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo ufw allow 80
+```
+
+</CodeContainer>
 
 Perform the following commands
 

@@ -1,9 +1,8 @@
 ---
-import { type CollectionEntry, getCollection } from "astro:content";
+import { getCollection } from "astro:content";
 
-import CategoryCard from "../../components/category-card.astro";
-import MainLayout from "../../components/layout/page-layout.astro";
 import PostCard from "../../components/blog/post-card.astro";
+import MainLayout from "../../components/layout/page-layout.astro";
 import slugify from "../../utils/slugify";
 
 export async function getStaticPaths() {
@@ -153,10 +152,7 @@ const categoryMapper: Record<string, Category> = {
     title: "Posts related to Astro Authentication",
     description: "Browse all the post related to Astro Authentication",
   },
-  digitalocean: {
-    title: "Posts related to DigitalOcean",
-    description: "Browse all the post related to DigitalOcean",
-  },
+
   vps: {
     title: "Posts related to VPS",
     description: "Browse all the post related to VPS",
@@ -176,6 +172,10 @@ const categoryMapper: Record<string, Category> = {
   "nodejs-hosting": {
     title: "Posts related to Node.js Hosting",
     description: "Browse all the post related to Node.js Hosting",
+  },
+  "self-hosting": {
+    title: "Posts related to Self Hosting",
+    description: "Browse all the post related to Self Hosting",
   },
 };
 ---
