@@ -7,4 +7,6 @@ interface Props {
 const { href } = Astro.props;
 ---
 
-<a href={href}><slot /></a>
+<a href={href} target="_blank" rel="noopener noreferrer" class="external-link">
+  <slot />
+</a>

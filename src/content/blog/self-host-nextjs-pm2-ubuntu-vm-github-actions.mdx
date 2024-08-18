@@ -1,0 +1,644 @@
+---
+title: "Self-Hosting Next.js on Ubuntu VM  with GitHub Actions for Automatic Deployments"
+publishedDate: 2024-08-18
+updatedDate: 2024-08-18
+description: "Step by step guide on how to self host next js application using nginx and pm2 on the ubuntu virtual machine and also setup github actions for automatic deployments"
+ogImage: "https://static.everythingcs.dev/blog/nextjs-self-host/self-host-nextjs-pm2-ubuntu-vm-github-actions.png"
+featuredImage: "https://static.everythingcs.dev/blog/nextjs-self-host/self-host-nextjs-pm2-ubuntu-vm-github-actions.png"
+category: ["Nextjs"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+import CodeContainer from "../../components/blog/code-container.astro";
+
+In this step by step guide I will demonstrate how to self host Next.js applications on the virtual machine. Also we will add github actions for automatic deployments.
+
+## Provisioning machine
+
+Provision a machine if you don't have already. I personally use    <a href="https://m.do.co/c/0437ceebb62f" target="_blank" rel="noopener noreferrer" class="external-link">DigitalOcean</a> or <a href="https://www.hetzner.com/cloud" target="_blank" rel="noopener noreferrer" class="external-link">Hetzner</a>. (links are affiliate).
+
+For security purposes use SSH keys to login to machine. 
+
+
+### Create new user
+
+Log in to your machine and create a new user. Here I am creating a user called `jks` and will grant them sudo access.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo adduser jks
+
+# sudo access
+sudo usermod -aG sudo jks
+```
+
+</CodeContainer>
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/add-new-user.png" loading="lazy" alt="Add user" />
+
+
+### Setting up SSH keys
+
+Now we need to setup SSH keys for the user. This will allow us to login to the machine using SSH keys. Open a terminal and run the following command.
+
+For my machine I store every SSH key in the `~/.ssh` directory. You can change this to any directory you want.
+
+I am using using passphrase for additional security. It is like a password for the SSH key. So even if someone gets access to your machine they won't be able to login to the machine using the SSH key.
+
+Give any name to the SSH key. I am using `jks` as the name.
+
+<CodeContainer fileName="terminal">
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "jks@example.com"
+```
+
+</CodeContainer>
+
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/ssh-keygen.png" loading="lazy" alt="SSH keygen" />
+
+Now that we have the SSH key, we need to copy the public key to the server. Copy the public key to the clipboard.
+
+Use the cat command to output the public key and copy it to the clipboard.
+
+<CodeContainer fileName="terminal">
+
+```bash
+cat ./jks.pub 
+```
+
+</CodeContainer>
+
+
+
+Now we need to add the public key to the authorized keys file. This will allow us to login to the machine using SSH keys.
+
+### Add SSH key to authorized keys
+
+First login as the new user. You can do that while being logged in as root.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo su - jks
+```
+
+</CodeContainer>
+
+Create ssh directory if it doesn't exist.
+
+<CodeContainer fileName="terminal">
+
+```bash
+mkdir -p ~/.ssh
+```
+
+</CodeContainer>
+
+Create or open the authorized keys file.
+
+<CodeContainer fileName="terminal">
+
+```bash
+cd ~/.ssh
+nano ./authorized_keys
+```
+
+</CodeContainer>
+
+Add the public key to the authorized keys file and use Ctrl +S to save and Ctrl + X to exit.
+
+Now let's test if we can login to the machine using the SSH key.
+
+<CodeContainer fileName="terminal">
+
+```bash
+ssh -i ~/.ssh/jks jks@server_ip
+```
+
+</CodeContainer>
+
+Make sure you replace `server_ip` with the IP address of your server. Also the name of the key should be the same as the one you created.
+
+You should be able to login to the machine using the SSH key.
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/login-ssh.png" loading="lazy" alt="Login with SSH key" />
+
+
+## Installing Node.js
+
+For the next step we need to install Node.js. We will use nvm to manage Node.js versions. For latest version of nvm, visit <a href="https://github.com/nvm-sh/nvm" target="_blank" rel="noopener noreferrer" class="external-link">nvm github</a>.
+
+<CodeContainer fileName="terminal">
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+```
+
+</CodeContainer>
+
+
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/nvm-install.png" loading="lazy" alt="NVM install" />
+
+Now install the LTS version of Node.js.
+
+<CodeContainer fileName="terminal">
+
+```bash
+nvm install --lts
+```
+
+</CodeContainer>
+
+After the installation is complete, you can check the version of Node.js.
+
+<CodeContainer fileName="terminal">
+
+```bash
+node -v
+```
+
+</CodeContainer>
+
+### Install pnpm
+
+I used pnpm for installing dependencies. You can use any package manager you want. I am using pnpm because it is faster than npm.
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm install -g pnpm
+```
+
+</CodeContainer>
+
+Now we will have to set up the repo
+
+## Setting up the repo
+
+If you are integrating into existing repo, you can skip this step. Else for following this guide you can use this [repo](https://github.com/ksjitendra18/nextjs-todo.git) as a starting point.
+
+You can clone the repo and make changes to it.
+
+If you have private repo, then you can read this guide on [how to clone private repo](https://everythingcs.dev/blog/clone-private-repo-github-remote-host-vm/)
+
+## Running the app
+
+Login to the machine using SSH keys. Clone the repo and install dependencies.
+
+<CodeContainer fileName="terminal">
+
+```bash
+git clone https://github.com/ksjitendra18/nextjs-todo.git
+cd nextjs-todo
+```
+
+</CodeContainer>
+
+Install dependencies.
+
+<CodeContainer fileName="terminal">
+
+```bash
+pnpm install
+```
+
+</CodeContainer>
+
+Now add your environment variables to the `.env.production` file.
+Build the app and start the server.
+
+<CodeContainer fileName="terminal">
+
+```bash
+pnpm build
+
+pnpm start
+```
+
+</CodeContainer>
+
+Now you can access the app at `http://server_ip:3000`.
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/app-running.png" loading="lazy" alt="App Running" />
+
+Depending on your host firewall, you may need to open the port 3000 for the server to work. In hetzner all the ports are open by default. We will configure the firewall in the later step.
+
+### Installing PM2
+
+We will use PM2 to run the app in the background. PM2 is a process manager for Node.js applications. It allows you to run your Node.js application as a background process, which can be restarted on errors or system reboots.
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm install -g pm2
+```
+
+</CodeContainer>
+
+Now to run the app run the following command.
+
+<CodeContainer fileName="terminal">
+
+```bash
+pm2 start npm --name "nextjs-todo" -- start
+
+# specify the custom port to run multiple apps
+
+pm2 start npm --name "nextjs-todo" -- start -- -p 3001
+```
+
+</CodeContainer>
+
+
+You can check the status of the app by running the following command.
+
+<CodeContainer fileName="terminal">
+
+```bash
+pm2 status 
+
+pm2 list
+```
+
+</CodeContainer>
+
+## Installing Nginx
+
+So let's setup Nginx to serve our app. It will also us to access the app using a domain name. There are multiple reverse proxy like nginx, apache, caddy etc. We will use nginx as it easy to configure and fast.
+
+### Installing Nginx
+
+Install Nginx on the server.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo apt update
+sudo apt install nginx
+```
+
+</CodeContainer>
+
+### Configuring Nginx
+
+Create a new configuration file for Nginx. Use your project name or more preferably your domain name.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo nano /etc/nginx/sites-available/nextjs-todo
+```
+
+</CodeContainer>
+
+Add the following configuration to the file.
+
+<CodeContainer fileName="/etc/nginx/sites-available/nextjs-todo">
+
+```nginx
+server {
+    server_name your_domain_name.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+</CodeContainer>
+
+Save and exit the file. 
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/nginx-configuration.png" loading="lazy" alt="Nginx Configuration" />
+
+Now create a symbolic link to the sites-enabled directory.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo ln -s /etc/nginx/sites-available/nextjs-todo /etc/nginx/sites-enabled/nextjs-todo
+```
+
+</CodeContainer>
+
+Now test the configuration and also restart the nginx service.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+</CodeContainer>
+
+Before we can access the app we need to setup the domain.
+
+## Setting up the domain
+
+We need to point the domain name to server IP. You have to add `A` record to your domain provider. I am using cloudflare so I am adding the record in the cloudflare dashboard.
+
+I have added 2 records. I want to redirect www to non-www.
+
+A record `@` pointing to the server IP
+AAAA record 'www' pointing to "100::"
+(this might be cloudflare specific)
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/cloudflare-config.png" loading="lazy" alt="Cloudflare DNS" />
+
+Now you can access the app at `http://your_domain_name.com`. 
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/app-running-http.png" loading="lazy" alt="App Running" />
+
+## Setting up SSL Certificate
+
+The website is being served via HTTP. We need to setup SSL certificate. To do this we need to install certbot on the server.
+
+<div class="bg-red-600 text-white px-4 py-2 rounded-md">
+If you have firewall enabled you will have to open port 80 for the certbot to work. Also wait till DNS propagation is complete. 
+</div>
+
+### Installing Certbot
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+```
+
+</CodeContainer>
+
+Now let's get the certificate for the domain.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo certbot --nginx -d your_domain_name.com
+```
+
+</CodeContainer>
+
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/certbot-nginx.png" loading="lazy" alt="Certbot Nginx" />
+
+
+<div class="bg-amber-600 text-white px-4 py-2 rounded-md">
+If you are using cloudflare, please select the Full mode in SSL/TLS mode.
+</div>
+Now you can access the app at https mode.
+
+## Setting up the firewall
+
+Let's setup the firewall and close all the ports except the ones we need. I am 
+going to use ufw for this. 
+
+Check the current status of ufw.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo ufw status 
+```
+
+</CodeContainer>
+
+Let's open port for SSH and HTTPS and finally enable the firewall.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx HTTPS'
+sudo ufw enable
+```
+
+</CodeContainer>
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/ufw-config.png" loading="lazy" alt="UFW Config" />
+
+<div class="bg-amber-600 text-white px-4 py-2 rounded-md">
+If in future you want to create ssl certificate for any other domain you will need to open port 80.
+</div>
+
+
+## Github Actions 
+
+Now let's setup github actions for automatic deployments. 
+
+### Setting up Github Actions Secrets
+Go to the repo settings and go to Security section in the left sidebar and you will find the Secrets and Variables section. Click on Actions.
+
+Click on Add New Repository Secret.
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/github-actions-secrets-variables.png" loading="lazy" alt="Github Actions Secret" />
+
+Add the variable which are present in your `.env.production` file. I am naming it ENV_FILE.
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/github-action-add-secret.png" loading="lazy" alt="Github Actions Secret" />
+
+Now add the other secrets.
+
+<CodeContainer fileName="terminal">
+
+```bash
+SERVER_IP
+SERVER_USER
+SSH_PRIVATE_KEY
+``` 
+</CodeContainer>
+
+It is recommended to create new SSH keys for the github actions. Follow the above steps create a new SSH key and add the public key to the authorized keys file.
+Just paste the new public key in authorized keys  file below the existing keys.
+
+<img src="https://static.everythingcs.dev/blog/nextjs-self-host/github-actions-secrets.png" loading="lazy" alt="Github Actions Secret" />
+
+Now that we have added the secrets, we need to add the workflow.
+
+### Setting up Github Actions Workflow
+
+Open the repo in your code editor and add the following workflow.
+
+Create a new folder named `.github` and inside that create a folder named `workflows`.
+
+Inside the workflows folder create a file named `main.yml`.
+
+<CodeContainer fileName="workflows/main.yml" githubLink="https://github.com/ksjitendra18/nextjs-todo/blob/main/.github/workflows/main.yml">
+
+```yaml
+name: Main Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env.production
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Deploy
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
+            cd ~/nextjs-todo
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            echo "Node version: $(node --version)"
+            echo "NPM version: $(npm --version)"
+            git pull
+            pnpm install
+            pnpm run build
+            pm2 restart nextjs-todo  
+          EOF
+```
+
+</CodeContainer>
+
+
+Now if you have resource constrained server then you can copy the .next folder to the server and skip the build step in your server.
+
+I haven't tested this extensively but I am already using in one of my projects and haven't faced any issues yet.
+
+### Copy the .next folder to the server
+In this approach we will skip the build step and copy the .next folder to the server.
+
+I am creating new file for dev branch although I have not this branch but you can use it for development previews. Just you will have to create a new folder and clone the dev branch. Just same steps as above. Use a domain name like dev.your_domain_name.com.
+
+<CodeContainer fileName="workflows/dev.yml" githubLink="https://github.com/ksjitendra18/nextjs-todo/blob/main/.github/workflows/dev.yml">
+
+```yaml
+name: Dev Workflow
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env.production
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Deploy
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./.next/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/todo-app-dev/.next/
+
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
+            cd ~/onlinecourseplatform
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            echo "Node version: $(node --version)"
+            echo "NPM version: $(npm --version)"
+            git pull origin dev 
+            pnpm install --frozen-lockfile
+            pm2 restart todo-app-dev  
+          EOF
+```
+</CodeContainer>
+
+Now we have automatic deployments for main and dev branches.
+
+## Conclusion
+
+In this step by step guide I have demonstrated how to self host Next.js applications on the virtual machine. Also we have added github actions for automatic deployments.
+
+I have used this [repo](https://github.com/ksjitendra18/nextjs-todo) to demonstrate the process. Free free to use it. 
+
+In the upcoming post I will show how to host nextjs application using docker.
+
+If you have any query then you can ask on [EverythingCS discord server](https://discord.gg/W3nubBNeXK).

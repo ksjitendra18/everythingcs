@@ -204,6 +204,8 @@ sudo ufw allow OpenSSH
 
 sudo ufw allow 3000
 
+sudo ufw allow 80 # required for ssl
+
 sudo ufw enable
 ```
 
@@ -367,6 +369,15 @@ After the dns is propagated (takes some time) you can visit your website via dom
 ## Step 6: SSL Setup
 
 Now that we have domain setup we can configure ssl certificate.
+Before this make sure you have port 80 open on your firewall. If not then add it.
+
+<CodeContainer fileName="terminal">
+
+```bash
+sudo ufw allow 80
+```
+
+</CodeContainer>
 
 Perform the following commands
 
