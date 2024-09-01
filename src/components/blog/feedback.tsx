@@ -25,18 +25,15 @@ function Feedback({ slug }: { slug: string }) {
     const rating = selectedValue();
     const cfTurnstileRes = formData.get("cf-turnstile-response");
     try {
-      const sendForm = await fetch(
-        "https://apis.everythingcs.dev/v1/feedback",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            rating,
-            message,
-            slug,
-            cfTurnstileRes,
-          }),
-        }
-      );
+      const sendForm = await fetch("https://everythingcs.dev/api/feedback", {
+        method: "POST",
+        body: JSON.stringify({
+          rating,
+          message,
+          slug,
+          cfTurnstileRes,
+        }),
+      });
       const sendFormRes = await sendForm.json();
 
       if (sendForm.status === 500) {

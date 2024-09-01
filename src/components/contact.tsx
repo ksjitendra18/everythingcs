@@ -36,7 +36,7 @@ const ContactPage = () => {
     const cfTurnstileRes = formData.get("cf-turnstile-response");
 
     try {
-      const sendForm = await fetch("https://apis.everythingcs.dev/v1/contact", {
+      const sendForm = await fetch("https://everythingcs.dev/api/contact", {
         method: "POST",
         body: JSON.stringify({
           name,
