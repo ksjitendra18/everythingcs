@@ -69,11 +69,14 @@ const slug = Astro.url.pathname.split("/")[2];
       const pageReferrer = document.referrer;
 
       setTimeout(() => {
-        eventDispatcher("pageLoad");
+        eventDispatcher("load");
       }, 5000);
       setTimeout(() => {
-        eventDispatcher("after30s");
+        eventDispatcher("30s");
       }, 30000);
+      setTimeout(() => {
+        eventDispatcher("60s");
+      }, 60000);
 
       let hasScrolled = false;
       let isAtBottom = false;
@@ -86,7 +89,7 @@ const slug = Astro.url.pathname.split("/")[2];
           if (isAtBottom) return;
 
           isAtBottom = true;
-          eventDispatcher("bottom");
+          eventDispatcher("end");
         }
         if (hasScrolled) return;
         hasScrolled = true;
