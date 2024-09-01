@@ -45,8 +45,8 @@ importers:
         specifier: ^2.5.1
         version: 2.5.1(rollup@4.21.2)
       lucide-astro:
-        specifier: ^0.427.0
-        version: 0.427.0(astro@4.15.1(rollup@4.21.2)(typescript@5.5.4))
+        specifier: ^0.437.0
+        version: 0.437.0(astro@4.15.1(rollup@4.21.2)(typescript@5.5.4))
       nanoid:
         specifier: ^5.0.7
         version: 5.0.7
@@ -1919,10 +1919,12 @@ packages:
 
   libsql@0.3.19:
     resolution: {integrity: sha512-Aj5cQ5uk/6fHdmeW0TiXK42FqUlwx7ytmMLPSaUQPin5HKKKuUPD62MAbN4OEweGBBI7q1BekoEN4gPUEL6MZA==}
+    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   libsql@0.4.1:
     resolution: {integrity: sha512-qZlR9Yu1zMBeLChzkE/cKfoKV3Esp9cn9Vx5Zirn4AVhDWPcjYhKwbtJcMuHehgk3mH+fJr9qW+3vesBWbQpBg==}
+    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lilconfig@2.1.0:
@@ -1961,8 +1963,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-astro@0.427.0:
-    resolution: {integrity: sha512-CCZ1rHjVpxdM/QtD7TlniH2algtkyziKxh6+qi+BMx42chb+bWCH8OLXCojPleisexUHc20tNaZ0meMySm6++w==}
+  lucide-astro@0.437.0:
+    resolution: {integrity: sha512-9wJbtr0wB5GFeT3BY0Q+f444DtPPT0xXGJrjkgdOwfPa48ZIpO4ZYZT/8ifqy3bVXBlFHDAcG4ZbqZ1O1f4ZhQ==}
     peerDependencies:
       astro: '>=2.7.1'
 
@@ -4697,7 +4699,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-astro@0.427.0(astro@4.15.1(rollup@4.21.2)(typescript@5.5.4)):
+  lucide-astro@0.437.0(astro@4.15.1(rollup@4.21.2)(typescript@5.5.4)):
     dependencies:
       astro: 4.15.1(rollup@4.21.2)(typescript@5.5.4)
 

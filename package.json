@@ -22,7 +22,7 @@
     "astro-robots-txt": "^1.0.0",
     "drizzle-orm": "^0.33.0",
     "flowbite": "^2.5.1",
-    "lucide-astro": "^0.427.0",
+    "lucide-astro": "^0.437.0",
     "nanoid": "^5.0.7",
     "preact": "^10.23.2",
     "rollup": "^4.21.2",
