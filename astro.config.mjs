@@ -24,8 +24,5 @@ export default defineConfig({
   output: "hybrid",
   adapter: cloudflare({
     imageService: "passthrough",
-    platformProxy: {
-      enabled: true,
-    },
   }),
 });

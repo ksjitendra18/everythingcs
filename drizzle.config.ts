@@ -1,21 +1,16 @@
 import { defineConfig } from "drizzle-kit";
 
-if (
-  !process.env.CF_ACCOUNT_ID ||
-  !process.env.CF_DATABASE_ID ||
-  !process.env.CF_TOKEN
-) {
-  throw new Error("Missing CF_ACCOUNT_ID, CF_DATABASE_ID or CF_TOKEN");
+if (!process.env.TURSO_DB_URL || !process.env.TURSO_DB_TOKEN) {
+  throw new Error("Missing environment variables");
 }
 
 export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./src/db/migrations",
   dialect: "sqlite",
-  driver: "d1-http",
+  driver: "turso",
   dbCredentials: {
-    accountId: process.env.CF_ACCOUNT_ID,
-    databaseId: process.env.CF_DATABASE_ID,
-    token: process.env.CF_TOKEN,
+    url: process.env.TURSO_DB_URL,
+    authToken: process.env.TURSO_DB_TOKEN,
   },
 });
