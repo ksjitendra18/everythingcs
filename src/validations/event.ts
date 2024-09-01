@@ -7,9 +7,4 @@ export const EventSchema = z.object({
   }),
   slug: z.string(),
   referrer: z.string(),
-  country: z.string().optional(),
-  city: z.string().optional(),
-  os: z.string().optional(),
-  device: z.string().optional(),
-  browser: z.string().optional(),
 });

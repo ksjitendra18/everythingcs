@@ -20,8 +20,6 @@ export async function POST({ request, clientAddress }: APIContext) {
 
     const requestBody = await request.json();
 
-    console.log("requestBody", requestBody);
-
     const parsedData = FeedbackSchema.safeParse(requestBody);
 
     if (!parsedData.success) {
@@ -51,7 +49,6 @@ export async function POST({ request, clientAddress }: APIContext) {
 
     const outcome: any = await result.json();
 
-    console.log("outcome", outcome);
     if (!outcome.success) {
       return Response.json(
         {
