@@ -39,7 +39,7 @@ export const events = sqliteTable("events", {
   id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   hash: text("hash").notNull(),
   type: text("type", {
-    enum: ["load", "end", "exit", "10s", "30s", "60s"],
+    enum: ["load", "scroll", "end", "exit", "10s", "30s", "60s"],
   }).notNull(),
   slug: text("slug").notNull(),
   referrer: text("referrer").notNull(),

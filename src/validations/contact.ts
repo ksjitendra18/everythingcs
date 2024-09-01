@@ -10,7 +10,7 @@ export const ContactValidation = z.object({
     required_error: "Type is required",
     invalid_type_error: "Invalid type",
   }),
-  blogPostLink: z.string().optional(),
+  blogPostLink: z.string().optional().nullable(),
   message: z.string({ required_error: "Message is required" }),
   cfTurnstileRes: z.string({
     message: "Captcha is required. Please refresh the page",

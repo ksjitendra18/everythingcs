@@ -61,7 +61,7 @@ function Feedback({ slug }: { slug: string }) {
         }));
         return;
       }
-      if (sendForm.status === 201 && sendFormRes.data.submit) {
+      if (sendForm.status === 201) {
         e.target.reset();
         setSelectedValue(null);
         setFormHandler(() => ({
