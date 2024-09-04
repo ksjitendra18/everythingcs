@@ -18,6 +18,7 @@
     "@astrojs/tailwind": "^5.1.0",
     "@fontsource-variable/inter": "^5.0.20",
     "@libsql/client": "^0.10.0",
+    "@types/xxhashjs": "^0.2.4",
     "astro": "^4.15.1",
     "astro-robots-txt": "^1.0.0",
     "bowser": "^2.11.0",
@@ -30,6 +31,7 @@
     "solid-js": "^1.8.22",
     "tailwindcss": "^3.4.10",
     "valibot": "^0.37.0",
+    "xxhashjs": "^0.2.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {

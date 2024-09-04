@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { queries } from "../../db/schema";
 import { db } from "../../db";
 import { ContactValidation } from "../../validations/contact";
+import { ne } from "drizzle-orm";
 
 export const prerender = false;
 
@@ -87,17 +88,21 @@ export async function POST({ request, clientAddress }: APIContext) {
           { status: 400 }
         );
       }
-      await db.insert(queries).values({
-        name: parsedData.data.name,
-        email: parsedData.data.email,
-        type: parsedData.data.type,
-        message: parsedData.data.message,
-        blogPostLink: parsedData.data.blogPostLink,
-      });
+      const [newQuery] = await db
+        .insert(queries)
+        .values({
+          name: parsedData.data.name,
+          email: parsedData.data.email,
+          type: parsedData.data.type,
+          message: parsedData.data.message,
+          blogPostLink: parsedData.data.blogPostLink,
+        })
+        .returning({ id: queries.id });
       return Response.json(
         {
           data: {
             message: `Contact Submitted successfully`,
+            referenceId: newQuery.id,
           },
         },
         { status: 201 }
