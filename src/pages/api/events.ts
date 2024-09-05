@@ -1,23 +1,11 @@
 import type { APIContext } from "astro";
 import Bowser from "bowser";
+import xxhashjs from "xxhashjs";
 import { db } from "../../db";
 import { events } from "../../db/schema";
-import xxhashjs from "xxhashjs";
-const { h64 } = xxhashjs;
 import { EventSchema } from "../../validations/event";
+const { h64 } = xxhashjs;
 export const prerender = false;
-
-export async function GET({ request, clientAddress }: APIContext) {
-  // const data = await db
-  //   .select()
-  //   .from(events)
-  //   .where(like(events.device, "%bot%"));
-
-  const data = await db.selectDistinct({ hash: events.hash }).from(events);
-
-  const allHashes = data.map((item) => item.hash);
-  return Response.json(allHashes);
-}
 
 async function hashData(data: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -95,12 +83,7 @@ export async function POST({ request, clientAddress }: APIContext) {
         country: requestData.country,
         city: requestData.city,
         os: parser.getOS().name + " " + parser.getOS().version,
-        device:
-          parser.getPlatform().type +
-          " " +
-          parser.getPlatform().model +
-          " " +
-          parser.getPlatform().vendor,
+        device: parser.getPlatform().type ?? "unknown",
         browser: parser.getBrowser().name + " " + parser.getBrowser().version,
         hash: h64().update(hashedData).digest().toString(16),
       });

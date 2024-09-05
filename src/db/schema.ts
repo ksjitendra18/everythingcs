@@ -43,12 +43,12 @@ export const events = sqliteTable("events", {
   }).notNull(),
   slug: text("slug").notNull(),
   referrer: text("referrer").notNull(),
-  city: text("country").notNull(),
+  city: text("city").notNull(),
   country: text("country").notNull(),
   os: text("os"),
-  device: text("device"),
-  browser: text("browser"),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  device: text("device").notNull(),
+  browser: text("browser").notNull(),
+  createdAt: integer("created_at")
     .notNull()
     .default(sql`(unixepoch())`),
 });
