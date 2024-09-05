@@ -22,3 +22,35 @@ Here is the demonstration.
 <video muted controls>
   <source src="https://static.everythingcs.dev/blog/pagination-nextjs-291023/nextjs-server-side-pagination-server-components-drizzle-orm.mp4" />
 </video>
+
+## Setup
+
+I have setup a basic Next.js app with Drizzle ORM. [Download the setup from github](https://github.com/ksjitendra18/nextjs-pagination/archive/refs/heads/starter-code.zip). Extract it in your desired folder and run `npm i` to install all the packages.
+
+After installing create a local db or use a remote database. I am using a local mysql database.
+
+<CodeContainer fileName="terminal">
+
+  ```bash 
+  mysql -u username -p # enter password 
+  ```
+
+</CodeContainer>
+
+<CodeContainer fileName="terminal">
+
+```bash 
+create database paginationguide;
+```
+
+</CodeContainer>
+
+Now create a .env.local file and add the database url.
+
+<CodeContainer fileName="terminal">
+
+```bash 
+DB_URL=mysql://username:password@localhost:3306/paginationguide 
+```
+
+</CodeContainer>
