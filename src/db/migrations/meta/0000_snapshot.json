@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8342f5ae-0786-4498-a70b-bdae98da2a75",
+  "id": "96713276-6853-4b3e-a0af-bd01d06ff0d2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "events": {
@@ -42,6 +42,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "country": {
           "name": "country",
           "type": "text",
@@ -60,14 +67,14 @@
           "name": "device",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "browser": {
           "name": "browser",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "created_at": {

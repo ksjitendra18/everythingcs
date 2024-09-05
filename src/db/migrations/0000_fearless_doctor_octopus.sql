@@ -4,10 +4,11 @@ CREATE TABLE `events` (
 	`type` text NOT NULL,
 	`slug` text NOT NULL,
 	`referrer` text NOT NULL,
+	`city` text NOT NULL,
 	`country` text NOT NULL,
 	`os` text,
-	`device` text,
-	`browser` text,
+	`device` text NOT NULL,
+	`browser` text NOT NULL,
 	`created_at` integer DEFAULT (unixepoch()) NOT NULL
 );
 --> statement-breakpoint
