@@ -5,10 +5,10 @@ updatedDate: 2023-10-31
 description: "Setup server side pagination in Next.js server components using Drizzle ORM and planetscale"
 ogImage: "https://static.everythingcs.dev/blog/nextjs-server-side-pagination-server-components-drizzle-orm.png"
 featuredImage: "https://static.everythingcs.dev/blog/nextjs-server-side-pagination-server-components-drizzle-orm.png"
-category: ["Nextjs"]
+category: ["Nextjs", "Drizzle ORM"]
 author: "Jitendra"
 isFeatured: true
-draft: false
+draft: true
 ---
 
 import CodeContainer from "../../components/blog/code-container.astro";
@@ -254,7 +254,7 @@ Now this works fine but lacks validation. For example we can go to page 0 that w
 
 Firstly let's prevent the users from going beyond page 1.
 
-Let's make use of URLSearchParams and we will use it to manage the params. Let's delete the params from the url if it is below 3. Also let's add a check in offsetItems.
+Let's make use of URLSearchParams and we will use it to manage the params. Let's delete the params from the url if it is below 2. Also let's add a check in offsetItems.
 
 <CodeContainer>
 

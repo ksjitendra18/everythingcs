@@ -1,0 +1,1001 @@
+---
+title: "Server Side Pagination and Searching in Nextjs and Drizzle-orm"
+publishedDate: 2024-09-12
+updatedDate: 2024-09-12
+description: "Setup server side pagination and searching in Next.js server components using Drizzle ORM"
+ogImage: "https://static.everythingcs.dev/blog/pagination-searching-nextjs/nextjs-server-components-pagination-searching.png"
+featuredImage: "https://static.everythingcs.dev/blog/pagination-searching-nextjs/nextjs-server-components-pagination-searching.png"
+category: ["Nextjs", "Drizzle ORM"]
+author: "Jitendra"
+isFeatured: true
+draft: false
+---
+
+import CodeContainer from "../../components/blog/code-container.astro";
+
+With the introduction of Server Components we can easily perform server side pagination and searching in the Next.js app router with the help of query params so in this article we are going to see how to achieve exactly this using the Drizzle ORM.
+
+Please refer to the [github repo](https://github.com/ksjitendra18/nextjs-drizzle-orm-pagination-searching/) for code reference. This works well in both Next.js 14 and 15. This tutorial is based on Next.js 14.
+
+Here is the demonstration.
+
+<video muted controls>
+  <source src="https://static.everythingcs.dev/blog/pagination-searching-nextjs/nextjs-pagination-search-server-components.mp4" />
+</video>
+
+## Setup
+
+I have setup a basic Next.js app with Drizzle ORM. [Download the setup from github](https://github.com/ksjitendra18/nextjs-drizzle-orm-pagination-searching/archive/refs/heads/starter-code.zip). Extract it in your desired folder and run `npm i` to install all the packages.
+
+After installing create a local db or use a remote database. I am using a local mysql database.
+
+<CodeContainer fileName="terminal">
+
+  ```bash 
+  mysql -u username -p # enter password 
+  ```
+
+</CodeContainer>
+
+<CodeContainer fileName="terminal">
+
+```bash 
+create database nextjspagination;
+```
+
+</CodeContainer>
+
+Now create a .env.local file and add the database url.
+
+I have already define the schema in `src/db/schema.ts` file. It's a simple schema. Now let's push the schema to the database and let's seed the database with the data.
+
+<CodeContainer fileName="terminal">
+
+```bash 
+DB_URL=mysql://username:password@localhost:3306/nextjspagination 
+```
+
+</CodeContainer>
+
+In the terminal run
+
+<CodeContainer fileName="terminal">
+
+```bash
+npm run drizzle-kit generate
+```
+
+</CodeContainer>
+
+<CodeContainer fileName="terminal">
+
+```bash 
+npm run drizzle-kit migrate 
+```
+
+</CodeContainer>
+
+
+After this let's run the seed script. I have already installed tsx to run the script so in terminal run
+
+<CodeContainer fileName="terminal">
+
+```bash 
+npx tsx src/scripts/seed.ts 
+```
+
+</CodeContainer>
+
+<img
+  src="https://static.everythingcs.dev/blog/pagination-nextjs-291023/seed-db.png"
+  loading="lazy"
+/>
+
+
+
+Now that our database has test data you can finally run the app with **npm run dev** command. You will see currently we are loading complete 500 data and this is not good performance wise and also for users.
+
+So let's fix it and add pagination to it.
+
+## Pagination Style 1
+
+This is the simplest form with just Next and Previous button. This is manily to understand the concept. You can use this if their is small dataset. 
+
+Firstly let's limit the number of items we are getting from the database. We can easily do it by calling the limit function.
+
+<CodeContainer>
+
+```js
+const allUsers = await db.select().from(users).limit(6);
+```
+
+</CodeContainer>
+
+So now we can have only 6 posts. Now let's see how to get next 6 post. We need the offset function.
+
+<CodeContainer>
+
+```js
+const allUsers = await db.select().from(users).limit(6).offset(6);
+```
+
+</CodeContainer>
+
+So this will skip first 6 and will show users from 7 to 12. So by manipulating this we can get next set of users.
+
+Now, to implement pagination we will use the parameter that will keep the page number and based on page number we will offset the user.
+
+Let's get the value stored in the url in the server components
+
+<CodeContainer fileName="page.tsx">
+
+```jsx
+interface SearchParamsProps {
+  searchParams: {
+    page: string,
+  };
+}
+export default async function Home({ searchParams }: SearchParamsProps) {
+  console.log(searchParams.page);
+}
+```
+
+</CodeContainer>
+
+Now visit localhost:3000/?page=2 You will get the value 2 in the terminal.
+
+Let's implement the functionality.
+
+For example let's say we want to show 6 users every page. Let's store it in the constant **numberOfItems**. for page 1, the offset will be 0 and for page 2 it will offset numberOfItems value. For page 3 it will offset by twice the numberOfItems. 
+
+So the generalised formula is **offsetItems = (pageNumber - 1) \* numberOfItems**
+
+<CodeContainer>
+
+```jsx
+const pageNumber = searchParams.page ?? 1;
+
+const numberOfItems = 6;
+
+const offsetItems = (Number(pageNumber) - 1) * numberOfItems;
+
+const allUsers = await db.select().from(users).limit(6).offset(offsetItems);
+```
+
+</CodeContainer>
+
+
+
+Let's add 2 Button to navigate to other pages.
+
+Here is the code.(In later part we will refactor it)
+
+### Basic Code
+
+<CodeContainer fileName="page.tsx">
+
+```tsx
+import { users } from "@/db/schema";
+import { db } from "@/db/setup";
+import Link from "next/link";
+
+interface SearchParamsProps {
+  searchParams: {
+    page: string;
+  };
+}
+export default async function Home({ searchParams }: SearchParamsProps) {
+  const pageNumber = Number(searchParams.page ?? 1);
+
+  const numberOfItems = 6;
+
+  const offsetItems = (pageNumber - 1) * numberOfItems;
+
+  const allUsers = await db
+    .select()
+    .from(users)
+    .limit(numberOfItems)
+    .offset(offsetItems);
+  return (
+    <main className="max-w-7xl my-5 mx-auto px-3">
+      <h2 className="text-center text-2xl font-bold my-5">Users </h2>
+      <div className=" relative  overflow-hidden ">
+        <table className=" border-2  rounded-xl border-slate-700 table-fixed w-full text-sm">
+          <thead>
+            <tr>
+              <th className="border-b-2 border-slate-700  font-medium p-4 pl-8  pb-3 text-left">
+                ID
+              </th>
+              <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                Name
+              </th>
+              <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                Email
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {allUsers.map((user) => (
+              <tr key={user.id}>
+                <td className="border-b border-slate-700  p-4 pl-8  ">
+                  {user.id}
+                </td>
+                <td className="border-b border-slate-700  p-4 pl-8  ">
+                  {user.name}
+                </td>
+                <td className="border-b border-slate-700  p-4 pl-8  ">
+                  {user.email}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex my-5 justify-end items-center gap-5">
+        <Link
+          href={`/?page=${pageNumber - 1}`}
+          className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-500"
+        >
+          Previous
+        </Link>
+        <Link
+          href={`/?page=${pageNumber + 1}`}
+          className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-500"
+        >
+          Next
+        </Link>
+      </div>
+    </main>
+  );
+}
+```
+
+</CodeContainer>
+
+Try clicking on the previous and next button. You will see next set of users.
+
+Now this works fine but lacks validation. For example we can go to page 0 which will cause error and also user can go to page beyond users are there.
+
+We need to have some sort of validation.
+
+### Validation for previous button
+
+Firstly let's prevent the users from going beyond page 1.
+
+Let's make use of URLSearchParams and we will use it to manage the params. Let's delete the params from the url if it is below 2. Also let's add a check in offsetItems.
+
+<CodeContainer>
+
+```jsx
+ const offsetItems = pageNumber > 1 ? (pageNumber - 1) * numberOfItems : 0;
+
+const prevSearchParams = new URLSearchParams();
+const nextSearchParams = new URLSearchParams();
+
+if (pageNumber > 2) {
+  prevSearchParams.set("page", `${pageNumber - 1}`);
+} else {
+  prevSearchParams.delete("page");
+}
+
+...
+
+<Link
+  href={pageNumber < 2 ? `` : `/?${prevSearchParams}`}
+  className={`${
+    pageNumber < 2
+    ? "bg-gray-500 cursor-not-allowed"
+    : "bg-blue-600 hover:bg-blue-500"
+  } px-5 py-2 rounded-md text-white`}
+  >
+  Previous
+</Link>
+
+```
+
+</CodeContainer>
+
+### Validation for Next Button
+
+User can go to any arbitary page number so we have to prevent the users from going beyond the data page. So firstly we will have to know how many pages do we need.
+
+So to calculate the number of pages we will first **count the number of entries and divide it by the numberOfItems**.
+
+To calculate the number of rows or number of entries in drizzle orm run the following command
+
+<CodeContainer>
+
+```jsx
+const totalUsers = await db
+  .select({ count: sql < number > `count(*)` })
+  .from(users);
+```
+
+</CodeContainer>
+If you  log it, output will be
+
+<CodeContainer>
+
+```js
+[{ count: 500 }];
+```
+
+</CodeContainer>
+
+Let's calculate the number of pages
+
+<CodeContainer>
+
+```js
+const totalUsers = await db
+  .select({ count: sql < number > `count(*)` })
+  .from(users);
+
+const numberOfPages = Math.ceil(totalUsers[0].count / numberOfItems);
+```
+
+</CodeContainer>
+
+Now let's add the validation. Here is the final page.tsx file.
+
+### Final Code
+<CodeContainer fileName="page.tsx">
+
+```tsx
+import Search from "@/components/search";
+import { users } from "@/db/schema";
+import { db } from "@/db/setup";
+import { sql } from "drizzle-orm";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+interface SearchParamsProps {
+  searchParams: {
+    page: string;
+  };
+}
+
+export default async function Home({ searchParams }: SearchParamsProps) {
+  const pageNumber = Number(searchParams.page ?? 1);
+
+  const numberOfItems = 6;
+
+  const totalUsers = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(users);
+
+  const numberOfPages = Math.ceil(totalUsers[0].count / numberOfItems);
+
+  let safePageNumber = 1;
+
+  if (pageNumber < 1) {
+    redirect("/");
+  } else if (pageNumber > numberOfPages) {
+    redirect("/");
+  } else {
+    safePageNumber = pageNumber;
+  }
+
+  const offsetItems =
+    safePageNumber > 1 ? (safePageNumber - 1) * numberOfItems : 0;
+
+  const allUsers = await db.select().from(users).limit(6).offset(offsetItems);
+
+  const prevSearchParams = new URLSearchParams();
+  const nextSearchParams = new URLSearchParams();
+
+  if (safePageNumber > 2) {
+    prevSearchParams.set("page", `${safePageNumber - 1}`);
+  } else {
+    prevSearchParams.delete("page");
+  }
+
+  if (safePageNumber > 0) {
+    if (safePageNumber === numberOfPages) {
+      nextSearchParams.set("page", `${numberOfPages}`);
+    } else {
+      nextSearchParams.set("page", `${safePageNumber + 1}`);
+    }
+  } else {
+    nextSearchParams.delete("page");
+  }
+  return (
+    <main className="max-w-7xl my-5 mx-auto px-3">
+    <div className="flex gap-4 items-center">
+      <h2 className="text-2xl font-bold my-5">Users </h2>
+      {/* <Search search={searchParams.q} /> */}
+      <Search/>
+    </div>
+    {allUsers.length > 0 ? (
+      <>
+        <div className="relative overflow-hidden">
+          <table className="border-2 rounded-xl border-slate-700 table-fixed w-full text-sm">
+            <thead>
+              <tr>
+                <th className="border-b-2 border-slate-700  font-medium p-4 pl-8  pb-3 text-left">
+                  ID
+                </th>
+                <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                  Name
+                </th>
+                <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                  Email
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {allUsers.map((user) => (
+                <tr key={user.id}>
+                  <td className="border-b border-slate-700  p-4 pl-8  ">
+                    {user.id}
+                  </td>
+                  <td className="border-b border-slate-700  p-4 pl-8  ">
+                    {user.name}
+                  </td>
+                  <td className="border-b border-slate-700  p-4 pl-8  ">
+                    {user.email}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex my-5 justify-end items-center gap-5">
+          <Link
+            href={`/?${prevSearchParams}`}
+            className={`${
+              safePageNumber === 1
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-500"
+            } px-5 py-2 rounded-md text-white`}
+          >
+            Previous
+          </Link>
+          <Link
+            href={`/?${nextSearchParams}`}
+            className={`${
+              safePageNumber === numberOfPages
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-500"
+            } px-5 py-2 rounded-md text-white`}
+          >
+            Next
+          </Link>
+        </div>
+      </>
+    ) : (
+      <p className="text-center text-xl mt-10">No users found</p>
+    )}
+  </main>
+  );
+}
+```
+
+</CodeContainer>
+
+Now we have validation in place.
+
+
+## Pagination Style 2
+
+In this we will show first to last pages and some intermediate pages.
+
+<img src="https://static.everythingcs.dev/blog/pagination-searching-nextjs/pagination-nextjs-demo-1.png" loading="lazy"/>
+<img src="https://static.everythingcs.dev/blog/pagination-searching-nextjs/pagination-nextjs-demo-2.png" loading="lazy"/>
+<img src="https://static.everythingcs.dev/blog/pagination-searching-nextjs/pagination-nextjs-demo-3.png" loading="lazy"/>
+
+In this we will generate the pagination array and show the number.
+
+### generatePaginationArray function
+
+<CodeContainer fileName="src/app/users/page.tsx">
+
+```tsx
+  const pageNumber = Math.max(1, Number(searchParams.page ?? 1));
+
+  const numberOfItems = 6;
+
+  const numberOfPages = Math.max(1, Math.ceil(totalCount / numberOfItems));
+
+  const generatePaginationArray = (current: number, max: number) => {
+    if (max <= 7) return Array.from({ length: max }, (_, i) => i + 1);
+
+    if (current <= 4) return [1, 2, 3, 4, 5, "...", max];
+    if (current >= max - 3)
+      return [1, "...", max - 4, max - 3, max - 2, max - 1, max];
+
+    return [1, "...", current - 1, current, current + 1, "...", max];
+  };
+
+  const paginationArray = generatePaginationArray(pageNumber, numberOfPages);
+```
+
+</CodeContainer>
+
+### createPageUrl function
+
+<CodeContainer fileName="src/app/users/page.tsx">
+
+```tsx
+  const createPageUrl = (page: number | string) => {
+    const params = new URLSearchParams(searchParams);
+    console.log("create", page)
+    if (page === 0) {
+      params.delete("page");
+    } else {
+      params.set("page", page.toString());
+    }
+    return `/users?${params.toString()}`;
+  };
+```
+
+</CodeContainer>
+
+It creates a new URLSearchParams object from the existing searchParams. This preserves any other query parameters that might be present in the URL. Then, it deletes the page parameter if the current page is 0, and sets the page parameter to the specified page number if it's not 0. Finally, it returns a string that represents the updated URL.
+
+
+### Final Code
+
+<CodeContainer fileName="src/app/users/page.tsx">
+
+```tsx
+import { users } from "@/db/schema";
+import { db } from "@/db/setup";
+import { like, sql } from "drizzle-orm";
+import Link from "next/link";
+import Search from "../../../components/search";
+
+interface SearchParamsProps {
+  searchParams: {
+    page: string;
+  };
+}
+
+export default async function Home({ searchParams }: SearchParamsProps) {
+  const pageNumber = Math.max(1, Number(searchParams.page ?? 1));
+  const numberOfItems = 6;
+
+  const totalUsers = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(users)
+
+  const totalCount = totalUsers[0].count;
+  const numberOfPages = Math.max(1, Math.ceil(totalCount / numberOfItems));
+
+  const safePageNumber = Math.min(pageNumber, numberOfPages);
+  const offsetItems = (safePageNumber - 1) * numberOfItems;
+
+  const allUsers = await db
+    .select()
+    .from(users)
+    .limit(numberOfItems)
+    .offset(offsetItems)
+
+
+  const generatePaginationArray = (current: number, max: number) => {
+    if (max <= 7) return Array.from({ length: max }, (_, i) => i + 1);
+
+    if (current <= 4) return [1, 2, 3, 4, 5, "...", max];
+    if (current >= max - 3)
+      return [1, "...", max - 4, max - 3, max - 2, max - 1, max];
+
+    return [1, "...", current - 1, current, current + 1, "...", max];
+  };
+
+  const paginationArray = generatePaginationArray(pageNumber, numberOfPages);
+
+  const createPageUrl = (page: number | string) => {
+    const params = new URLSearchParams(searchParams);
+    console.log("create", page)
+    if (page === 0) {
+      params.delete("page");
+    } else {
+      params.set("page", page.toString());
+    }
+    return `/users?${params.toString()}`;
+  };
+
+  return (
+    <main className="max-w-7xl my-5 mx-auto px-3">
+      <div className="flex gap-4 items-center">
+        <h2 className="text-2xl font-bold my-5">Users </h2>
+        <Search  />
+      </div>
+      {allUsers.length > 0 ? (
+        <>
+          <div className=" relative  overflow-hidden ">
+            <table className=" border-2  rounded-xl border-slate-700 table-fixed w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="border-b-2 border-slate-700  font-medium p-4 pl-8  pb-3 text-left">
+                    ID
+                  </th>
+                  <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                    Name
+                  </th>
+                  <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                    Email
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {allUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td className="border-b border-slate-700  p-4 pl-8  ">
+                      {user.id}
+                    </td>
+                    <td className="border-b border-slate-700  p-4 pl-8  ">
+                      {user.name}
+                    </td>
+                    <td className="border-b border-slate-700  p-4 pl-8  ">
+                      {user.email}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex my-5 justify-center items-center gap-2">
+            <Link
+              href={createPageUrl(safePageNumber - 1)}
+              className={`px-3 py-1 rounded border ${
+                pageNumber === 1
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-white text-blue-600 hover:bg-blue-50"
+              }`}
+            >
+              Prev
+            </Link>
+
+            {paginationArray.map((item, index) =>
+              item === "..." ? (
+                <span key={index} className="px-3 py-1">
+                  ...
+                </span>
+              ) : (
+                <Link
+                  key={index}
+                  href={createPageUrl(item)}
+                  className={`px-3 py-1 rounded border ${
+                    pageNumber === item
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-blue-600 hover:bg-blue-50"
+                  }`}
+                >
+                  {item}
+                </Link>
+              )
+            )}
+
+            <Link
+              href={createPageUrl(Math.min(numberOfPages, safePageNumber + 1))}
+              className={`px-3 py-1 rounded border ${
+                pageNumber === numberOfPages
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-white text-blue-600 hover:bg-blue-50"
+              }`}
+            >
+              Next
+            </Link>
+          </div>
+        </>
+      ) : (
+        <p className="text-center text-xl mt-10">No users found</p>
+      )}
+    </main>
+  );
+}
+```
+
+</CodeContainer>
+
+
+## Searching 
+
+Now we have the pagination working. Now let's add the search functionality.
+
+We will implement searching by the name of the user. You can extend this to search by email or any other field.
+
+From the database side we will use the like function to search for the users. 
+
+<CodeContainer fileName="src/app/users/page.tsx">
+
+```tsx
+const allUsers = await db
+    .select()
+    .from(users)
+    .limit(numberOfItems)
+    .offset(offsetItems)
+    .where(like(users.name, `%${searchQuery}%`));
+```
+
+</CodeContainer>
+
+Now we need this searchQuery. We will store it in the url params. I am implementing this in the root page.tsx component. You can do it in either of pages. In the final code both will have the searching functionality.
+
+### Basic Code
+
+Let's get the value stored in the url in the server components and pass it to search components
+
+<CodeContainer fileName="src/app/page.tsx">
+
+```tsx
+interface SearchParamsProps {
+  searchParams: {
+    page: string;
+    q: string;
+  };
+}
+
+export default async function Home({ searchParams }: SearchParamsProps) {
+  const searchQuery = typeof searchParams.q === "string" ? searchParams.q : "";
+
+  ...
+
+  return (
+    ...
+       <Search search={searchParams.q} />
+  )
+}
+```
+
+</CodeContainer>
+
+and in the search component
+
+<CodeContainer fileName="src/components/search.tsx">
+
+```tsx
+"use client";
+
+import { Loader2, SearchIcon } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useDebouncedCallback } from "use-debounce";
+
+export default function Search({ search }: { search: string | undefined }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const debouncedSearch = useDebouncedCallback((value: string) => {
+    startTransition(() => {
+      if (value) {
+        router.push(`${pathname}/?q=${value}`);
+      } else {
+        router.push(`${pathname}`);
+      }
+      setIsLoading(false);
+    });
+  }, 500);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setIsLoading(true);
+    debouncedSearch(event.target.value);
+  };
+
+  return (
+    <div className="relative mt-1 rounded-md shadow-sm border-2 border-gray-300">
+      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+        <SearchIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+      </div>
+      <input
+        type="text"
+        name="search"
+        id="search"
+        defaultValue={search}
+        className="block w-full rounded-md border-gray-300 pl-10 text-sm focus:border-gray-400 focus:outline-none focus:ring-0 py-2"
+        placeholder="Search"
+        onChange={handleSearchChange}
+      />
+
+      {isLoading && (
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+          <Loader2
+            className="h-5 w-5 text-gray-400 animate-spin"
+            aria-hidden="true"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+</CodeContainer>
+
+Now that we have this in place let's modify the data fetching logic.
+
+### data fetching logic
+
+<CodeContainer fileName="src/app/users/page.tsx">
+
+```tsx
+const totalUsers = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(users)
+    .where(like(users.name, `%${searchQuery}%`));
+
+const allUsers = await db
+    .select()
+    .from(users)
+    .limit(numberOfItems)
+    .offset(offsetItems)
+    .where(like(users.name, `%${searchQuery}%`));
+```
+
+</CodeContainer>
+
+### Final Code
+
+<CodeContainer fileName="src/app/users/page.tsx">
+
+```tsx
+import { users } from "@/db/schema";
+import { db } from "@/db/setup";
+import { like, sql } from "drizzle-orm";
+import Link from "next/link";
+import Search from "../../components/search";
+
+interface SearchParamsProps {
+  searchParams: {
+    page: string;
+    q: string;
+  };
+}
+
+export default async function Home({ searchParams }: SearchParamsProps) {
+  const searchQuery = typeof searchParams.q === "string" ? searchParams.q : "";
+  const pageNumber = Math.max(1, Number(searchParams.page ?? 1));
+  const numberOfItems = 6;
+
+  const totalUsers = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(users)
+    .where(like(users.name, `%${searchQuery}%`));
+
+  const totalCount = totalUsers[0].count;
+  const numberOfPages = Math.max(1, Math.ceil(totalCount / numberOfItems));
+
+  const safePageNumber = Math.min(pageNumber, numberOfPages);
+  const offsetItems = (safePageNumber - 1) * numberOfItems;
+
+  const allUsers = await db
+    .select()
+    .from(users)
+    .limit(numberOfItems)
+    .offset(offsetItems)
+    .where(like(users.name, `%${searchQuery}%`));
+
+
+  const generatePaginationArray = (current: number, max: number) => {
+    if (max <= 7) return Array.from({ length: max }, (_, i) => i + 1);
+
+    if (current <= 4) return [1, 2, 3, 4, 5, "...", max];
+    if (current >= max - 3)
+      return [1, "...", max - 4, max - 3, max - 2, max - 1, max];
+
+    return [1, "...", current - 1, current, current + 1, "...", max];
+  };
+
+  const paginationArray = generatePaginationArray(pageNumber, numberOfPages);
+
+  const createPageUrl = (page: number | string) => {
+    const params = new URLSearchParams(searchParams);
+    console.log("create", page)
+    if (page === 0) {
+      params.delete("page");
+    } else {
+      params.set("page", page.toString());
+    }
+    return `/users?${params.toString()}`;
+  };
+
+  return (
+    <main className="max-w-7xl my-5 mx-auto px-3">
+      <div className="flex gap-4 items-center">
+        <h2 className="text-2xl font-bold my-5">Users </h2>
+        <Search search={searchParams.q} />
+      </div>
+      {allUsers.length > 0 ? (
+        <>
+          <div className=" relative  overflow-hidden ">
+            <table className=" border-2  rounded-xl border-slate-700 table-fixed w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="border-b-2 border-slate-700  font-medium p-4 pl-8  pb-3 text-left">
+                    ID
+                  </th>
+                  <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                    Name
+                  </th>
+                  <th className="border-b-2 border-slate-700 font-medium p-4 pl-8  pb-3 text-left">
+                    Email
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {allUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td className="border-b border-slate-700  p-4 pl-8  ">
+                      {user.id}
+                    </td>
+                    <td className="border-b border-slate-700  p-4 pl-8  ">
+                      {user.name}
+                    </td>
+                    <td className="border-b border-slate-700  p-4 pl-8  ">
+                      {user.email}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex my-5 justify-center items-center gap-2">
+            <Link
+              href={createPageUrl(safePageNumber - 1)}
+              className={`px-3 py-1 rounded border ${
+                pageNumber === 1
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-white text-blue-600 hover:bg-blue-50"
+              }`}
+            >
+              Prev
+            </Link>
+
+            {paginationArray.map((item, index) =>
+              item === "..." ? (
+                <span key={index} className="px-3 py-1">
+                  ...
+                </span>
+              ) : (
+                <Link
+                  key={index}
+                  href={createPageUrl(item)}
+                  className={`px-3 py-1 rounded border ${
+                    pageNumber === item
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-blue-600 hover:bg-blue-50"
+                  }`}
+                >
+                  {item}
+                </Link>
+              )
+            )}
+
+            <Link
+              href={createPageUrl(Math.min(numberOfPages, safePageNumber + 1))}
+              className={`px-3 py-1 rounded border ${
+                pageNumber === numberOfPages
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-white text-blue-600 hover:bg-blue-50"
+              }`}
+            >
+              Next
+            </Link>
+          </div>
+        </>
+      ) : (
+        <p className="text-center text-xl mt-10">No users found</p>
+      )}
+    </main>
+  );
+}
+
+```
+
+</CodeContainer>
+
+
+## Conclusion
+
+So in this post we implemented the server side pagination and searching in server components in the Nextjs 14 with app router using drizzle orm.
+
+Please [refer to this repo for the code](https://github.com/ksjitendra18/nextjs-drizzle-orm-pagination-searching).
+
+Also if you have any query feel free to reach out to me via [EverythingCS discord server](https://discord.gg/W3nubBNeXK).
+

@@ -20,6 +20,9 @@ export default defineConfig({
   redirects: {
     "/blog/astro-js-google-auth/":
       "/blog/astro-js-auth-oauth-github-google-auth-guide/",
+
+    "/blog/nextjs-server-side-pagination-server-components-drizzle-orm/":
+      "/blog/nextjs-server-components-pagination-searching-drizzle-orm/",
   },
   output: "hybrid",
   adapter: cloudflare({
