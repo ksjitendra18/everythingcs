@@ -69,8 +69,8 @@ importers:
         specifier: ^3.4.10
         version: 3.4.10
       valibot:
-        specifier: ^0.37.0
-        version: 0.37.0(typescript@5.5.4)
+        specifier: ^0.42.1
+        version: 0.42.1(typescript@5.5.4)
       xxhashjs:
         specifier: ^0.2.2
         version: 0.2.2
@@ -1937,10 +1937,12 @@ packages:
 
   libsql@0.3.19:
     resolution: {integrity: sha512-Aj5cQ5uk/6fHdmeW0TiXK42FqUlwx7ytmMLPSaUQPin5HKKKuUPD62MAbN4OEweGBBI7q1BekoEN4gPUEL6MZA==}
+    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   libsql@0.4.1:
     resolution: {integrity: sha512-qZlR9Yu1zMBeLChzkE/cKfoKV3Esp9cn9Vx5Zirn4AVhDWPcjYhKwbtJcMuHehgk3mH+fJr9qW+3vesBWbQpBg==}
+    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lilconfig@2.1.0:
@@ -2740,8 +2742,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  valibot@0.37.0:
-    resolution: {integrity: sha512-FQz52I8RXgFgOHym3XHYSREbNtkgSjF9prvMFH1nBsRyfL6SfCzoT1GuSDTlbsuPubM7/6Kbw0ZMQb8A+V+VsQ==}
+  valibot@0.42.1:
+    resolution: {integrity: sha512-3keXV29Ar5b//Hqi4MbSdV7lfVp6zuYLZuA9V1PvQUsXqogr+u5lvLPLk3A4f74VUXDnf/JfWMN6sB+koJ/FFw==}
     peerDependencies:
       typescript: '>=5'
     peerDependenciesMeta:
@@ -5874,7 +5876,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  valibot@0.37.0(typescript@5.5.4):
+  valibot@0.42.1(typescript@5.5.4):
     optionalDependencies:
       typescript: 5.5.4
 
