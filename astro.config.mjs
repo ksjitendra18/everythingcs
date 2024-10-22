@@ -23,6 +23,8 @@ export default defineConfig({
 
     "/blog/nextjs-server-side-pagination-server-components-drizzle-orm/":
       "/blog/nextjs-server-components-pagination-searching-drizzle-orm/",
+
+      "/blog/nextjs-server-side-pagination-searching-drizzle-orm/":"/blog/nextjs-server-components-pagination-searching-drizzle-orm/"
   },
   output: "hybrid",
   adapter: cloudflare({
