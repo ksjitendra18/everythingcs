@@ -1,7 +1,7 @@
 ---
 title: "Self-Hosting Next.js on Ubuntu VM  with GitHub Actions for Automatic Deployments"
 publishedDate: 2024-08-18
-updatedDate: 2024-08-18
+updatedDate: 2024-10-22
 description: "Step by step guide on how to self host next js application using nginx and pm2 on the ubuntu virtual machine and also setup github actions for automatic deployments"
 ogImage: "https://static.everythingcs.dev/blog/nextjs-self-host/self-host-nextjs-pm2-ubuntu-vm-github-actions.png"
 featuredImage: "https://static.everythingcs.dev/blog/nextjs-self-host/self-host-nextjs-pm2-ubuntu-vm-github-actions.png"
@@ -182,6 +182,8 @@ Now we will have to set up the repo
 
 If you are integrating into existing repo, you can skip this step. Else for following this guide you can use this [repo](https://github.com/ksjitendra18/nextjs-todo.git) as a starting point.
 
+Make sure to add compress: false in your next.config.ts(next 15) or next.config.mjs(next 14). [Reference](https://nextjs.org/docs/app/api-reference/next-config-js/compress) 
+
 You can clone the repo and make changes to it.
 
 If you have private repo, then you can read this guide on [how to clone private repo](https://everythingcs.dev/blog/clone-private-repo-github-remote-host-vm/)
@@ -296,7 +298,7 @@ sudo nano /etc/nginx/sites-available/nextjs-todo
 
 </CodeContainer>
 
-Add the following configuration to the file.
+Add the following configuration to the file. Last two configuration is there to enable streaming.
 
 <CodeContainer fileName="/etc/nginx/sites-available/nextjs-todo">
 
@@ -311,6 +313,9 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
+
+        proxy_buffering off;
+        proxy_set_header X-Accel-Buffering no;
     }
 }
 ```
