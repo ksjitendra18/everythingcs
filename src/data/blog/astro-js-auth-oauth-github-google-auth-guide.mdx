@@ -1,7 +1,7 @@
 ---
 title: "Google and Github Authentication OAuth2 Setup in Astro.js"
 publishedDate: 2024-01-02
-updatedDate: 2024-02-28
+updatedDate: 2024-10-02
 description: "Step by step guide on how to setup google and github authentication in astro and also persist user and protecting routes."
 ogImage: "https://static.everythingcs.dev/blog/astro-auth-series/google-github-oauth-authentication-astro-js-ssr.png"
 featuredImage: "https://static.everythingcs.dev/blog/astro-auth-series/google-github-oauth-authentication-astro-js-ssr.png"
@@ -11,6 +11,7 @@ isFeatured: true
 draft: false
 ---
 import CodeContainer from "../../components/blog/code-container.astro";
+
 
 In this guide we are going to see how to setup OAuth authentication using google and github provider in Astro js without any external library.
 
@@ -141,32 +142,41 @@ export const users = sqliteTable("users", {
 });
 
 export const usersRelations = relations(users, ({ many, one }) => ({
-  oauthTokens: many(oauthTokens),
+  oauthProviders: many(oauthProviders),
   sessions: many(sessions),
   loginLogs: many(loginLogs),
 }));
 
-export const oauthTokens = sqliteTable(
-  "oauth_tokens",
+export const oauthProviders = sqliteTable(
+  "oauth_providers",
   {
+    id: text("id")
+      .$default(() => createId())
+      .primaryKey(),
+    providerUserId: text("provider_user_id").notNull(),
     userId: text("user_id")
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    email: text("email").notNull(),
     strategy: text("strategy", { enum: ["google", "github"] }).notNull(),
-    accessToken: text("access_token").notNull(),
-    refreshToken: text("refresh_token").notNull(),
     createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   },
-  (table) => {
-    return {
-      pk: primaryKey({ columns: [table.userId, table.strategy] }),
-    };
-  }
+  (table) => ({
+    oauthProvidersUserIdIdx: index("oauth_providers_user_id_idx").on(
+      table.userId
+    ),
+    oauthProviderProvierUserIdStrategyIdx: index(
+      "oauth_providers_provider_user_id_strategy_idx"
+    ).on(table.providerUserId, table.strategy),
+  })
 );
 
-export const oauthTokenRelations = relations(oauthTokens, ({ one }) => ({
+export const oauthProviderRelations = relations(oauthProviders, ({ one }) => ({
   user: one(users, {
-    fields: [oauthTokens.userId],
+    fields: [oauthProviders.userId],
     references: [users.id],
   }),
 }));
@@ -187,24 +197,33 @@ export const sessionRelations = relations(sessions, ({ one }) => ({
   loginLog: one(loginLogs),
 }));
 
-export const loginLogs = sqliteTable("login_logs", {
-  id: text("id")
-    .$default(() => createId())
-    .primaryKey(),
-  sessionId: text("session_id").references(() => sessions.id, {
-    onDelete: "set null",
-  }),
-  userId: text("user_id").references(() => users.id, {
-    onDelete: "cascade",
-  }),
+export const loginLogs = sqliteTable(
+  "login_logs",
+  {
+    id: text("id")
+      .$default(() => createId())
+      .primaryKey(),
+    sessionId: text("session_id").references(() => sessions.id, {
+      onDelete: "cascade",
+    }),
+    userId: text("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
 
-  browser: text("browser").notNull(),
-  device: text("device").notNull(),
-  os: text("os").notNull(),
-  ip: text("ip").notNull(),
-  loggedInAt: text("logged_in_at").default(sql`CURRENT_TIMESTAMP`),
-});
+    strategy: text("strategy", {
+      enum: ["github", "google", "credentials", "magic_link"],
+    }).notNull(),
 
+    browser: text("browser").notNull(),
+    device: text("device").notNull(),
+    os: text("os").notNull(),
+    ip: text("ip").notNull(),
+    loggedInAt: text("logged_in_at").default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => ({
+    loginLogsUserIdIdx: index("login_logs_user_id_idx").on(table.userId),
+  })
+);
 export const loginLogsRelations = relations(loginLogs, ({ one }) => ({
   user: one(users, {
     fields: [loginLogs.userId],
@@ -228,18 +247,21 @@ Create a drizzle.config.ts file in the root of the current folder.
 <CodeContainer fileName="drizzle.config.ts">
 
 ```ts
-import type { Config } from "drizzle-kit";
+import { defineConfig } from "drizzle-kit";
 
-export default {
+if (!process.env.DB_URL || !process.env.DB_TOKEN) {
+  throw new Error("DB_URL and DB_TOKEN missing");
+}
+export default defineConfig({
+  dialect: "sqlite",
+  driver: "turso",
   schema: "./src/db/schema.ts",
   out: "./src/db/migrations",
   dbCredentials: {
     url: process.env.DB_URL!,
     authToken: process.env.DB_TOKEN!,
   },
-
-  driver: "turso",
-} satisfies Config;
+});
 ```
 
 </CodeContainer>
@@ -249,14 +271,14 @@ Now run the following command
 <CodeContainer fileName="terminal">
 
 ```bash
-npx drizzle-kit push:sqlite
+npx drizzle-kit generate
+
+npx drizzle-kit migrate
 ```
 
 </CodeContainer>
 
-<img src="https://static.everythingcs.dev/blog/astro-auth-series/db-push.png" loading="lazy" alt="db push output" />
-
-Now that the schema is pushed to turso let setup the db
+Now that the schema is synced with the turso let setup the db 
 
 ### Setting up db
 
@@ -377,9 +399,7 @@ export async function GET({ cookies }: APIContext) {
   const authorizationUrl = queryString.stringifyUrl({
     url: "https://accounts.google.com/o/oauth2/v2/auth",
     query: {
-      access_type: "offline",
       scope: "openid email profile",
-      prompt: "consent",
       response_type: "code",
       client_id: import.meta.env.GOOGLE_AUTH_CLIENT,
       redirect_uri: import.meta.env.GOOGLE_AUTH_CALLBACK_URL,
@@ -402,7 +422,7 @@ export async function GET({ cookies }: APIContext) {
 
 Let's understand from top. Firstly we are generating googleOauthState and then storing it in the cookies as the session. This state is recommended for protecting against XSRF and CSRF attacks.
 
-Then we are generating codeChallenge. This is for the implementation of PKCE for google oauth. Learn more about PKCE.
+Then we are generating codeChallenge. This is for the implementation of PKCE for google oauth. Learn more about [PKCE](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-pkce).
 
 Now we will generate a redirect url with the values mentioned above and redirect the user to the authorization page. Once user select the account and you will be redirected to the url that you have mentioned as callback.
 
@@ -455,7 +475,7 @@ We will check if the stored state in the cookie matches with the state received 
 
 If the state doesn't matches we will redirect the user to the login page with error and also we will delete the cookie if it exists.
 
-The second step is to make request to the exchange the code and the verfier for the access and the refresh token
+The second step is to make request to the exchange the code and the verfier for the access token
 
 <CodeContainer fileName="src/pages/api/auth/callback/google.ts">
 
@@ -493,7 +513,6 @@ You will get response something like this
 {
   access_token: '...',
   expires_in: 3599,
-  refresh_token: '...',
   scope: '...,
   token_type: 'Bearer',
   id_token: '...'     
@@ -503,7 +522,7 @@ You will get response something like this
 
 </CodeContainer>
 
-The response contains the access token which we can use to get the user details like name and email. Access token has lifetime of 1 hours as mentioned in the expires_in. So authrization server also gives the refresh token.
+The response contains the access token which we can use to get the user details like name and email. Access token has lifetime of 1 hours as mentioned in the expires_in. 
 
 So let's make a request to the user info server to get the user details.
 
@@ -539,7 +558,7 @@ Here is the reponse of the user request
 
 </CodeContainer>
 
-<div class="bg-yellow-500 px-3 rounded-md my-2 py-1">
+<div class="bg-yellow-700  px-3 rounded-md my-2 py-1">
 <p class="p-0 m-0" style={{"margin-block-end": "0px"}}> **Note:** Don't worry about error handling in the below final code I will handle it</p>
 </div>
 
@@ -568,7 +587,11 @@ console.log("userExists", userExists);
 
 </CodeContainer>
 
-The response with be undefined if their is no user. And if the user exists and user
+The reponse will be either undefined or the existing user details.
+
+<div class="bg-amber-600  px-3 rounded-md my-2 py-1">
+We will perform account linking. That means if the user has already an account then we will link the accounts. Means if the user created an account with email then they can access the same account with the google account having same email.
+</div>
 
 So let's add a simple check and create new user, then create oauth token, create session, create log for the user and then redirect the user with the session token as the cookie to the user.
 
@@ -615,6 +638,7 @@ if (!userExists) {
     userId: newUser[0].id,
     sessionId: newSession[0].id,
     ip: clientAddress ?? "dev",
+    strategy: "google",
     os: `${parser.getOSName()} ${parser.getOSVersion()}`,
     browser: `${parser.getBrowserName()}  ${parser.getBrowserVersion()}`,
     device: parser.getPlatformType(),
@@ -652,19 +676,13 @@ If user doesn't have that strategy then we will add the entry to the oauth token
 ```ts
 if(!userExists){
   ...
-} else{
-  if(userExists.oauthTokens.length > 0){
-    // update oauth tokens
-    // create session
-    // create logs
-    // send session id to user
-  } else{
-    // create oauth token
-    // create session
-    // create logs
-    // send session id to user
-  }
+} else if (userExists && !oauthProviderData) {
+//  create oauth provider
+
 }
+
+// create session
+// create log
 
 ```
 
@@ -679,14 +697,24 @@ Let's refactor it. Create a lib folder in the src folder and inside lib folder c
 ```ts
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/index";
-import { loginLogs, oauthTokens, sessions, users } from "../db/schema";
+import {
+  loginLogs,
+  oauthProviders,
+  passwords,
+  sessions,
+  users,
+} from "../db/schema";
 import Bowser from "bowser";
+import bcrypt from "bcryptjs";
+import redis from "./redis";
+import { customAlphabet } from "nanoid";
 
 type NewUserArgs = {
   email: string;
   userName: string;
   fullName: string;
   profilePhoto: string;
+  emailVerified: boolean;
 };
 
 type UserExistArgs = {
@@ -703,6 +731,7 @@ type NewLogsArgs = {
   userId: string;
   sessionId: string;
   ip: string;
+  strategy: "github" | "google" | "credentials" | "magic_link";
 };
 
 type TokenArgs = {
@@ -715,16 +744,12 @@ type TokenArgs = {
 const expiresAt = new Date();
 expiresAt.setDate(expiresAt.getDate() + 14);
 
-export async function throwError() {
-  throw new Error("wtf");
-}
-
 export const createUser = async ({
   email,
   fullName,
   profilePhoto,
   userName,
-  emailVerified
+  emailVerified,
 }: NewUserArgs) => {
   try {
     const newUser = await db
@@ -744,17 +769,91 @@ export const createUser = async ({
   }
 };
 
-export const checkUserExists = async ({ email, strategy }: UserExistArgs) => {
+export const checkUserExists = async ({ email }: UserExistArgs) => {
   const userExists = await db.query.users.findFirst({
-    where: eq(users.email, email),
+    columns: {
+      id: true,
+      email: true,
+    },
+    where: and(
+      eq(users.email, email),
+      eq(users.isBlocked, false),
+      eq(users.isDeleted, false)
+    ),
+  });
+
+  return userExists;
+};
+
+export const checkOauthUserExists = async ({
+  email,
+  providerId,
+  strategy,
+}: {
+  email: string;
+  providerId: string;
+  strategy: "github" | "google";
+}) => {
+  const userExists = await db.query.users.findFirst({
+    where: and(
+      eq(users.email, email),
+      eq(users.isBlocked, false),
+      eq(users.isDeleted, false)
+    ),
+    columns: {
+      id: true,
+      email: true,
+    },
     with: {
-      oauthTokens: {
-        where: eq(oauthTokens.strategy, strategy),
+      oauthProviders: {
+        where: and(
+          eq(oauthProviders.providerUserId, String(providerId)),
+          eq(oauthProviders.strategy, strategy)
+        ),
       },
     },
   });
 
-  return userExists;
+  const oauthProviderData = await db.query.oauthProviders.findFirst({
+    where: and(
+      eq(oauthProviders.providerUserId, String(providerId)),
+      eq(oauthProviders.strategy, strategy)
+    ),
+    with: {
+      user: {
+        columns: {
+          id: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  return { userExists, oauthProviderData };
+};
+
+export const createOauthProvider = async ({
+  providerId,
+  userId,
+  email,
+  strategy,
+}: {
+  providerId: string | number;
+  userId: string;
+  email: string;
+  strategy: "github" | "google";
+}) => {
+  try {
+    await db.insert(oauthProviders).values({
+      providerUserId: String(providerId),
+      userId,
+      strategy,
+      email,
+    });
+  } catch (error) {
+    console.log("Error while creating oauth provider", error);
+    throw new Error("Error while creating oauth provider");
+  }
 };
 
 export const createSession = async ({ userId }: NewSessionArgs) => {
@@ -776,50 +875,12 @@ export const createSession = async ({ userId }: NewSessionArgs) => {
   }
 };
 
-export const saveOauthToken = async ({
-  accessToken,
-  refreshToken,
-  strategy,
-  userId,
-}: TokenArgs) => {
-  try {
-    await db.insert(oauthTokens).values({
-      userId,
-      strategy: "google",
-      accessToken,
-      refreshToken,
-    });
-  } catch (error) {
-    throw new Error("Error while creating token");
-  }
-};
-
-export const updateOauthToken = async ({
-  accessToken,
-  refreshToken,
-  strategy,
-  userId,
-}: TokenArgs) => {
-  try {
-    await db
-      .update(oauthTokens)
-      .set({
-        accessToken,
-        refreshToken,
-      })
-      .where(
-        and(eq(oauthTokens.userId, userId), eq(oauthTokens.strategy, strategy))
-      );
-  } catch (error) {
-    throw new Error("Error while creating token");
-  }
-};
-
 export const createLoginLog = async ({
   userAgent,
   userId,
   sessionId,
   ip,
+  strategy,
 }: NewLogsArgs) => {
   if (!userAgent) {
     throw new Error("Internal Error");
@@ -831,8 +892,9 @@ export const createLoginLog = async ({
       userId,
       sessionId,
       ip,
+      strategy,
       os: `${parser.getOSName()} ${parser.getOSVersion()}`,
-      browser: `${parser.getBrowserName()}  ${parser.getBrowserVersion()}`,
+      browser: `${parser.getBrowserName()} ${parser.getBrowserVersion()}`,
       device: parser.getPlatformType(),
     });
   } catch (error) {
@@ -851,13 +913,16 @@ Here is the final auth/callback/google.ts
 import type { APIContext } from "astro";
 
 import {
-  checkUserExists,
+  checkOauthUserExists,
+  create2FASession,
   createLoginLog,
+  createOauthProvider,
   createSession,
   createUser,
-  saveOauthToken,
-  updateOauthToken,
 } from "../../../../lib/auth";
+import { oauthProviders } from "../../../../db/schema";
+import { db } from "../../../../db";
+import { eq } from "drizzle-orm";
 
 export async function GET({ request,clientAddress, cookies }: APIContext) {
   const code = new URL(request.url).searchParams?.get("code");
@@ -905,8 +970,9 @@ export async function GET({ request,clientAddress, cookies }: APIContext) {
     );
     const fetchUserRes = await fetchUser.json();
 
-    const userExists = await checkUserExists({
+     const { userExists, oauthProviderData } = await checkOauthUserExists({
       email: fetchUserRes.email,
+      providerId: fetchUserRes.id,
       strategy: "google",
     });
 
@@ -919,60 +985,55 @@ export async function GET({ request,clientAddress, cookies }: APIContext) {
         emailVerified: true,
       });
 
-      await saveOauthToken({
+      await createOauthProvider({
+        providerId: fetchUserRes.id,
         userId: userId,
         strategy: "google",
-        accessToken: fetchTokenRes.access_token,
-        refreshToken: fetchTokenRes.refresh_token,
+        email: fetchUserRes.email,
       });
 
       const { sessionId, expiresAt } = await createSession({
         userId: userId,
       });
 
-      // log
       await createLoginLog({
         sessionId,
         userAgent: request.headers.get("user-agent"),
         userId: userId,
         ip: clientAddress ?? "dev",
+        strategy: "google",
       });
 
-      cookies.delete("google_oauth_state", { path: "/" });
-      cookies.delete("google_code_challenge", { path: "/" });
-
-      cookies.set("app_auth_token", sessionId, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: import.meta.env.PROD,
-      });
+      cookies.delete("google_oauth_state");
+      cookies.delete("google_code_challenge");
 
       return new Response(null, {
         status: 302,
         headers: {
           Location: "/profile",
+          "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
+            import.meta.env.PROD
+          }`,
         },
       });
+    } else if (userExists && !oauthProviderData) {
+      await createOauthProvider({
+        providerId: fetchUserRes.id,
+        userId: userExists.id,
+        strategy: "google",
+        email: fetchUserRes.email,
+      });
     } else {
-      if (userExists.oauthTokens.length > 0) {
-        // oauth strategy exists
-        // update token
-
-        await updateOauthToken({
-          userId: userExists.id,
-          strategy: "google",
-          accessToken: fetchTokenRes.access_token,
-          refreshToken: fetchTokenRes.refresh_token,
-        });
-      } else {
-        await saveOauthToken({
-          userId: userExists.id,
-          strategy: "google",
-          accessToken: fetchTokenRes.access_token,
-          refreshToken: fetchTokenRes.refresh_token,
-        });
+      // this is not required because hardly user will change their email. very rare chances
+      if (userExists.oauthProviders[0].email !== fetchUserRes.email) {
+        await db
+          .update(oauthProviders)
+          .set({
+            email: fetchUserRes.email,
+          })
+          .where(eq(oauthProviders.providerUserId, fetchUserRes.id));
       }
+    }
 
       const { sessionId, expiresAt } = await createSession({
         userId: userExists.id,
@@ -1164,7 +1225,6 @@ You will get the token from github. Here is the response
 
 Then we will use this token to access user info and their email. Please note that if the user has his email as null then we will have to make a separate request to another endpoint to get their email.
 
-Please note github doesn't provide refresh_token so we will store this only as both access and refresh token.
 
 <CodeContainer fileName="src/pages/api/auth/callback/github.ts">
 
@@ -1244,12 +1304,12 @@ Here is complete api/auth/callback/github.ts
 import type { APIContext } from "astro";
 
 import {
-  checkUserExists,
+  checkOauthUserExists,
+  create2FASession,
   createLoginLog,
+  createOauthProvider,
   createSession,
-  createUser,
-  saveOauthToken,
-  updateOauthToken,
+  createUser
 } from "../../../../lib/auth";
 
 type EmailRes = (
@@ -1343,12 +1403,47 @@ export async function GET({ request,clientAddress, cookies }: APIContext) {
       }
     };
 
-    const userExists = await checkUserExists({
-      email: userEmail(),
+ const { userExists, oauthProviderData } = await checkOauthUserExists({
+      providerId: fetchUserRes.id,
       strategy: "github",
+      email: userEmail(),
     });
 
-  
+    if (oauthProviderData) {
+      if (oauthProviderData.email !== userEmail()) {
+        await db
+          .update(oauthProviders)
+          .set({
+            email: userEmail(),
+          })
+          .where(eq(oauthProviders.providerUserId, String(fetchUserRes.id)));
+      }
+
+      const { sessionId, expiresAt } = await createSession({
+        userId: oauthProviderData.userId,
+      });
+
+      await createLoginLog({
+        sessionId,
+        userAgent: request.headers.get("user-agent"),
+        userId: oauthProviderData.userId,
+        ip: clientAddress ?? "dev",
+        strategy: "github",
+      });
+
+      cookies.delete("github_oauth_state", { path: "/" });
+
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: "/profile",
+          "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
+            import.meta.env.PROD
+          }`,
+        },
+      });
+    }
+
     if (!userExists) {
       const { userId } = await createUser({
         email: userEmail(),
@@ -1358,60 +1453,43 @@ export async function GET({ request,clientAddress, cookies }: APIContext) {
         emailVerified: true,
       });
 
-      await saveOauthToken({
-        userId: userId,
+      await createOauthProvider({
+        providerId: fetchUserRes.id,
+        userId,
         strategy: "github",
-        accessToken: fetchTokenRes.access_token,
-        refreshToken: fetchTokenRes.access_token,
+        email: userEmail(),
       });
 
       const { sessionId, expiresAt } = await createSession({
         userId: userId,
       });
 
-      // log
       await createLoginLog({
         sessionId,
         userAgent: request.headers.get("user-agent"),
         userId: userId,
         ip: clientAddress ?? "dev",
+        strategy: "github",
       });
 
       cookies.delete("github_oauth_state", { path: "/" });
-
-      cookies.set("app_auth_token", sessionId, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: import.meta.env.PROD,
-      });
-
 
       return new Response(null, {
         status: 302,
         headers: {
           Location: "/profile",
+          "Set-Cookie": `app_auth_token=${sessionId}; Path=/; HttpOnly; SameSite=Lax;Expires=${expiresAt.toUTCString()}; Secure=${
+            import.meta.env.PROD
+          }`,
         },
       });
-    } else {
-      if (userExists.oauthTokens.length > 0) {
-        // oauth strategy exists
-        // update token
-
-        await updateOauthToken({
-          userId: userExists.id,
-          strategy: "github",
-          accessToken: fetchTokenRes.access_token,
-          refreshToken: fetchTokenRes.access_token,
-        });
-      } else {
-        await saveOauthToken({
-          userId: userExists.id,
-          strategy: "github",
-          accessToken: fetchTokenRes.access_token,
-          refreshToken: fetchTokenRes.access_token,
-        });
-      }
+    } else if (!oauthProviderData) {
+      await createOauthProvider({
+        providerId: fetchUserRes.id,
+        userId: userExists.id,
+        strategy: "github",
+        email: userEmail(),
+      });
     }
 
     const { sessionId, expiresAt } = await createSession({
@@ -1581,6 +1659,7 @@ And here is the profile page
 
 ```astro
 ---
+---
 import { eq, and, gte } from "drizzle-orm";
 import MainLayout from "../layout/main-layout.astro";
 import { sessions } from "../db/schema";
@@ -1597,12 +1676,17 @@ const userInfo = await db.query.sessions.findFirst({
     eq(sessions.id, authToken),
     gte(sessions.expiresAt, new Date().getTime())
   ),
+  columns:{id: true},
   with: {
-    user: true,
+    user: {
+      columns:{
+        fullName: true,
+        email: true,
+        userName: true,
+      }
+    },
   },
 });
-
-console.log("auth", userInfo);
 ---
 
 <MainLayout title="Profile" description="Profile">
@@ -1674,7 +1758,7 @@ console.log("auth", userInfo);
       "status px-3 my-5 text-center w-fit rounded-md py-2 flex items-center justify-center text-white";
 
     if (res.status === 200) {
-      window.location.href = "/";
+      window.location.href = "/account";
     }
   });
 </script>
@@ -1726,6 +1810,13 @@ const logs = userInfo?.user?.loginLogs.sort((a, b) =>
 function capitalizeFirstWord(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+const strategiesMap = {
+  github: "GitHub",
+  google: "Google",
+  credentials: "Credential",
+  magic_link: "Magic Link",
+}
 ---
 
 <MainLayout title="Account Page" description="Account Page">
@@ -1771,7 +1862,7 @@ function capitalizeFirstWord(text: string) {
     )
   }
 
-  <div class="my-5">
+<div class="my-5">
     <h2 class="text-xl my-3 font-semibold">Log in logs</h2>
 
     <div class="flex flex-col gap-5">
@@ -1788,11 +1879,19 @@ function capitalizeFirstWord(text: string) {
               {capitalizeFirstWord(log.device)}
               {capitalizeFirstWord(log.browser)}
             </div>
-            <div class="flex md:gap-5 gap-3 w-full lg:w-auto mt-2 flex-col md:flex-row flex-wrap">
+            <div class="flex md:gap-5 gap-3 w-full items-center lg:w-auto mt-2 flex-col md:flex-row flex-wrap">
+              <div class="bg-blue-700 rounded-md px-2 py-1 text-white text-sm">Method: {strategiesMap[log.strategy]}</div>
               <div>IP: {log.ip}</div>
               <div>
                 Logged in at:
-                {new Intl.DateTimeFormat("en-US").format(
+                {new Intl.DateTimeFormat("en-US", {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: true                      
+                }).format(
                   new Date(log.loggedInAt!)
                 )}
               </div>
