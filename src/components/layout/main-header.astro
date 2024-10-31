@@ -60,5 +60,17 @@ const { title, description } = Astro.props;
     }`}
   />
 
+  <script
+    defer
+    data-domain="everythingcs.dev"
+    src="https://evts.everythingcs.dev/js/script.outbound-links.js"></script>
+  <script>
+    window.plausible =
+      window.plausible ||
+      function () {
+        (window.plausible.q = window.plausible.q || []).push(arguments);
+      };
+  </script>
+
   <slot />
 </head>
