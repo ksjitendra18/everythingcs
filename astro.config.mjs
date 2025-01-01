@@ -14,9 +14,7 @@ export default defineConfig({
   markdown: {
     syntaxHighlight: "prism",
   },
-  experimental: {
-    contentLayer: true,
-  },
+
   redirects: {
     "/blog/astro-js-google-auth/":
       "/blog/astro-js-auth-oauth-github-google-auth-guide/",
@@ -24,9 +22,10 @@ export default defineConfig({
     "/blog/nextjs-server-side-pagination-server-components-drizzle-orm/":
       "/blog/nextjs-server-components-pagination-searching-drizzle-orm/",
 
-      "/blog/nextjs-server-side-pagination-searching-drizzle-orm/":"/blog/nextjs-server-components-pagination-searching-drizzle-orm/"
+    "/blog/nextjs-server-side-pagination-searching-drizzle-orm/":
+      "/blog/nextjs-server-components-pagination-searching-drizzle-orm/",
   },
-  output: "hybrid",
+  output: "static",
   adapter: cloudflare({
     imageService: "passthrough",
   }),
