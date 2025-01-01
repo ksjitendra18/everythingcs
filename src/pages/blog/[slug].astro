@@ -24,6 +24,7 @@ const {
   updatedDate,
   publishedDate,
   featuredImage,
+
   category,
 } = post.data;
 
@@ -45,7 +46,6 @@ const { Content, headings } = await render(post);
     </div>
 
     <aside class="hidden lg:flex flex-col z-1 sticky top-4">
-      <!-- <TOC {headings} client:load /> -->
       <TableOfContents {headings} />
     </aside>
   </article>
