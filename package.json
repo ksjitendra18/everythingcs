@@ -23,7 +23,7 @@
     "astro-robots-txt": "^1.0.0",
     "bowser": "^2.11.0",
     "drizzle-orm": "^0.38.3",
-    "lucide-astro": "^0.469.0",
+    "lucide-astro": "^0.473.0",
     "nanoid": "^5.0.9",
     "preact": "^10.25.4",
     "solid-js": "^1.9.3",
