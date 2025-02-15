@@ -15,7 +15,7 @@ import MainLayout from "../../components/layout/page-layout.astro";
     <div class="my-10">
       <h3 class="font-medium text-xl">Series</h3>
 
-      <div class="category-section">
+      <div class="flex flex-col md:flex-row flex-wrap gap-4 my-5">
         <CategoryCard
           href={"/global-state-management-reactjs"}
           title={"React State Management"}
@@ -29,7 +29,7 @@ import MainLayout from "../../components/layout/page-layout.astro";
     <div class="my-10">
       <h3 class="font-medium text-xl">Full Stack</h3>
 
-      <div class="category-section">
+      <div class="flex flex-col md:flex-row flex-wrap gap-4 my-5">
         <CategoryCard href={"/nextjs"} title={"Next.js"} />
         <CategoryCard href={"/nuxtjs"} title={"Nuxt.js"} />
         <CategoryCard href={"/sveltekit"} title={"Sveltekit"} />
@@ -38,7 +38,7 @@ import MainLayout from "../../components/layout/page-layout.astro";
     <div class="my-10">
       <h3 class="font-medium text-xl">Frontend</h3>
 
-      <div class="category-section">
+      <div class="flex flex-col md:flex-row flex-wrap gap-4 my-5">
         <CategoryCard href={"/reactjs"} title={"React.js"} />
         <CategoryCard href={"/vuejs"} title={"Vue.js"} />
         <CategoryCard href={"/svelte"} title={"Svelte"} />
@@ -50,7 +50,7 @@ import MainLayout from "../../components/layout/page-layout.astro";
     <div class="my-10">
       <h3 class="font-medium text-xl">Cloud and Services</h3>
 
-      <div class="category-section">
+      <div class="flex flex-col md:flex-row flex-wrap gap-4 my-5">
         <CategoryCard href={"/firebase"} title={"Firebase"} />
         <CategoryCard href={"/vps"} title={"VPS"} />
         <CategoryCard href={"/self-hosting"} title={"Self Hosting"} />
@@ -59,7 +59,7 @@ import MainLayout from "../../components/layout/page-layout.astro";
     <div class="my-10">
       <h3 class="font-medium text-xl">Backend</h3>
 
-      <div class="category-section">
+      <div class="flex flex-col md:flex-row flex-wrap gap-4 my-5">
         <CategoryCard href={"/nodejs"} title={"Node.js"} />
         <CategoryCard href={"/deno"} title={"Deno"} />
         <CategoryCard href={"/bun"} title={"Bun"} />
@@ -75,9 +75,3 @@ import MainLayout from "../../components/layout/page-layout.astro";
     </div>
   </div>
 </MainLayout>
-
-<style>
-  .category-section {
-    @apply flex flex-col md:flex-row flex-wrap gap-4 my-5;
-  }
-</style>

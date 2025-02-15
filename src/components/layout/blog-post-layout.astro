@@ -79,7 +79,7 @@ const slug = Astro.url.pathname.split("/")[2];
       let hasScrolled = false;
       let isAtBottom = false;
 
-      window.addEventListener("scroll", function () {
+      window.addEventListener("scroll", async () => {
         let distanceToBottom =
           document.body.offsetHeight - (window.innerHeight + window.scrollY);
 
@@ -91,7 +91,7 @@ const slug = Astro.url.pathname.split("/")[2];
         }
         if (hasScrolled) return;
         hasScrolled = true;
-        eventDispatcher("scroll");
+        await eventDispatcher("scroll");
       });
 
       async function eventDispatcher(type: string) {
@@ -99,7 +99,7 @@ const slug = Astro.url.pathname.split("/")[2];
         const slug = window.location.pathname.split("/")[2];
         const device = window.navigator.userAgent;
 
-        await fetch("https://everythingcs.dev/api/events", {
+        await fetch("/api/events", {
           method: "POST",
           body: JSON.stringify({ type, slug, device, referrer: pageReferrer }),
         });

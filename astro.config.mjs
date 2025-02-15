@@ -1,15 +1,17 @@
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import solid from "@astrojs/solid-js";
-import tailwind from "@astrojs/tailwind";
+import tailwind from "@tailwindcss/vite";
 import robotsTxt from "astro-robots-txt";
 import { defineConfig } from "astro/config";
 
 import cloudflare from "@astrojs/cloudflare";
 
-// https://astro.build/config
 export default defineConfig({
-  integrations: [tailwind(), sitemap(), mdx(), robotsTxt(), solid()],
+  integrations: [sitemap(), mdx(), robotsTxt(), solid()],
+  vite: {
+    plugins: [tailwind()],
+  },
   site: "https://everythingcs.dev",
   markdown: {
     syntaxHighlight: "prism",

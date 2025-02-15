@@ -8,7 +8,9 @@ const { fileName, hasPartialCode, githubLink } = Astro.props;
 import { Copy, Check, Github } from "lucide-astro";
 ---
 
-<div class="code-container">
+<div
+  class="code-container bg-surface dark:bg-transparent dark:border-2 dark:border-gray-400 rounded-xl"
+>
   <div
     class="border-b-2 py-2 px-4 flex items-center justify-between text-white font-medium border-gray-600;"
   >
@@ -87,10 +89,10 @@ import { Copy, Check, Github } from "lucide-astro";
   </script>
 
   <style is:global>
+    @reference "../../global.css"
     .code-container {
       margin-block-top: 20px !important;
       margin-block-end: 20px !important;
-      @apply bg-[#1f2023] dark:bg-transparent dark:border-2 dark:border-gray-400  rounded-xl;
     }
 
     pre {

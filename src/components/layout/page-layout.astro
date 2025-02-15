@@ -24,7 +24,7 @@ export const prerender = true;
   <body class="flex flex-col min-h-[100vh]">
     <div>
       <Navbar />
-      <main class="md:max-w-[1248px] md:mx-auto px-3">
+      <main class="md:max-w-[1248px] md:mx-auto px-3 md:px-0">
         <slot />
       </main>
     </div>
@@ -44,7 +44,7 @@ export const prerender = true;
       let hasScrolled = false;
       let isAtBottom = false;
 
-      window.addEventListener("scroll", function () {
+      window.addEventListener("scroll", async () => {
         let distanceToBottom =
           document.body.offsetHeight - (window.innerHeight + window.scrollY);
 
@@ -56,7 +56,7 @@ export const prerender = true;
         }
         if (hasScrolled) return;
         hasScrolled = true;
-        eventDispatcher("scroll");
+        await eventDispatcher("scroll");
       });
 
       async function eventDispatcher(type: string) {
@@ -64,7 +64,7 @@ export const prerender = true;
         const slug = window.location.pathname;
         const device = window.navigator.userAgent;
 
-        await fetch("https://apis.everythingcs.dev/v1/events", {
+        await fetch("/api/events", {
           method: "POST",
           body: JSON.stringify({ type, slug, device, referrer: pageReferrer }),
         });

@@ -217,7 +217,7 @@ const ContactPage = () => {
           <button
             id="contactFormBtn"
             disabled={isLoading()}
-            class="dark:border-2 dark:border-gray-200 bg-primaryColour dark:bg-transparent px-5 py-2 text-sm rounded-md mt-3 text-white disabled:bg-primaryColour/70 disabled:animate-pulse"
+            class="dark:border-2 dark:border-gray-200 bg-primary dark:bg-transparent px-5 py-2 text-sm rounded-md mt-3 text-white disabled:bg-primary/70 disabled:animate-pulse"
           >
             Submit
           </button>
