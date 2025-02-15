@@ -50,21 +50,21 @@ export async function POST({ request, clientAddress }: APIContext) {
       ip,
       userAgent,
       // @ts-ignore
-      city: request.cf.city ?? "",
+      city: request?.cf?.city ?? "",
       // @ts-ignore
-      continent: request.cf.continent ?? "",
+      continent: request?.cf?.continent ?? "",
       // @ts-ignore
-      country: request.cf.country ?? "",
+      country: request?.cf?.country ?? "",
       // @ts-ignore
-      latitude: request.cf.latitude ?? "",
+      latitude: request?.cf?.latitude ?? "",
       // @ts-ignore
-      longitude: request.cf.longitude ?? "",
+      longitude: request?.cf?.longitude ?? "",
       // @ts-ignore
-      timezone: request.cf.timezone ?? "",
+      timezone: request?.cf?.timezone ?? "",
       // @ts-ignore
-      region: request.cf.region ?? "",
+      region: request?.cf?.region ?? "",
       // @ts-ignore
-      asOrg: request.cf.asOrganization ?? "",
+      asOrg: request?.cf?.asOrganization ?? "",
     };
 
     const dataToBeHashed = JSON.stringify({

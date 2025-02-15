@@ -13,7 +13,10 @@ const filteredHeading = headings.filter((f) => f.depth < 4);
 {
   filteredHeading.length > 0
     ? filteredHeading.map((heading) => (
-        <a class={`toc-link depth-${heading.depth}`} href={`#${heading.slug}`}>
+        <a
+          class={`dark:!text-white toc-link !text-black !no-underline depth-${heading.depth}`}
+          href={`#${heading.slug}`}
+        >
           {heading.text}
         </a>
       ))
@@ -28,13 +31,5 @@ const filteredHeading = headings.filter((f) => f.depth < 4);
   a.toc-link.depth-2 {
     font-weight: 500;
     /* text-decoration: underline; */
-  }
-
-  a.toc-link {
-    /* color: white;
-    font: 0.5rem;
-    text-decoration: none; */
-
-    @apply dark:text-white text-black no-underline;
   }
 </style>
