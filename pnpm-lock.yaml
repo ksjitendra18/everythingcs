@@ -32,9 +32,6 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.0.6
         version: 4.0.6(vite@6.1.0(@types/node@22.13.4)(jiti@2.4.2)(lightningcss@1.29.1)(yaml@2.7.0))
-      '@types/xxhashjs':
-        specifier: ^0.2.4
-        version: 0.2.4
       astro:
         specifier: ^5.3.0
         version: 5.3.0(@types/node@22.13.4)(jiti@2.4.2)(lightningcss@1.29.1)(rollup@4.34.7)(typescript@5.7.3)(yaml@2.7.0)
@@ -72,6 +69,12 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
     devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 22.13.4
+      '@types/xxhashjs':
+        specifier: ^0.2.4
+        version: 0.2.4
       drizzle-kit:
         specifier: ^0.30.4
         version: 0.30.4
@@ -4009,7 +4012,7 @@ snapshots:
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 17.0.45
+      '@types/node': 22.13.4
 
   '@types/unist@2.0.11': {}
 
