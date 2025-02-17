@@ -69,6 +69,9 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20250214.0
+        version: 4.20250214.0
       '@types/node':
         specifier: latest
         version: 22.13.4
@@ -81,6 +84,9 @@ importers:
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
+      wrangler:
+        specifier: ^3.109.1
+        version: 3.109.1(@cloudflare/workers-types@4.20250214.0)
 
 packages:
 
