@@ -11,6 +11,9 @@ export default defineConfig({
   integrations: [sitemap(), mdx(), robotsTxt(), solid()],
   vite: {
     plugins: [tailwind()],
+    define: {
+      "process.env": process.env,
+    },
   },
   site: "https://everythingcs.dev",
   markdown: {
@@ -30,14 +33,8 @@ export default defineConfig({
   output: "static",
   adapter: cloudflare({
     imageService: "passthrough",
-    platformProxy:{
+    platformProxy: {
       enabled: true,
-    }
-  }),
-
-  vite: {
-    define: {
-      "process.env": process.env,
     },
-  },
+  }),
 });

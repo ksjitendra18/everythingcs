@@ -4,6 +4,8 @@ dist/
 .astro/
 .vscode
 
+.wrangler
+
 # dependencies
 node_modules/
 
