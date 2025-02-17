@@ -35,7 +35,7 @@ export const prerender = true;
       const pageReferrer = document.referrer;
 
       setTimeout(() => {
-        eventDispatcher("pageLoad");
+        eventDispatcher("load");
       }, 5000);
       setTimeout(() => {
         eventDispatcher("after30s");
@@ -60,7 +60,7 @@ export const prerender = true;
       });
 
       async function eventDispatcher(type: string) {
-        // if (window.location.host !== "everythingcs.dev") return;
+        if (window.location.host !== "everythingcs.dev") return;
         const slug = window.location.pathname;
         const device = window.navigator.userAgent;
 
