@@ -30,5 +30,14 @@ export default defineConfig({
   output: "static",
   adapter: cloudflare({
     imageService: "passthrough",
+    platformProxy:{
+      enabled: true,
+    }
   }),
+
+  vite: {
+    define: {
+      "process.env": process.env,
+    },
+  },
 });

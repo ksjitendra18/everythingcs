@@ -35,7 +35,7 @@ export const prerender = true;
       const pageReferrer = document.referrer;
 
       setTimeout(() => {
-        eventDispatcher("pageLoad");
+        eventDispatcher("load");
       }, 5000);
       setTimeout(() => {
         eventDispatcher("after30s");

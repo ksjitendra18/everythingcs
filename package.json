@@ -18,7 +18,6 @@
     "@fontsource-variable/inter": "^5.1.1",
     "@libsql/client": "^0.14.0",
     "@tailwindcss/vite": "^4.0.6",
-    "@types/xxhashjs": "^0.2.4",
     "astro": "^5.3.0",
     "astro-robots-txt": "^1.0.0",
     "bowser": "^2.11.0",
@@ -34,6 +33,8 @@
   },
   "devDependencies": {
     "drizzle-kit": "^0.30.4",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "@types/xxhashjs": "^0.2.4",
+    "@types/node": "latest"
   }
 }
