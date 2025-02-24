@@ -104,6 +104,36 @@ const slug = Astro.url.pathname.split("/")[2];
           body: JSON.stringify({ type, slug, device, referrer: pageReferrer }),
         });
       }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const paragraphs = document.querySelectorAll(".post-content p");
+        if (paragraphs.length > 5) {
+          const adSenseComponent = document.createElement("div");
+          adSenseComponent.innerHTML = `
+      <ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-4587134058392926"
+     data-ad-slot="7175656160"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+      `;
+          paragraphs[1].insertAdjacentElement("afterend", adSenseComponent);
+        }
+        if (paragraphs.length > 12) {
+          // Insert ad after the 2nd paragraph (adjust as needed)
+          const adSenseComponent = document.createElement("div");
+          adSenseComponent.innerHTML = `
+       <ins class="adsbygoogle"
+     style="display:block"
+     data-ad-format="autorelaxed"
+     data-ad-client="ca-pub-4587134058392926"
+     data-ad-slot="1782462320"></ins>
+      `;
+          paragraphs[1].insertAdjacentElement("afterend", adSenseComponent);
+        }
+      });
+
+      (adsbygoogle = window.adsbygoogle || []).push({});
     </script>
   </body>
 </html>

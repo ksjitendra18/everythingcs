@@ -126,7 +126,7 @@ function Feedback({ slug }: { slug: string }) {
         <div class="flex my-3 justify-end">
           <button
             disabled={isLoading()}
-            class="bg-blue-600 disabled:bg-blue-600/10  px-3 py-2 rounded-md mt-3"
+            class="bg-blue-600 text-white disabled:bg-blue-600/10  px-3 py-2 rounded-md mt-3"
           >
             <Show when={isLoading()}>Submitting... </Show>
             <Show when={!isLoading()}>Submit</Show>
