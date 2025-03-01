@@ -25,7 +25,7 @@
     "drizzle-orm": "^0.39.3",
     "lucide-astro": "^0.473.0",
     "nanoid": "^5.1.0",
-    "preact": "^10.25.4",
+    "preact": "^10.26.4",
     "solid-js": "^1.9.4",
     "tailwindcss": "^4.0.6",
     "valibot": "1.0.0-rc.0",
