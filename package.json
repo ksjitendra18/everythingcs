@@ -36,7 +36,7 @@
     "@cloudflare/workers-types": "^4.20250410.0",
     "@types/node": "latest",
     "@types/xxhashjs": "^0.2.4",
-    "drizzle-kit": "^0.30.6",
+    "drizzle-kit": "^0.31.1",
     "typescript": "^5.8.3",
     "wrangler": "^4.9.1"
   }
